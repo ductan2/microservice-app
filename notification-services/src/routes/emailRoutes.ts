@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { EmailService } from '../email/EmailService';
 
-const router = Router();
+export const router = Router();
 
 router.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
@@ -32,4 +32,3 @@ router.post('/send-email', async (req, res) => {
   }
 });
 
-export default router;

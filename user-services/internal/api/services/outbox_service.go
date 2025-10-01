@@ -35,11 +35,17 @@ func NewOutboxService(outboxRepo repositories.OutboxRepository, channel *amqp.Ch
 }
 
 func (s *outboxService) PublishUserEvent(ctx context.Context, aggregateID uuid.UUID, eventType string, payload map[string]any) error {
+	// Marshal payload to JSON bytes for storage
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal payload: %w", err)
+	}
+
 	event := &models.Outbox{
 		AggregateID: aggregateID,
 		Topic:       "user.events",
 		Type:        eventType,
-		Payload:     payload,
+		Payload:     payloadBytes,
 		CreatedAt:   time.Now(),
 	}
 	return s.outboxRepo.Create(ctx, event)
@@ -81,14 +87,14 @@ func (s *outboxService) publishToRabbitMQ(ctx context.Context, event models.Outb
 	// Create routing key from topic
 	routingKey := event.Topic // e.g., "user.created", "user.events"
 
-	// Marshal payload to JSON
-	body, err := json.Marshal(event.Payload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal event payload: %w", err)
+	// Payload is already JSON bytes from database
+	body := event.Payload
+	if len(body) == 0 {
+		return fmt.Errorf("event payload is empty")
 	}
 
 	// Publish to RabbitMQ
-	err = s.channel.PublishWithContext(
+	err := s.channel.PublishWithContext(
 		ctx,
 		s.exchange, // exchange
 		routingKey, // routing key

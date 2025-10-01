@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -66,6 +67,7 @@ func GetRabbitConfig() RabbitConfig {
 		port := getenv("RABBITMQ_PORT", "5672")
 		vhost := getenv("RABBITMQ_VHOST", "/")
 		url = fmt.Sprintf("amqp://%s:%s@%s:%s/%s", user, pass, host, port, vhost)
+		log.Println("RabbitMQ URL:", url)
 	}
 	return RabbitConfig{URL: url}
 }

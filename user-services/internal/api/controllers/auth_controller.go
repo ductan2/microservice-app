@@ -35,13 +35,11 @@ func (a AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	response := dto.AuthResponse{
-		AccessToken:  result.Token,
-		RefreshToken: result.RefreshToken,
-		ExpiresAt:    result.ExpiresAt,
-		User:         modelToPublicUser(result.User),
-	}
-	utils.Created(c, response)
+	// Return success message without token - user needs to verify email
+	utils.Created(c, gin.H{
+		"message": "Registration successful! Please check your email to verify your account.",
+		"email":   result.User.Email,
+	})
 }
 
 func (a AuthController) Login(c *gin.Context) {
@@ -80,6 +78,22 @@ func (a AuthController) Logout(c *gin.Context) {
 	utils.Success(c, gin.H{"message": "Logged out successfully"})
 }
 
+func (a AuthController) VerifyEmail(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		utils.Fail(c, "Verification token is required", http.StatusBadRequest, "missing token")
+		return
+	}
+
+	if err := a.Service.VerifyEmail(c.Request.Context(), token); err != nil {
+		utils.Fail(c, "Email verification failed", http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.Success(c, gin.H{
+		"message": "Email verified successfully! You can now login.",
+	})
+}
 
 func modelToPublicUser(user models.User) dto.PublicUser {
 	return dto.PublicUser{
@@ -88,12 +102,12 @@ func modelToPublicUser(user models.User) dto.PublicUser {
 		EmailVerified: user.EmailVerified,
 		Status:        user.Status,
 		CreatedAt:     user.CreatedAt,
-		Profile:       &dto.UserProfile{
+		Profile: &dto.UserProfile{
 			DisplayName: user.Profile.DisplayName,
 			AvatarURL:   user.Profile.AvatarURL,
 			Locale:      user.Profile.Locale,
 			TimeZone:    user.Profile.TimeZone,
 		},
-		UpdatedAt:     user.UpdatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}
 }

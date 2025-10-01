@@ -9,16 +9,17 @@ import (
 
 // User represents the canonical identity
 type User struct {
-	ID              uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	Email           string    `gorm:"type:citext;uniqueIndex;not null" json:"email"`
-	EmailNormalized string    `gorm:"type:citext;index:users_email_norm_idx" json:"-"`
-	PasswordHash    string    `gorm:"type:text;not null" json:"-"`
-	EmailVerified   bool      `gorm:"default:false;not null" json:"email_verified"`
-	Status          string    `gorm:"type:text;default:'active';not null;check:status IN ('active','locked','disabled','deleted')" json:"status"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
-    Profile   UserProfile `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:UserID;references:ID" json:"profile"`
-
+	ID                      uuid.UUID    `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Email                   string       `gorm:"type:citext;uniqueIndex;not null" json:"email"`
+	EmailNormalized         string       `gorm:"type:citext;index:users_email_norm_idx" json:"-"`
+	PasswordHash            string       `gorm:"type:text;not null" json:"-"`
+	EmailVerified           bool         `gorm:"default:false;not null" json:"email_verified"`
+	EmailVerificationToken  string       `gorm:"type:text" json:"-"`
+	EmailVerificationExpiry sql.NullTime `gorm:"type:timestamptz" json:"-"`
+	Status                  string       `gorm:"type:text;default:'active';not null;check:status IN ('active','locked','disabled','deleted')" json:"status"`
+	CreatedAt               time.Time    `json:"created_at"`
+	UpdatedAt               time.Time    `json:"updated_at"`
+	Profile                 UserProfile  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:UserID;references:ID" json:"profile"`
 }
 
 // UserProfile stores non-auth PII
@@ -110,11 +111,11 @@ type AuditLog struct {
 
 // Outbox for cross-service events (transactional outbox pattern)
 type Outbox struct {
-	ID          int64          `gorm:"primaryKey;autoIncrement" json:"id"`
-	AggregateID uuid.UUID      `gorm:"type:uuid;not null" json:"aggregate_id"`
-	Topic       string         `gorm:"type:text;not null" json:"topic"`
-	Type        string         `gorm:"type:text;not null" json:"type"`
-	Payload     map[string]any `gorm:"type:jsonb;not null" json:"payload"`
-	CreatedAt   time.Time      `gorm:"default:now();not null" json:"created_at"`
-	PublishedAt sql.NullTime   `gorm:"index:outbox_unpublished_idx,where:published_at IS NULL" json:"published_at,omitempty"`
+	ID          int64        `gorm:"primaryKey;autoIncrement" json:"id"`
+	AggregateID uuid.UUID    `gorm:"type:uuid;not null" json:"aggregate_id"`
+	Topic       string       `gorm:"type:text;not null" json:"topic"`
+	Type        string       `gorm:"type:text;not null" json:"type"`
+	Payload     []byte       `gorm:"type:jsonb"`
+	CreatedAt   time.Time    `gorm:"default:now();not null" json:"created_at"`
+	PublishedAt sql.NullTime `gorm:"index:outbox_unpublished_idx,where:published_at IS NULL" json:"published_at,omitempty"`
 }

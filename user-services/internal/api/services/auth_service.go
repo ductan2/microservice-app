@@ -2,7 +2,10 @@ package services
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"user-services/internal/api/repositories"
@@ -118,36 +121,60 @@ func (s *AuthService) Register(ctx context.Context, email, password, name string
 		// In production, you might want to use a proper logger
 	}
 
-	// 7. Create outbox event for user.created
-	outboxEvent := &models.Outbox{
-		AggregateID: user.ID,
-		Topic:       "user.created",
-		Type:        "UserCreated",
-		Payload: map[string]any{
-			"user_id": user.ID,
-			"email":   user.Email,
-			"name":    name,
-		},
-		CreatedAt: time.Now(),
-	}
-
-	if err := s.OutboxRepo.Create(ctx, outboxEvent); err != nil {
-		// Log error but don't fail registration
-		// In production, you might want to use a proper logger
-	}
-
-	// 8. Generate JWT token
-	token, err := utils.GenerateJWT(user.ID, user.Email)
+	// 7. Generate email verification token
+	verificationToken, err := utils.GenerateSecureToken(32)
 	if err != nil {
 		return AuthResult{}, err
 	}
 
-	// For registration, we don't create session/refresh token yet
-	// User will need to login to get full session
+	// Hash the token for storage
+	tokenHash := utils.HashToken(verificationToken)
+
+	// Save verification token to user
+	user.EmailVerificationToken = tokenHash
+	user.EmailVerificationExpiry = sql.NullTime{
+		Time:  time.Now().Add(24 * time.Hour), // Expires in 24 hours
+		Valid: true,
+	}
+	if err := s.UserRepo.UpdateUser(ctx, &user); err != nil {
+		return AuthResult{}, err
+	}
+
+	// 8. Build verification link
+	frontendURL := utils.GetEnv("FRONTEND_URL", "http://localhost:3000")
+	verificationLink := fmt.Sprintf("%s/verify-email?token=%s", frontendURL, verificationToken)
+
+	// 9. Create outbox event for email verification
+	payloadData := map[string]any{
+		"user_id":           user.ID,
+		"email":             user.Email,
+		"name":              name,
+		"verification_link": verificationLink,
+		"verificationLink":  verificationLink, // alternative key
+	}
+	payloadBytes, err := json.Marshal(payloadData)
+	if err != nil {
+		// Log error but don't fail registration
+		// In production, you might want to use a proper logger
+	} else {
+		outboxEvent := &models.Outbox{
+			AggregateID: user.ID,
+			Topic:       "user.email_verification",
+			Type:        "EmailVerificationRequested",
+			Payload:     payloadBytes,
+			CreatedAt:   time.Now(),
+		}
+
+		if err := s.OutboxRepo.Create(ctx, outboxEvent); err != nil {
+			// Log error but don't fail registration
+			// In production, you might want to use a proper logger
+		}
+	}
+
+	// 10. Return result WITHOUT token (user needs to verify email first)
 	return AuthResult{
-		User:      user,
-		Token:     token,
-		ExpiresAt: time.Now().Add(config.GetJWTConfig().ExpiresIn),
+		User: user,
+		// No token until email is verified
 	}, nil
 }
 
@@ -226,6 +253,66 @@ func (s *AuthService) Login(ctx context.Context, email, password, mfaCode, userA
 		RefreshToken: rawRefresh,
 		ExpiresAt:    time.Now().Add(config.GetJWTConfig().ExpiresIn),
 	}, nil
+}
+
+// VerifyEmail verifies user's email with the provided token
+func (s *AuthService) VerifyEmail(ctx context.Context, token string) error {
+	// 1. Hash the token
+	tokenHash := utils.HashToken(token)
+
+	// 2. Find user with this token
+	user, err := s.UserRepo.GetByVerificationToken(ctx, tokenHash)
+	if err != nil {
+		return errors.New("invalid or expired verification token")
+	}
+
+	// 3. Check if token is expired
+	if user.EmailVerificationExpiry.Valid && user.EmailVerificationExpiry.Time.Before(time.Now()) {
+		return errors.New("verification token has expired")
+	}
+
+	// 4. Check if already verified
+	if user.EmailVerified {
+		return nil // Already verified, silently succeed
+	}
+
+	// 5. Mark email as verified and clear token
+	user.EmailVerified = true
+	user.EmailVerificationToken = ""
+	user.EmailVerificationExpiry = sql.NullTime{Valid: false}
+
+	if err := s.UserRepo.UpdateUser(ctx, user); err != nil {
+		return err
+	}
+
+	// 6. Log audit event
+	auditLog := &models.AuditLog{
+		UserID: &user.ID,
+		Action: "email.verified",
+		Metadata: map[string]any{
+			"email": user.Email,
+		},
+		CreatedAt: time.Now(),
+	}
+	_ = s.AuditLogRepo.Create(ctx, auditLog)
+
+	// 7. Send welcome email after verification
+	payloadData := map[string]any{
+		"user_id": user.ID,
+		"email":   user.Email,
+		"name":    user.Profile.DisplayName,
+	}
+	payloadBytes, _ := json.Marshal(payloadData)
+	outboxEvent := &models.Outbox{
+		AggregateID: user.ID,
+		Topic:       "user.created",
+		Type:        "UserCreated",
+		Payload:     payloadBytes,
+		CreatedAt:   time.Now(),
+	}
+	_ = s.OutboxRepo.Create(ctx, outboxEvent)
+
+	return nil
 }
 
 // logLoginAttempt helper

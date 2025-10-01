@@ -6,6 +6,7 @@ import (
 
 	"user-services/internal/models"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -57,7 +58,27 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (mode
 	return user, nil
 }
 
-// GetUserByID retrieves a user by their ID
+// GetByEmail retrieves a user by email (alias for auth service)
+func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
+	var user models.User
+	err := r.DB.WithContext(ctx).Preload("Profile").Where("email = ?", email).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// GetByID retrieves a user by UUID
+func (r *UserRepository) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
+	var user models.User
+	err := r.DB.WithContext(ctx).Preload("Profile").Where("id = ?", userID).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// GetUserByID retrieves a user by their ID (string version)
 func (r *UserRepository) GetUserByID(ctx context.Context, userID string) (models.User, error) {
 	var user models.User
 	err := r.DB.WithContext(ctx).Where("id = ?", userID).First(&user).Preload("Profile").Error
@@ -73,6 +94,27 @@ func (r *UserRepository) GetUserByID(ctx context.Context, userID string) (models
 // UpdateUser updates user information
 func (r *UserRepository) UpdateUser(ctx context.Context, user *models.User) error {
 	return r.DB.WithContext(ctx).Save(user).Error
+}
+
+// UpdatePassword updates user's password hash
+func (r *UserRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error {
+	return r.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("id = ?", userID).
+		Update("password_hash", passwordHash).Error
+}
+
+// GetByVerificationToken retrieves a user by their email verification token
+func (r *UserRepository) GetByVerificationToken(ctx context.Context, tokenHash string) (*models.User, error) {
+	var user models.User
+	err := r.DB.WithContext(ctx).
+		Preload("Profile").
+		Where("email_verification_token = ?", tokenHash).
+		First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 // DeleteUser soft deletes a user

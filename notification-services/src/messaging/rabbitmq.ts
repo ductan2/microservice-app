@@ -2,7 +2,7 @@ import { connect, Channel, ChannelModel } from 'amqplib';
 import { config } from '../config';
 import { logger } from '../logger';
 import { EmailService } from '../email/EmailService';
-import { buildPasswordResetEmailTemplate, buildUserRegistrationEmailTemplate } from '../email/templates';
+import { buildPasswordResetEmailTemplate, buildUserRegistrationEmailTemplate, buildEmailVerificationTemplate } from '../email/templates';
 import { EmailPayload } from '../email/types';
 
 let connection: ChannelModel | null = null;
@@ -170,6 +170,23 @@ function buildEmailFromUserEvent(
             'expires_in',
             'expiresIn'
           ),
+          appName: getString(payload, 'appName'),
+          supportEmail: getString(payload, 'support_email', 'supportEmail'),
+        }),
+      };
+    }
+    case 'emailverificationrequested':
+    case 'user.email_verification':
+    case 'user.emailverification': {
+      const verificationLink = getString(payload, 'verification_link', 'verificationLink', 'verify_link', 'verifyLink');
+      if (!verificationLink) {
+        throw new Error('Email verification event payload is missing verification link');
+      }
+      return {
+        to: email,
+        ...buildEmailVerificationTemplate({
+          name: getString(payload, 'name'),
+          verificationLink,
           appName: getString(payload, 'appName'),
           supportEmail: getString(payload, 'support_email', 'supportEmail'),
         }),
