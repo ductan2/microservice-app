@@ -34,13 +34,16 @@ func NewRouter(deps Deps) *gin.Engine {
 	loginAttemptRepo := repositories.NewLoginAttemptRepository(deps.DB)
 	// Initialize services
 	authService := services.NewAuthService(userRepo, userProfileRepo, auditLogRepo, outboxRepo, sessionRepo, refreshTokenRepo, mfaRepo, loginAttemptRepo)
+	profileService := services.NewUserProfileService(userProfileRepo)
 
 	// Initialize controllers
 	authCtrl := controllers.NewAuthController(authService)
+	profileCtrl := controllers.NewProfileController(profileService)
 
 	api := r.Group("/api/v1")
 	{
 		routers.RegisterAuthRoutes(api, *authCtrl)
+		routers.RegisterProfileRoutes(api, profileCtrl)
 	}
 
 	return r
