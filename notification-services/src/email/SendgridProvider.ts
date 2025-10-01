@@ -1,4 +1,5 @@
 import sg from '@sendgrid/mail';
+import type { MailDataRequired } from '@sendgrid/mail';
 import { EmailProvider } from './EmailProvider';
 import { EmailPayload } from './types';
 import { config } from '../config';
@@ -17,13 +18,15 @@ export class SendgridProvider implements EmailProvider {
       throw new Error('Missing From: provide payload.from or set SENDGRID_DEFAULT_FROM');
     }
 
-    const res = await sg.send({
-      to: payload.to as any,
+    const message: MailDataRequired = {
+      to: payload.to,
       from,
       subject: payload.subject,
-      text: payload.text || '',
+      text: payload.text ?? '',
       html: payload.html,
-    });
+    };
+
+    const res = await sg.send(message);
 
     // SendGrid returns an array of responses; use the first message-id if available
     const msgId = res?.[0]?.headers?.['x-message-id'] as string | undefined;
