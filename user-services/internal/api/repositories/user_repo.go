@@ -9,6 +9,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var ErrUserNotFound = errors.New("user not found")
+
 type UserRepository struct {
 	DB *gorm.DB
 }
@@ -50,7 +52,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (mode
 	err := r.DB.WithContext(ctx).Preload("Profile").First(&user, "email = ?", email).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return models.User{}, errors.New("user not found")
+			return models.User{}, ErrUserNotFound
 		}
 		return models.User{}, err
 	}
@@ -60,10 +62,13 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (mode
 // GetUserByID retrieves a user by their ID
 func (r *UserRepository) GetUserByID(ctx context.Context, userID string) (models.User, error) {
 	var user models.User
-	err := r.DB.WithContext(ctx).Where("id = ?", userID).First(&user).Preload("Profile").Error
+	err := r.DB.WithContext(ctx).
+		Preload("Profile").
+		Where("id = ?", userID).
+		First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return models.User{}, errors.New("user not found")
+			return models.User{}, ErrUserNotFound
 		}
 		return models.User{}, err
 	}

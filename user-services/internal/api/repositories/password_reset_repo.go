@@ -25,26 +25,34 @@ func NewPasswordResetRepository(db *gorm.DB) PasswordResetRepository {
 }
 
 func (r *passwordResetRepository) Create(ctx context.Context, reset *models.PasswordReset) error {
-	// TODO: implement
-	return nil
+	return r.db.WithContext(ctx).Create(reset).Error
 }
 
 func (r *passwordResetRepository) GetByTokenHash(ctx context.Context, tokenHash string) (*models.PasswordReset, error) {
-	// TODO: implement
-	return nil, nil
+	var reset models.PasswordReset
+	if err := r.db.WithContext(ctx).Where("token_hash = ?", tokenHash).First(&reset).Error; err != nil {
+		return nil, err
+	}
+	return &reset, nil
 }
 
 func (r *passwordResetRepository) Consume(ctx context.Context, id uuid.UUID) error {
-	// TODO: implement
-	return nil
+	return r.db.WithContext(ctx).
+		Model(&models.PasswordReset{}).
+		Where("id = ? AND consumed_at IS NULL", id).
+		Update("consumed_at", gorm.Expr("now()")).Error
 }
 
 func (r *passwordResetRepository) DeleteExpired(ctx context.Context) error {
-	// TODO: implement
-	return nil
+	return r.db.WithContext(ctx).
+		Where("expires_at < now()").
+		Delete(&models.PasswordReset{}).
+		Error
 }
 
 func (r *passwordResetRepository) DeleteByUserID(ctx context.Context, userID uuid.UUID) error {
-	// TODO: implement
-	return nil
+	return r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		Delete(&models.PasswordReset{}).
+		Error
 }

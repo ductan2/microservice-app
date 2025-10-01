@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -19,4 +20,27 @@ func GetPort() string {
 		return p
 	}
 	return "8001"
+}
+
+func GetAppName() string {
+	return getEnv("APP_NAME", "Microservice App")
+}
+
+func GetSupportEmail() string {
+	return getEnv("SUPPORT_EMAIL", "support@example.com")
+}
+
+func GetPublicAppURL() string {
+	return getEnv("PUBLIC_APP_URL", "http://localhost:3000")
+}
+
+func GetPasswordResetPath() string {
+	return getEnv("PASSWORD_RESET_PATH", "/reset-password")
+}
+
+func getEnv(key, fallback string) string {
+	if value := strings.TrimSpace(os.Getenv(key)); value != "" {
+		return value
+	}
+	return fallback
 }
