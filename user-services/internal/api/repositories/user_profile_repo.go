@@ -28,13 +28,15 @@ func (r *userProfileRepository) Create(ctx context.Context, profile *models.User
 }
 
 func (r *userProfileRepository) GetByUserID(ctx context.Context, userID uuid.UUID) (*models.UserProfile, error) {
-	// TODO: implement
-	return nil, nil
+	var profile models.UserProfile
+	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).First(&profile).Error; err != nil {
+		return nil, err
+	}
+	return &profile, nil
 }
 
 func (r *userProfileRepository) Update(ctx context.Context, profile *models.UserProfile) error {
-	// TODO: implement
-	return nil
+	return r.db.WithContext(ctx).Save(profile).Error
 }
 
 func (r *userProfileRepository) Delete(ctx context.Context, userID uuid.UUID) error {
