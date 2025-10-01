@@ -1,0 +1,416 @@
+# GraphQL Schema for Content Service
+
+scalar Time
+scalar UUID
+scalar JSON
+scalar Upload
+
+# ============= Types =============
+
+type Topic {
+  id: UUID!
+  slug: String!
+  name: String!
+  createdAt: Time!
+  lessons: [Lesson!]!
+  flashcardSets: [FlashcardSet!]!
+}
+
+type Level {
+  id: UUID!
+  code: String!
+  name: String!
+  lessons: [Lesson!]!
+  flashcardSets: [FlashcardSet!]!
+}
+
+type Tag {
+  id: UUID!
+  slug: String!
+  name: String!
+}
+
+enum MediaKind {
+  IMAGE
+  AUDIO
+}
+
+type MediaAsset {
+  id: UUID!
+  storageKey: String!
+  kind: MediaKind!
+  mimeType: String!
+  bytes: Int
+  durationMs: Int
+  sha256: String!
+  createdAt: Time!
+  uploadedBy: UUID
+  url: String # presigned URL
+}
+
+type Lesson {
+  id: UUID!
+  code: String
+  title: String!
+  description: String
+  topic: Topic
+  level: Level
+  isPublished: Boolean!
+  version: Int!
+  createdBy: UUID
+  createdAt: Time!
+  updatedAt: Time!
+  publishedAt: Time
+  sections: [LessonSection!]!
+  quizzes: [Quiz!]!
+  tags: [Tag!]!
+}
+
+enum LessonSectionType {
+  TEXT
+  DIALOG
+  AUDIO
+  IMAGE
+  EXERCISE
+}
+
+type LessonSection {
+  id: UUID!
+  lessonId: UUID!
+  ord: Int!
+  type: LessonSectionType!
+  body: JSON!
+  createdAt: Time!
+}
+
+type FlashcardSet {
+  id: UUID!
+  title: String!
+  description: String
+  topic: Topic
+  level: Level
+  createdAt: Time!
+  createdBy: UUID
+  flashcards: [Flashcard!]!
+  tags: [Tag!]!
+}
+
+type Flashcard {
+  id: UUID!
+  setId: UUID!
+  frontText: String!
+  backText: String!
+  frontMedia: MediaAsset
+  backMedia: MediaAsset
+  ord: Int!
+  hints: [String!]
+  createdAt: Time!
+}
+
+type Quiz {
+  id: UUID!
+  lessonId: UUID
+  title: String!
+  description: String
+  totalPoints: Int!
+  timeLimitS: Int
+  createdAt: Time!
+  questions: [QuizQuestion!]!
+  tags: [Tag!]!
+}
+
+enum QuestionType {
+  MCQ
+  MULTI_SELECT
+  FILL_BLANK
+  AUDIO_TRANSCRIBE
+  MATCH
+  ORDERING
+}
+
+type QuizQuestion {
+  id: UUID!
+  quizId: UUID!
+  ord: Int!
+  type: QuestionType!
+  prompt: String!
+  promptMedia: MediaAsset
+  points: Int!
+  metadata: JSON!
+  options: [QuestionOption!]!
+}
+
+type QuestionOption {
+  id: UUID!
+  questionId: UUID!
+  ord: Int!
+  label: String!
+  isCorrect: Boolean!
+  feedback: String
+}
+
+# ============= Inputs =============
+
+input CreateTopicInput {
+  slug: String!
+  name: String!
+}
+
+input UpdateTopicInput {
+  slug: String
+  name: String
+}
+
+input CreateLevelInput {
+  code: String!
+  name: String!
+}
+
+input CreateTagInput {
+  slug: String!
+  name: String!
+}
+
+input CreateLessonInput {
+  code: String
+  title: String!
+  description: String
+  topicId: UUID
+  levelId: UUID
+  tagIds: [UUID!]
+}
+
+input UpdateLessonInput {
+  code: String
+  title: String
+  description: String
+  topicId: UUID
+  levelId: UUID
+}
+
+input CreateLessonSectionInput {
+  type: LessonSectionType!
+  body: JSON!
+}
+
+input UpdateLessonSectionInput {
+  type: LessonSectionType
+  body: JSON
+}
+
+input CreateFlashcardSetInput {
+  title: String!
+  description: String
+  topicId: UUID
+  levelId: UUID
+  tagIds: [UUID!]
+}
+
+input UpdateFlashcardSetInput {
+  title: String
+  description: String
+  topicId: UUID
+  levelId: UUID
+}
+
+input CreateFlashcardInput {
+  frontText: String!
+  backText: String!
+  frontMediaId: UUID
+  backMediaId: UUID
+  hints: [String!]
+}
+
+input UpdateFlashcardInput {
+  frontText: String
+  backText: String
+  frontMediaId: UUID
+  backMediaId: UUID
+  hints: [String!]
+}
+
+input CreateQuizInput {
+  lessonId: UUID
+  title: String!
+  description: String
+  timeLimitS: Int
+  tagIds: [UUID!]
+}
+
+input UpdateQuizInput {
+  title: String
+  description: String
+  timeLimitS: Int
+}
+
+input CreateQuizQuestionInput {
+  type: QuestionType!
+  prompt: String!
+  promptMediaId: UUID
+  points: Int!
+  metadata: JSON
+}
+
+input UpdateQuizQuestionInput {
+  type: QuestionType
+  prompt: String
+  promptMediaId: UUID
+  points: Int
+  metadata: JSON
+}
+
+input CreateQuestionOptionInput {
+  label: String!
+  isCorrect: Boolean!
+  feedback: String
+}
+
+input UpdateQuestionOptionInput {
+  label: String
+  isCorrect: Boolean
+  feedback: String
+}
+
+input FilterLessonsInput {
+  topicId: UUID
+  levelId: UUID
+  isPublished: Boolean
+  search: String
+}
+
+input PaginationInput {
+  page: Int = 1
+  pageSize: Int = 20
+}
+
+# ============= Responses =============
+
+type PaginatedLessons {
+  data: [Lesson!]!
+  page: Int!
+  pageSize: Int!
+  total: Int!
+  totalPages: Int!
+}
+
+type PaginatedFlashcardSets {
+  data: [FlashcardSet!]!
+  page: Int!
+  pageSize: Int!
+  total: Int!
+  totalPages: Int!
+}
+
+type PaginatedQuizzes {
+  data: [Quiz!]!
+  page: Int!
+  pageSize: Int!
+  total: Int!
+  totalPages: Int!
+}
+
+# ============= Queries =============
+
+type Query {
+  # Taxonomies
+  topics: [Topic!]!
+  topic(id: UUID!): Topic
+  topicBySlug(slug: String!): Topic
+  
+  levels: [Level!]!
+  level(id: UUID!): Level
+  levelByCode(code: String!): Level
+  
+  tags: [Tag!]!
+  tag(id: UUID!): Tag
+  tagBySlug(slug: String!): Tag
+  
+  # Media
+  mediaAsset(id: UUID!): MediaAsset
+  mediaAssets(ids: [UUID!]!): [MediaAsset!]!
+  
+  # Lessons
+  lessons(filter: FilterLessonsInput, pagination: PaginationInput): PaginatedLessons!
+  lesson(id: UUID!): Lesson
+  lessonByCode(code: String!): Lesson
+  
+  # Flashcards
+  flashcardSets(topicId: UUID, levelId: UUID, pagination: PaginationInput): PaginatedFlashcardSets!
+  flashcardSet(id: UUID!): FlashcardSet
+  
+  # Quizzes
+  quizzes(lessonId: UUID, pagination: PaginationInput): PaginatedQuizzes!
+  quiz(id: UUID!): Quiz
+}
+
+# ============= Mutations =============
+
+type Mutation {
+  # Topics
+  createTopic(input: CreateTopicInput!): Topic!
+  updateTopic(id: UUID!, input: UpdateTopicInput!): Topic!
+  deleteTopic(id: UUID!): Boolean!
+  
+  # Levels
+  createLevel(input: CreateLevelInput!): Level!
+  deleteLevel(id: UUID!): Boolean!
+  
+  # Tags
+  createTag(input: CreateTagInput!): Tag!
+  deleteTag(id: UUID!): Boolean!
+  
+  # Lessons
+  createLesson(input: CreateLessonInput!): Lesson!
+  updateLesson(id: UUID!, input: UpdateLessonInput!): Lesson!
+  publishLesson(id: UUID!): Lesson!
+  unpublishLesson(id: UUID!): Lesson!
+  deleteLesson(id: UUID!): Boolean!
+  
+  # Lesson Sections
+  addLessonSection(lessonId: UUID!, input: CreateLessonSectionInput!): LessonSection!
+  updateLessonSection(id: UUID!, input: UpdateLessonSectionInput!): LessonSection!
+  reorderLessonSections(lessonId: UUID!, sectionIds: [UUID!]!): [LessonSection!]!
+  deleteLessonSection(id: UUID!): Boolean!
+  
+  # Flashcard Sets
+  createFlashcardSet(input: CreateFlashcardSetInput!): FlashcardSet!
+  updateFlashcardSet(id: UUID!, input: UpdateFlashcardSetInput!): FlashcardSet!
+  deleteFlashcardSet(id: UUID!): Boolean!
+  
+  # Flashcards
+  addFlashcard(setId: UUID!, input: CreateFlashcardInput!): Flashcard!
+  updateFlashcard(id: UUID!, input: UpdateFlashcardInput!): Flashcard!
+  reorderFlashcards(setId: UUID!, flashcardIds: [UUID!]!): [Flashcard!]!
+  deleteFlashcard(id: UUID!): Boolean!
+  
+  # Quizzes
+  createQuiz(input: CreateQuizInput!): Quiz!
+  updateQuiz(id: UUID!, input: UpdateQuizInput!): Quiz!
+  deleteQuiz(id: UUID!): Boolean!
+  
+  # Quiz Questions
+  addQuizQuestion(quizId: UUID!, input: CreateQuizQuestionInput!): QuizQuestion!
+  updateQuizQuestion(id: UUID!, input: UpdateQuizQuestionInput!): QuizQuestion!
+  reorderQuizQuestions(quizId: UUID!, questionIds: [UUID!]!): [QuizQuestion!]!
+  deleteQuizQuestion(id: UUID!): Boolean!
+  
+  # Question Options
+  addQuestionOption(questionId: UUID!, input: CreateQuestionOptionInput!): QuestionOption!
+  updateQuestionOption(id: UUID!, input: UpdateQuestionOptionInput!): QuestionOption!
+  deleteQuestionOption(id: UUID!): Boolean!
+  
+  # Content Tags
+  addTagToContent(tagId: UUID!, kind: String!, objectId: UUID!): Boolean!
+  removeTagFromContent(tagId: UUID!, kind: String!, objectId: UUID!): Boolean!
+  
+  # Media Upload
+  uploadMedia(file: Upload!, kind: MediaKind!): MediaAsset!
+}
+
+# ============= Subscriptions (Optional) =============
+
+type Subscription {
+  lessonPublished: Lesson!
+  quizCreated: Quiz!
+}
+

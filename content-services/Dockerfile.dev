@@ -1,0 +1,20 @@
+FROM golang:1.25-alpine
+
+WORKDIR /app
+
+# Install build tools and air for auto reload
+RUN apk add --no-cache git ca-certificates && update-ca-certificates
+RUN go install github.com/air-verse/air@latest
+
+# Copy go mod files
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE 8003
+
+# Run with auto reload using air
+CMD ["air", "-c", ".air.toml"]

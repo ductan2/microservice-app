@@ -1,0 +1,111 @@
+# Override file for development
+# This file is automatically loaded by docker-compose
+# Use this to override settings for local development
+
+version: "3.9"
+
+services:
+  # Override for development with auto reload
+  user-services:
+    build:
+      context: ../user-services
+      dockerfile: Dockerfile.dev
+    environment:
+      - GIN_MODE=debug
+    volumes:
+      - ../user-services:/app
+      - /app/vendor  # Exclude vendor directory
+
+  # Override for lesson-services with auto reload
+  lesson-services:
+    build:
+      context: ../lesson-services
+      dockerfile: Dockerfile.dev
+    container_name: lesson-services
+    restart: always
+    ports:
+      - "${LESSON_SERVICES_PORT:-8002}:8002"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER:-user}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - DB_NAME=${POSTGRES_DB:-english_app}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-user}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+    volumes:
+      - ../lesson-services:/app
+      - /app/__pycache__  # Exclude Python cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  # Override for content-services with auto reload
+  content-services:
+    build:
+      context: ../content-services
+      dockerfile: Dockerfile.dev
+    container_name: content-services
+    restart: always
+    ports:
+      - "${CONTENT_SERVICES_PORT:-8003}:8003"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER:-user}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - DB_NAME=${POSTGRES_DB:-english_app}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-user}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+    volumes:
+      - ../content-services:/app
+      - /app/vendor  # Exclude vendor directory
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  # Override for notification-services with auto reload
+  notification-services:
+    build:
+      context: ../notification-services
+      dockerfile: Dockerfile.dev
+    container_name: notification-services
+    restart: always
+    ports:
+      - "${NOTIFICATION_SERVICES_PORT:-8004}:8004"
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-user}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+    volumes:
+      - ../notification-services:/app
+      - /app/node_modules  # Exclude node_modules
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # Development database with more verbose logging
+  postgres:
+    environment:
+      - POSTGRES_LOG_STATEMENT=all
+      - POSTGRES_LOG_MIN_DURATION_STATEMENT=0

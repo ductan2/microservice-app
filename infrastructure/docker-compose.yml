@@ -1,0 +1,266 @@
+version: "3.9"
+
+services:
+  # =====================
+  # Database & Queue
+  # =====================
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-english_app}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-password}
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: postgres_exporter
+    restart: always
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-english_app}?sslmode=disable"
+    ports:
+      - "${POSTGRES_EXPORTER_PORT:-9187}:9187"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  mongodb:
+    image: mongo:8
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:8.2
+    container_name: redis
+    restart: always
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis_exporter:
+    image: oliver006/redis_exporter
+    container_name: redis_exporter
+    restart: always
+    command: ["--redis.addr=redis://redis:6379"]
+    ports:
+      - "${REDIS_EXPORTER_PORT:-9121}:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  rabbitmq:
+    image: rabbitmq:4.1-management
+    container_name: rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-user}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-password}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MGMT_PORT:-15672}:15672" # Web UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq_exporter:
+    image: kbudde/rabbitmq-exporter
+    container_name: rabbitmq_exporter
+    restart: always
+    environment:
+      RABBITMQ_URL: http://${RABBITMQ_USER:-user}:${RABBITMQ_PASSWORD:-password}@rabbitmq:15672
+    ports:
+      - "${RABBITMQ_EXPORTER_PORT:-9419}:9419"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # =====================
+  # Microservices
+  # =====================
+  user-services:
+    build:
+      context: ../user-services
+      dockerfile: Dockerfile
+    container_name: user-services
+    restart: always
+    ports:
+      - "${USER_SERVICES_PORT:-8001}:8001"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER:-user}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - DB_NAME=${POSTGRES_DB:-english_app}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-user}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  lesson-services:
+    build:
+      context: ../lesson-services
+      dockerfile: Dockerfile
+    container_name: lesson-services
+    restart: always
+    ports:
+      - "${LESSON_SERVICES_PORT:-8002}:8002"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER:-user}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - DB_NAME=${POSTGRES_DB:-english_app}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-user}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  content-services:
+    build:
+      context: ../content-services
+      dockerfile: Dockerfile
+    container_name: content-services
+    restart: always
+    ports:
+      - "${CONTENT_SERVICES_PORT:-8003}:8003"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER:-user}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - DB_NAME=${POSTGRES_DB:-english_app}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-user}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  notification-services:
+    build:
+      context: ../notification-services
+      dockerfile: Dockerfile
+    container_name: notification-services
+    restart: always
+    ports:
+      - "${NOTIFICATION_SERVICES_PORT:-8004}:8004"
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-user}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+  
+  # =====================
+  # Monitoring Stack
+  # =====================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: loki
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+
+  promtail:
+    image: grafana/promtail:2.9.2
+    container_name: promtail
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+
+  grafana:
+    image: grafana/grafana:10.0.3
+    container_name: grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+  rabbitmq_data:
+  prometheus_data:
+  loki_data:
