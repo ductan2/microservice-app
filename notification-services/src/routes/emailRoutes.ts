@@ -26,8 +26,9 @@ router.post('/send-email', async (req, res) => {
   try {
     const result = await service.send(parsed.data);
     return res.status(202).json(result ?? { status: 'queued' });
-  } catch (err: any) {
-    return res.status(502).json({ error: 'Failed to send email', message: err?.message });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return res.status(502).json({ error: 'Failed to send email', message });
   }
 });
 

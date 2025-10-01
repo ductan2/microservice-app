@@ -24,7 +24,7 @@ const EnvSchema = z.object({
   RABBITMQ_EMAIL_QUEUE: z.string().default('notifications.email'),
   RABBITMQ_EMAIL_ROUTING_KEY: z.string().default('email.send'),
   RABBITMQ_USER_EVENTS_QUEUE: z.string().default('notifications.user_events'),
-  RABBITMQ_USER_EVENTS_ROUTING_KEY: z.string().default('user.created'),
+  RABBITMQ_USER_EVENTS_ROUTING_KEY: z.string().default('user.created,user.password_reset'),
   RABBITMQ_PREFETCH: z.coerce.number().int().positive().default(10),
 });
 

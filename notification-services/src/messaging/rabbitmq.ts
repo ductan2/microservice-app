@@ -1,7 +1,8 @@
-import { connect, Channel, ChannelModel, Connection } from 'amqplib';
+import { connect, Channel, ChannelModel } from 'amqplib';
 import { config } from '../config';
 import { logger } from '../logger';
 import { EmailService } from '../email/EmailService';
+import { buildPasswordResetEmailTemplate, buildUserRegistrationEmailTemplate } from '../email/templates';
 import { EmailPayload } from '../email/types';
 
 let connection: ChannelModel | null = null;
@@ -50,7 +51,7 @@ async function initEmailConsumer(ch: Channel) {
         const payload: EmailPayload = JSON.parse(content);
         await service.send(payload);
         ch.ack(msg);
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error({ err }, 'Failed to process email message');
         // discard the message to avoid infinite redelivery loop
         ch.nack(msg, false, false);
@@ -64,10 +65,18 @@ async function initEmailConsumer(ch: Channel) {
 
 async function initUserEventsConsumer(ch: Channel) {
   await ch.assertQueue(config.RABBITMQ_USER_EVENTS_QUEUE, { durable: true });
-  await ch.bindQueue(
-    config.RABBITMQ_USER_EVENTS_QUEUE,
-    config.RABBITMQ_EXCHANGE,
-    config.RABBITMQ_USER_EVENTS_ROUTING_KEY
+  const routingKeys = config.RABBITMQ_USER_EVENTS_ROUTING_KEY.split(',')
+    .map((key) => key.trim())
+    .filter(Boolean);
+
+  if (routingKeys.length === 0) {
+    routingKeys.push('user.created');
+  }
+
+  await Promise.all(
+    routingKeys.map((key) =>
+      ch.bindQueue(config.RABBITMQ_USER_EVENTS_QUEUE, config.RABBITMQ_EXCHANGE, key)
+    )
   );
 
   await ch.prefetch(config.RABBITMQ_PREFETCH);
@@ -80,32 +89,32 @@ async function initUserEventsConsumer(ch: Channel) {
       if (!msg) return;
       try {
         const content = msg.content.toString('utf8');
-        const payload = JSON.parse(content);
+        const payload = JSON.parse(content) as Record<string, unknown>;
 
-        logger.info({ payload }, 'Received user.created event');
+        const payloadType = payload['type'];
+        const eventType =
+          msg.properties?.type ||
+          (msg.properties?.headers?.event_type as string | undefined) ||
+          (typeof payloadType === 'string' ? payloadType : undefined) ||
+          msg.fields.routingKey;
 
-        // Send welcome email
-        const welcomeEmail: EmailPayload = {
-          to: payload.email,
-          subject: 'Welcome to English Learning App! 🎉',
-          html: `
-            <h1>Welcome ${payload.name || 'there'}!</h1>
-            <p>Thank you for registering with us. We're excited to have you on board!</p>
-            <p>Your account has been successfully created.</p>
-            <p>Start your English learning journey today!</p>
-            <br/>
-            <p>Best regards,</p>
-            <p>English Learning Team</p>
-          `,
-          text: `Welcome ${payload.name || 'there'}! Thank you for registering with us. Your account has been successfully created.`
-        };
+        logger.info({ payload, eventType }, 'Received user event');
 
-        await emailService.send(welcomeEmail);
+        const email = buildEmailFromUserEvent(eventType, payload);
+
+        if (!email) {
+          logger.warn({ eventType, payload }, 'No email generated for user event');
+          ch.ack(msg);
+          return;
+        }
+
+        await emailService.send(email);
         ch.ack(msg);
 
-        logger.info({ email: payload.email }, 'Welcome email sent successfully');
-      } catch (err: any) {
-        logger.error({ err }, 'Failed to process user.created event');
+        const recipients = Array.isArray(email.to) ? email.to : [email.to];
+        logger.info({ email: recipients, eventType }, 'User event email sent successfully');
+      } catch (err: unknown) {
+        logger.error({ err }, 'Failed to process user event');
         // discard the message to avoid infinite redelivery loop
         ch.nack(msg, false, false);
       }
@@ -118,6 +127,87 @@ async function initUserEventsConsumer(ch: Channel) {
 
 // Keep the old function name for backward compatibility
 export const initRabbitEmailConsumer = initRabbitConsumers;
+
+function buildEmailFromUserEvent(
+  eventType: string | undefined,
+  payload: Record<string, unknown>
+): EmailPayload | null {
+  const normalizedType = eventType?.toLowerCase();
+
+  const email = getString(payload, 'email');
+  if (!email) {
+    throw new Error('User event payload is missing the email address');
+  }
+
+  switch (normalizedType) {
+    case 'usercreated':
+    case 'user.created':
+      return {
+        to: email,
+        ...buildUserRegistrationEmailTemplate({
+          name: getString(payload, 'name'),
+          appName: getString(payload, 'appName'),
+          dashboardUrl: getString(payload, 'dashboard_url', 'dashboardUrl'),
+          supportEmail: getString(payload, 'support_email', 'supportEmail'),
+        }),
+      };
+    case 'passwordresetrequested':
+    case 'user.password_reset':
+    case 'user.passwordreset': {
+      const resetLink = getString(payload, 'reset_link', 'resetLink', 'reset_url', 'resetUrl');
+      if (!resetLink) {
+        throw new Error('Password reset event payload is missing reset link');
+      }
+      return {
+        to: email,
+        ...buildPasswordResetEmailTemplate({
+          name: getString(payload, 'name'),
+          resetLink,
+          expiresInMinutes: getNumber(
+            payload,
+            'expires_in_minutes',
+            'expiresInMinutes',
+            'expires_in',
+            'expiresIn'
+          ),
+          appName: getString(payload, 'appName'),
+          supportEmail: getString(payload, 'support_email', 'supportEmail'),
+        }),
+      };
+    }
+    default:
+      return null;
+  }
+}
+
+function getString(payload: Record<string, unknown>, ...keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = payload[key];
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        return trimmed;
+      }
+    }
+  }
+  return undefined;
+}
+
+function getNumber(payload: Record<string, unknown>, ...keys: string[]): number | undefined {
+  for (const key of keys) {
+    const value = payload[key];
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string' && value.trim().length > 0) {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+  }
+  return undefined;
+}
 
 export async function publishEmailMessage(payload: EmailPayload) {
   if (!channel) throw new Error('RabbitMQ channel not initialized');
