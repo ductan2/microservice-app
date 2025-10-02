@@ -1,3 +1,5 @@
 *.env
 .specstory
 .cursorindexingignore
+user-services/tmp/
+user-services/vendor/
