@@ -6,6 +6,7 @@ import (
 	"content-services/internal/config"
 	"content-services/internal/db"
 	"content-services/internal/server"
+	"content-services/internal/taxonomy"
 	"context"
 	"net/http"
 	"os"
@@ -32,12 +33,20 @@ func main() {
 	}
 	database := db.GetDatabase(mongoClient)
 
+	// Prepare taxonomy store backed by MongoDB
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	taxonomyStore, err := taxonomy.NewStore(ctx, database)
+	cancel()
+	if err != nil {
+		log.Fatalf("taxonomy store init error: %v", err)
+	}
+
 	// Build GraphQL server
-	resolver := &gqlresolver.Resolver{DB: database}
+	resolver := &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore}
 	gqlSrv := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	graphqlHandler := handler.NewDefaultServer(gqlSrv)
 
-	r := server.NewRouterWithGraphQL(graphqlHandler)
+	r := server.NewRouter(graphqlHandler)
 	if config.GetGraphQLPlaygroundEnabled() {
 		// Expose playground at root
 		r.GET("/", func(c *gin.Context) {
@@ -67,9 +76,9 @@ func main() {
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Printf("graceful shutdown failed: %v", err)
 	}
 	log.Println("server stopped")

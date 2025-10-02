@@ -6,6 +6,21 @@ import (
 	"time"
 )
 
+type CreateLevelInput struct {
+	Code string `json:"code"`
+	Name string `json:"name"`
+}
+
+type CreateTagInput struct {
+	Slug string `json:"slug"`
+	Name string `json:"name"`
+}
+
+type CreateTopicInput struct {
+	Slug string `json:"slug"`
+	Name string `json:"name"`
+}
+
 type Lesson struct {
 	ID          string    `json:"id"`
 	Code        *string   `json:"code,omitempty"`
@@ -17,5 +32,42 @@ type Lesson struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
+type Level struct {
+	ID   string `json:"id"`
+	Code string `json:"code"`
+	Name string `json:"name"`
+}
+
+type Mutation struct {
+}
+
 type Query struct {
+}
+
+type Tag struct {
+	ID   string `json:"id"`
+	Slug string `json:"slug"`
+	Name string `json:"name"`
+}
+
+type Topic struct {
+	ID        string    `json:"id"`
+	Slug      string    `json:"slug"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+type UpdateLevelInput struct {
+	Code *string `json:"code,omitempty"`
+	Name *string `json:"name,omitempty"`
+}
+
+type UpdateTagInput struct {
+	Slug *string `json:"slug,omitempty"`
+	Name *string `json:"name,omitempty"`
+}
+
+type UpdateTopicInput struct {
+	Slug *string `json:"slug,omitempty"`
+	Name *string `json:"name,omitempty"`
 }

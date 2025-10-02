@@ -1,10 +1,34 @@
 schema {
   query: Query
+  mutation: Mutation
 }
 
 type Query {
   health: String!
   lessonByCode(code: String!): Lesson
+
+  topic(id: ID, slug: String): Topic
+  topics: [Topic!]!
+
+  level(id: ID, code: String): Level
+  levels: [Level!]!
+
+  tag(id: ID, slug: String): Tag
+  tags: [Tag!]!
+}
+
+type Mutation {
+  createTopic(input: CreateTopicInput!): Topic!
+  updateTopic(id: ID!, input: UpdateTopicInput!): Topic!
+  deleteTopic(id: ID!): Boolean!
+
+  createLevel(input: CreateLevelInput!): Level!
+  updateLevel(id: ID!, input: UpdateLevelInput!): Level!
+  deleteLevel(id: ID!): Boolean!
+
+  createTag(input: CreateTagInput!): Tag!
+  updateTag(id: ID!, input: UpdateTagInput!): Tag!
+  deleteTag(id: ID!): Boolean!
 }
 
 type Lesson {
@@ -16,6 +40,55 @@ type Lesson {
   version: Int!
   createdAt: Time!
   updatedAt: Time!
+}
+
+type Topic {
+  id: ID!
+  slug: String!
+  name: String!
+  createdAt: Time!
+}
+
+input CreateTopicInput {
+  slug: String!
+  name: String!
+}
+
+input UpdateTopicInput {
+  slug: String
+  name: String
+}
+
+type Level {
+  id: ID!
+  code: String!
+  name: String!
+}
+
+input CreateLevelInput {
+  code: String!
+  name: String!
+}
+
+input UpdateLevelInput {
+  code: String
+  name: String
+}
+
+type Tag {
+  id: ID!
+  slug: String!
+  name: String!
+}
+
+input CreateTagInput {
+  slug: String!
+  name: String!
+}
+
+input UpdateTagInput {
+  slug: String
+  name: String
 }
 
 scalar Time
