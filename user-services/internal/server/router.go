@@ -38,17 +38,20 @@ func NewRouter(deps Deps) *gin.Engine {
 	authService := services.NewAuthService(userRepo, userProfileRepo, auditLogRepo, outboxRepo, sessionRepo, refreshTokenRepo, mfaRepo, loginAttemptRepo)
 	profileService := services.NewUserProfileService(userProfileRepo)
 	passwordService := services.NewPasswordService(userRepo, passwordResetRepo, auditLogRepo, outboxRepo, userProfileRepo)
+	sessionService := services.NewSessionService(sessionRepo)
 
 	// Initialize controllers
 	authCtrl := controllers.NewAuthController(authService)
 	profileCtrl := controllers.NewProfileController(profileService)
 	passwordCtrl := controllers.NewPasswordController(passwordService)
+	sessionCtrl := controllers.NewSessionController(sessionService)
 
 	api := r.Group("/api/v1")
 	{
 		routers.RegisterAuthRoutes(api, *authCtrl)
 		routers.RegisterProfileRoutes(api, profileCtrl)
 		routers.RegisterPasswordRoutes(api, passwordCtrl)
+		routers.RegisterSessionRoutes(api, sessionCtrl)
 	}
 
 	return r
