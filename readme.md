@@ -38,6 +38,14 @@ This backend is designed for an English learning application using a **microserv
 - **Features:**
   - Sends email with html template
   - Tracks email 
+  - Integrations: SMTP or SendGrid/Mailgun
+
+- **Purpose:** Keeps users engaged & informed.
+
+### 5. Aggregator service
+- **Purpose:** The Aggregator Service (also called API Composition Layer / Backend-for-Frontend) is responsible for combining data from multiple domain services (User, Lesson, Progress, Content) into a single API response. Instead of the client making multiple calls, the aggregator merges responses and optimizes communication.
+
+
 ---
 
 ## Infrastructure Stack
@@ -53,6 +61,22 @@ This backend is designed for an English learning application using a **microserv
 
 - **RabbitMQ:**  
   Message broker for inter-service communication. Used to send events like `UserCreated` and `LessonCompleted` to Progress and Notification Services.
+
+---
+
+## API Gateway & Service Discovery
+
+**API Gateway** (Traefik):
+
+- Acts as a single entry point for all client requests
+- Handles routing and load balancing across services
+- Performs JWT verification and rate limiting
+- Terminates TLS/SSL connections
+
+**Service Discovery:**
+
+- Uses Kubernetes Services or Consul for dynamic service registration and discovery
+- Automatically registers and deregisters services to support scaling and resilience
 
 ---
 
@@ -87,6 +111,19 @@ This backend is designed for an English learning application using a **microserv
 
 ---
 
+## Position in Architecture
+```
+  Client (Web/Mobile)
+          ↓
+  API Gateway (Traefik: auth, routing, TLS, rate limiting)
+          ↓
+  Aggregator Service (Golang REST/GraphQL)
+          ↓
+  Core Microservices (User, Lesson, Progress, Content, Notification)
+```
+- Gateway → Security & infrastructure (auth, SSL, routing).
+- Aggregator → Business composition (merging User + Lesson + Progress data).
+- Domain services → Independent, focused on their own data and logic.
 ## Getting Started
 
 To run the stack:
