@@ -17,7 +17,7 @@ import (
 )
 
 type AuthService struct {
-	UserRepo         *repositories.UserRepository
+	UserRepo         repositories.UserRepository
 	UserProfileRepo  repositories.UserProfileRepository
 	AuditLogRepo     repositories.AuditLogRepository
 	OutboxRepo       repositories.OutboxRepository
@@ -29,7 +29,7 @@ type AuthService struct {
 
 // NewAuthService creates a new auth service instance
 func NewAuthService(
-	userRepo *repositories.UserRepository,
+	userRepo repositories.UserRepository,
 	userProfileRepo repositories.UserProfileRepository,
 	auditLogRepo repositories.AuditLogRepository,
 	outboxRepo repositories.OutboxRepository,

@@ -24,6 +24,7 @@ type UserProfile struct {
 	AvatarURL   string `json:"avatar_url,omitempty"`
 	Locale      string `json:"locale"`
 	TimeZone    string `json:"time_zone"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // UpdateProfileRequest updates user profile

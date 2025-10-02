@@ -10,17 +10,30 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRepository struct {
+type UserRepository interface {
+	CreateUser(ctx context.Context, email, passwordHash string) (models.User, error)
+	CheckEmailExists(ctx context.Context, email string) (bool, error)
+	GetUserByEmail(ctx context.Context, email string) (models.User, error)
+	GetByEmail(ctx context.Context, email string) (*models.User, error)
+	GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error)
+	GetUserByID(ctx context.Context, userID string) (models.User, error)
+	UpdateUser(ctx context.Context, user *models.User) error
+	UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error
+	GetByVerificationToken(ctx context.Context, tokenHash string) (*models.User, error)
+	DeleteUser(ctx context.Context, userID string) error
+}
+
+type userRepository struct {
 	DB *gorm.DB
 }
 
 // NewUserRepository creates a new user repository instance
-func NewUserRepository(db *gorm.DB) *UserRepository {
-	return &UserRepository{DB: db}
+func NewUserRepository(db *gorm.DB) UserRepository {
+	return &userRepository{DB: db}
 }
 
 // CreateUser inserts a new user with unique email
-func (r *UserRepository) CreateUser(ctx context.Context, email, passwordHash string) (models.User, error) {
+func (r *userRepository) CreateUser(ctx context.Context, email, passwordHash string) (models.User, error) {
 	user := models.User{
 		Email:           email,
 		EmailNormalized: email,
@@ -36,7 +49,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, email, passwordHash str
 }
 
 // CheckEmailExists checks if email already exists
-func (r *UserRepository) CheckEmailExists(ctx context.Context, email string) (bool, error) {
+func (r *userRepository) CheckEmailExists(ctx context.Context, email string) (bool, error) {
 	var count int64
 	err := r.DB.WithContext(ctx).Model(&models.User{}).Where("email = ?", email).Count(&count).Error
 	if err != nil {
@@ -46,7 +59,7 @@ func (r *UserRepository) CheckEmailExists(ctx context.Context, email string) (bo
 }
 
 // GetUserByEmail retrieves a user by their email address
-func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
+func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
 	var user models.User
 	err := r.DB.WithContext(ctx).Preload("Profile").First(&user, "email = ?", email).Error
 	if err != nil {
@@ -59,7 +72,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (mode
 }
 
 // GetByEmail retrieves a user by email (alias for auth service)
-func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
+func (r *userRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
 	err := r.DB.WithContext(ctx).Preload("Profile").Where("email = ?", email).First(&user).Error
 	if err != nil {
@@ -69,7 +82,7 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*models.
 }
 
 // GetByID retrieves a user by UUID
-func (r *UserRepository) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
+func (r *userRepository) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
 	var user models.User
 	err := r.DB.WithContext(ctx).Preload("Profile").Where("id = ?", userID).First(&user).Error
 	if err != nil {
@@ -79,7 +92,7 @@ func (r *UserRepository) GetByID(ctx context.Context, userID uuid.UUID) (*models
 }
 
 // GetUserByID retrieves a user by their ID (string version)
-func (r *UserRepository) GetUserByID(ctx context.Context, userID string) (models.User, error) {
+func (r *userRepository) GetUserByID(ctx context.Context, userID string) (models.User, error) {
 	var user models.User
 	err := r.DB.WithContext(ctx).Where("id = ?", userID).First(&user).Preload("Profile").Error
 	if err != nil {
@@ -92,12 +105,12 @@ func (r *UserRepository) GetUserByID(ctx context.Context, userID string) (models
 }
 
 // UpdateUser updates user information
-func (r *UserRepository) UpdateUser(ctx context.Context, user *models.User) error {
+func (r *userRepository) UpdateUser(ctx context.Context, user *models.User) error {
 	return r.DB.WithContext(ctx).Save(user).Error
 }
 
 // UpdatePassword updates user's password hash
-func (r *UserRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error {
+func (r *userRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error {
 	return r.DB.WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", userID).
@@ -105,7 +118,7 @@ func (r *UserRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, p
 }
 
 // GetByVerificationToken retrieves a user by their email verification token
-func (r *UserRepository) GetByVerificationToken(ctx context.Context, tokenHash string) (*models.User, error) {
+func (r *userRepository) GetByVerificationToken(ctx context.Context, tokenHash string) (*models.User, error) {
 	var user models.User
 	err := r.DB.WithContext(ctx).
 		Preload("Profile").
@@ -118,6 +131,6 @@ func (r *UserRepository) GetByVerificationToken(ctx context.Context, tokenHash s
 }
 
 // DeleteUser soft deletes a user
-func (r *UserRepository) DeleteUser(ctx context.Context, userID string) error {
+func (r *userRepository) DeleteUser(ctx context.Context, userID string) error {
 	return r.DB.WithContext(ctx).Where("id = ?", userID).Delete(&models.User{}).Error
 }

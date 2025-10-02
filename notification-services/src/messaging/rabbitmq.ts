@@ -4,6 +4,7 @@ import { logger } from '../logger';
 import { EmailService } from '../email/EmailService';
 import { buildPasswordResetEmailTemplate, buildUserRegistrationEmailTemplate, buildEmailVerificationTemplate } from '../email/templates';
 import { EmailPayload } from '../email/types';
+import { getString, getNumber } from '../utils/convert';
 
 let connection: ChannelModel | null = null;
 let channel: Channel | null = null;
@@ -139,6 +140,7 @@ function buildEmailFromUserEvent(
     throw new Error('User event payload is missing the email address');
   }
 
+  logger.info({ normalizedType }, 'normalizedType');
   switch (normalizedType) {
     case 'usercreated':
     case 'user.created':
@@ -197,34 +199,6 @@ function buildEmailFromUserEvent(
   }
 }
 
-function getString(payload: Record<string, unknown>, ...keys: string[]): string | undefined {
-  for (const key of keys) {
-    const value = payload[key];
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-      if (trimmed.length > 0) {
-        return trimmed;
-      }
-    }
-  }
-  return undefined;
-}
-
-function getNumber(payload: Record<string, unknown>, ...keys: string[]): number | undefined {
-  for (const key of keys) {
-    const value = payload[key];
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return value;
-    }
-    if (typeof value === 'string' && value.trim().length > 0) {
-      const parsed = Number(value);
-      if (Number.isFinite(parsed)) {
-        return parsed;
-      }
-    }
-  }
-  return undefined;
-}
 
 export async function publishEmailMessage(payload: EmailPayload) {
   if (!channel) throw new Error('RabbitMQ channel not initialized');

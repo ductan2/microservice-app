@@ -25,7 +25,7 @@ type PasswordService interface {
 }
 
 type passwordService struct {
-	userRepo          *repositories.UserRepository
+	userRepo          repositories.UserRepository
 	passwordResetRepo repositories.PasswordResetRepository
 	auditLogRepo      repositories.AuditLogRepository
 	outboxRepo        repositories.OutboxRepository
@@ -33,7 +33,7 @@ type passwordService struct {
 }
 
 func NewPasswordService(
-	userRepo *repositories.UserRepository,
+	userRepo repositories.UserRepository,
 	passwordResetRepo repositories.PasswordResetRepository,
 	auditLogRepo repositories.AuditLogRepository,
 	outboxRepo repositories.OutboxRepository,
