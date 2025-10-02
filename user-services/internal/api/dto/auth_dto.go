@@ -68,32 +68,6 @@ type VerifyEmailRequest struct {
 	Token string `json:"token" binding:"required"`
 }
 
-// MFASetupRequest initiates MFA setup
-type MFASetupRequest struct {
-	Type string `json:"type" binding:"required,oneof=totp webauthn"`
-}
-
-// MFASetupResponse returns setup details
-type MFASetupResponse struct {
-	ID      uuid.UUID `json:"id"`
-	Type    string    `json:"type"`
-	Secret  string    `json:"secret,omitempty"`  // for TOTP
-	QRCode  string    `json:"qr_code,omitempty"` // for TOTP
-	Options any       `json:"options,omitempty"` // for WebAuthn
-}
-
-// MFAVerifyRequest confirms MFA setup
-type MFAVerifyRequest struct {
-	ID   uuid.UUID `json:"id" binding:"required"`
-	Code string    `json:"code" binding:"required"`
-}
-
-// MFADisableRequest disables MFA
-type MFADisableRequest struct {
-	ID       uuid.UUID `json:"id" binding:"required"`
-	Password string    `json:"password" binding:"required"`
-}
-
 // SessionResponse represents active session
 type SessionResponse struct {
 	ID        uuid.UUID `json:"id"`

@@ -155,7 +155,7 @@ export function buildPasswordResetEmailTemplate(params: PasswordResetEmailParams
           </div>
           <div class="footer">
             <p>If the button doesn't work, copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #667eea;">${resetLink}</p>
+            <p style="word-break: break-all; color: #ffffff;">${resetLink}</p>
             <br>
             <p>Need help? Contact us at <a href="mailto:${supportEmail}">${supportEmail}</a></p>
             <p>&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</p>
