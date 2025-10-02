@@ -5,13 +5,16 @@ import (
 	"user-services/internal/api/repositories"
 	routers "user-services/internal/api/routes"
 	"user-services/internal/api/services"
+	"user-services/internal/cache"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type Deps struct {
-	DB *gorm.DB
+	DB          *gorm.DB
+	RedisClient *redis.Client
 }
 
 func NewRouter(deps Deps) *gin.Engine {
@@ -34,12 +37,15 @@ func NewRouter(deps Deps) *gin.Engine {
 	loginAttemptRepo := repositories.NewLoginAttemptRepository(deps.DB)
 	passwordResetRepo := repositories.NewPasswordResetRepository(deps.DB)
 
+	// Initialize Redis session cache
+	sessionCache := cache.NewSessionCache(deps.RedisClient)
+
 	// Initialize services
-	authService := services.NewAuthService(userRepo, userProfileRepo, auditLogRepo, outboxRepo, sessionRepo, refreshTokenRepo, mfaRepo, loginAttemptRepo)
+	authService := services.NewAuthService(userRepo, userProfileRepo, auditLogRepo, outboxRepo, sessionRepo, refreshTokenRepo, mfaRepo, loginAttemptRepo, sessionCache)
 	profileService := services.NewUserProfileService(userProfileRepo)
 	passwordService := services.NewPasswordService(userRepo, passwordResetRepo, auditLogRepo, outboxRepo, userProfileRepo)
 	mfaService := services.NewMFAService(mfaRepo, userRepo)
-	sessionService := services.NewSessionService(sessionRepo)
+	sessionService := services.NewSessionService(sessionRepo, sessionCache)
 
 	// Initialize controllers
 	authCtrl := controllers.NewAuthController(authService)
@@ -51,10 +57,10 @@ func NewRouter(deps Deps) *gin.Engine {
 	api := r.Group("/api/v1")
 	{
 		routers.RegisterAuthRoutes(api, *authCtrl)
-		routers.RegisterProfileRoutes(api, profileCtrl)
-		routers.RegisterPasswordRoutes(api, passwordCtrl)
-		routers.RegisterMFARoutes(api, mfaCtrl)
-		routers.RegisterSessionRoutes(api, sessionCtrl)
+		routers.RegisterProfileRoutes(api, profileCtrl, sessionCache)
+		routers.RegisterPasswordRoutes(api, passwordCtrl, sessionCache)
+		routers.RegisterMFARoutes(api, mfaCtrl, sessionCache)
+		routers.RegisterSessionRoutes(api, sessionCtrl, sessionCache)
 	}
 
 	return r

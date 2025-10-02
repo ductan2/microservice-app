@@ -3,13 +3,14 @@ package routes
 import (
 	"user-services/internal/api/controllers"
 	"user-services/internal/api/middleware"
+	"user-services/internal/cache"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterSessionRoutes(router *gin.RouterGroup, controller *controllers.SessionController) {
+func RegisterSessionRoutes(router *gin.RouterGroup, controller *controllers.SessionController, sessionCache *cache.SessionCache) {
 	sessions := router.Group("/sessions")
-	sessions.Use(middleware.AuthRequired())
+	sessions.Use(middleware.AuthRequired(sessionCache))
 	{
 		sessions.GET("", controller.GetActiveSessions)             // GET /sessions
 		sessions.DELETE("/:id", controller.RevokeSession)          // DELETE /sessions/:id

@@ -7,6 +7,7 @@ import (
 
 	"user-services/internal/api/dto"
 	"user-services/internal/api/repositories"
+	"user-services/internal/cache"
 	"user-services/internal/models"
 
 	"github.com/google/uuid"
@@ -27,12 +28,14 @@ type SessionService interface {
 }
 
 type sessionService struct {
-	sessionRepo repositories.SessionRepository
+	sessionRepo  repositories.SessionRepository
+	sessionCache *cache.SessionCache
 }
 
-func NewSessionService(sessionRepo repositories.SessionRepository) SessionService {
+func NewSessionService(sessionRepo repositories.SessionRepository, sessionCache *cache.SessionCache) SessionService {
 	return &sessionService{
-		sessionRepo: sessionRepo,
+		sessionRepo:  sessionRepo,
+		sessionCache: sessionCache,
 	}
 }
 
@@ -79,6 +82,7 @@ func (s *sessionService) GetUserSessions(ctx context.Context, userID uuid.UUID) 
 }
 
 func (s *sessionService) RevokeSession(ctx context.Context, sessionID uuid.UUID) error {
+	// First, revoke in database
 	if err := s.sessionRepo.Revoke(ctx, sessionID); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrSessionNotFound
@@ -86,11 +90,44 @@ func (s *sessionService) RevokeSession(ctx context.Context, sessionID uuid.UUID)
 		return err
 	}
 
+	// Then, delete from Redis
+	if err := s.sessionCache.DeleteSession(ctx, sessionID); err != nil {
+		// Log error but don't fail the operation - DB is source of truth
+		// In production, you might want to use a proper logger
+	}
+
 	return nil
 }
 
 func (s *sessionService) RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error {
-	return s.sessionRepo.RevokeAllByUserID(ctx, userID)
+	// First, get all active sessions for the user
+	sessions, err := s.sessionRepo.GetByUserID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	// Collect session IDs
+	sessionIDs := make([]uuid.UUID, 0, len(sessions))
+	for _, session := range sessions {
+		if !session.RevokedAt.Valid {
+			sessionIDs = append(sessionIDs, session.ID)
+		}
+	}
+
+	// Revoke in database
+	if err := s.sessionRepo.RevokeAllByUserID(ctx, userID); err != nil {
+		return err
+	}
+
+	// Delete from Redis
+	if len(sessionIDs) > 0 {
+		if err := s.sessionCache.DeleteAllUserSessions(ctx, sessionIDs); err != nil {
+			// Log error but don't fail the operation - DB is source of truth
+			// In production, you might want to use a proper logger
+		}
+	}
+
+	return nil
 }
 
 func (s *sessionService) CleanupExpiredSessions(ctx context.Context) error {

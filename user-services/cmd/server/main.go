@@ -10,6 +10,7 @@ import (
 
 	"user-services/internal/api/repositories"
 	"user-services/internal/api/services"
+	"user-services/internal/cache"
 	"user-services/internal/config"
 	"user-services/internal/db"
 	"user-services/internal/queue"
@@ -49,6 +50,18 @@ func main() {
 	if err := db.AutoMigrate(gormDB); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
+
+	// Connect to Redis
+	redisClient, err := cache.NewRedisClient(ctx)
+	if err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+	defer func() {
+		if err := redisClient.Close(); err != nil {
+			log.Printf("Error closing Redis: %v", err)
+		}
+	}()
+	log.Println("Redis connected successfully")
 
 	// Connect to RabbitMQ
 	rabbitConn, rabbitCh, err := queue.NewRabbitMQ(ctx)
@@ -97,7 +110,10 @@ func main() {
 	log.Println("Outbox processor started")
 
 	// Initialize router with dependencies
-	r := server.NewRouter(server.Deps{DB: gormDB})
+	r := server.NewRouter(server.Deps{
+		DB:          gormDB,
+		RedisClient: redisClient,
+	})
 
 	// Start server
 	addr := ":" + port

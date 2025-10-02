@@ -12,19 +12,21 @@ import (
 )
 
 type Claims struct {
-	UserID uuid.UUID `json:"user_id"`
-	Email  string    `json:"email"`
+	UserID    uuid.UUID `json:"user_id"`
+	Email     string    `json:"email"`
+	SessionID uuid.UUID `json:"session_id"`
 	jwt.RegisteredClaims
 }
 
-// GenerateJWT creates a signed JWT for the given user id and email.
-func GenerateJWT(userID uuid.UUID, email string) (string, error) {
+// GenerateJWT creates a signed JWT for the given user id, email, and session id.
+func GenerateJWT(userID uuid.UUID, email string, sessionID uuid.UUID) (string, error) {
 	cfg := config.GetJWTConfig()
 
 	now := time.Now()
 	claims := Claims{
-		UserID: userID,
-		Email:  email,
+		UserID:    userID,
+		Email:     email,
+		SessionID: sessionID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(cfg.ExpiresIn)),

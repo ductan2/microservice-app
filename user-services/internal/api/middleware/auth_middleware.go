@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"user-services/internal/cache"
 	"user-services/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -12,10 +13,11 @@ import (
 const (
 	contextUserIDKey    = "userID"
 	contextUserEmailKey = "userEmail"
+	contextSessionIDKey = "sessionID"
 )
 
-// AuthRequired ensures requests include a valid Bearer access token.
-func AuthRequired() gin.HandlerFunc {
+// AuthRequired ensures requests include a valid Bearer access token and validates session in Redis.
+func AuthRequired(sessionCache *cache.SessionCache) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -38,8 +40,24 @@ func AuthRequired() gin.HandlerFunc {
 			return
 		}
 
+		// Check if session exists in Redis
+		sessionData, err := sessionCache.GetSession(c.Request.Context(), claims.SessionID)
+		if err != nil {
+			utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "session not found or expired")
+			c.Abort()
+			return
+		}
+
+		// Additional validation: ensure userID in session matches JWT claims
+		if sessionData.UserID != claims.UserID {
+			utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "session user mismatch")
+			c.Abort()
+			return
+		}
+
 		c.Set(contextUserIDKey, claims.UserID)
 		c.Set(contextUserEmailKey, claims.Email)
+		c.Set(contextSessionIDKey, claims.SessionID)
 
 		c.Next()
 	}
@@ -53,4 +71,9 @@ func ContextUserIDKey() string {
 // ContextUserEmailKey exposes the context key used to store the authenticated user email.
 func ContextUserEmailKey() string {
 	return contextUserEmailKey
+}
+
+// ContextSessionIDKey exposes the context key used to store the authenticated session ID.
+func ContextSessionIDKey() string {
+	return contextSessionIDKey
 }

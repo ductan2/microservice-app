@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"user-services/internal/api/repositories"
+	"user-services/internal/cache"
 	"user-services/internal/config"
 	"user-services/internal/models"
 	"user-services/internal/utils"
@@ -25,6 +26,7 @@ type AuthService struct {
 	RefreshTokenRepo repositories.RefreshTokenRepository
 	MFARepo          repositories.MFARepository
 	LoginAttemptRepo repositories.LoginAttemptRepository
+	SessionCache     *cache.SessionCache
 }
 
 // NewAuthService creates a new auth service instance
@@ -37,6 +39,7 @@ func NewAuthService(
 	refreshTokenRepo repositories.RefreshTokenRepository,
 	mfaRepo repositories.MFARepository,
 	loginAttemptRepo repositories.LoginAttemptRepository,
+	sessionCache *cache.SessionCache,
 ) *AuthService {
 	return &AuthService{
 		UserRepo:         userRepo,
@@ -47,6 +50,7 @@ func NewAuthService(
 		RefreshTokenRepo: refreshTokenRepo,
 		MFARepo:          mfaRepo,
 		LoginAttemptRepo: loginAttemptRepo,
+		SessionCache:     sessionCache,
 	}
 }
 
@@ -187,7 +191,7 @@ func (s *AuthService) Login(ctx context.Context, email, password, mfaCode, userA
 		_ = s.logLoginAttempt(ctx, nil, email, ipAddr, false, "invalid_credentials")
 		return AuthResult{}, errors.New("invalid email or password")
 	}
-	if user.EmailVerified == false {
+	if !user.EmailVerified {
 		return AuthResult{}, errors.New("email not verified")
 	}
 
@@ -219,8 +223,23 @@ func (s *AuthService) Login(ctx context.Context, email, password, mfaCode, userA
 		return AuthResult{}, err
 	}
 
+	// 4.1) Store session in Redis with TTL matching JWT expiration
+	jwtConfig := config.GetJWTConfig()
+	sessionData := cache.SessionData{
+		UserID:    user.ID,
+		Email:     user.Email,
+		UserAgent: userAgent,
+		IPAddr:    ipAddr,
+		CreatedAt: session.CreatedAt,
+	}
+	if err := s.SessionCache.StoreSession(ctx, session.ID, sessionData, jwtConfig.ExpiresIn); err != nil {
+		// Log error but don't fail login - session still exists in DB
+		// In production, you might want to use a proper logger
+		fmt.Printf("Warning: failed to store session in Redis: %v\n", err)
+	}
+
 	// 5) Issue tokens: access JWT and refresh token
-	accessToken, err := utils.GenerateJWT(user.ID, user.Email)
+	accessToken, err := utils.GenerateJWT(user.ID, user.Email, session.ID)
 	if err != nil {
 		return AuthResult{}, err
 	}
