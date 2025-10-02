@@ -7,11 +7,119 @@ package resolver
 import (
 	"content-services/graph/generated"
 	"content-services/graph/model"
+	"content-services/internal/taxonomy"
 	"context"
+	"errors"
 	"time"
 
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.mongodb.org/mongo-driver/bson"
 )
+
+// CreateTopic is the resolver for the createTopic field.
+func (r *mutationResolver) CreateTopic(ctx context.Context, input model.CreateTopicInput) (*model.Topic, error) {
+	if r.Taxonomy == nil {
+		return nil, gqlerror.Errorf("taxonomy store not configured")
+	}
+	topic, err := r.Taxonomy.CreateTopic(ctx, input.Slug, input.Name)
+	if err != nil {
+		return nil, mapTaxonomyError("topic", err)
+	}
+	return mapTopic(topic), nil
+}
+
+// UpdateTopic is the resolver for the updateTopic field.
+func (r *mutationResolver) UpdateTopic(ctx context.Context, id string, input model.UpdateTopicInput) (*model.Topic, error) {
+	if r.Taxonomy == nil {
+		return nil, gqlerror.Errorf("taxonomy store not configured")
+	}
+	topic, err := r.Taxonomy.UpdateTopic(ctx, id, input.Slug, input.Name)
+	if err != nil {
+		return nil, mapTaxonomyError("topic", err)
+	}
+	return mapTopic(topic), nil
+}
+
+// DeleteTopic is the resolver for the deleteTopic field.
+func (r *mutationResolver) DeleteTopic(ctx context.Context, id string) (bool, error) {
+	if r.Taxonomy == nil {
+		return false, gqlerror.Errorf("taxonomy store not configured")
+	}
+	if err := r.Taxonomy.DeleteTopic(ctx, id); err != nil {
+		return false, mapTaxonomyError("topic", err)
+	}
+	return true, nil
+}
+
+// CreateLevel is the resolver for the createLevel field.
+func (r *mutationResolver) CreateLevel(ctx context.Context, input model.CreateLevelInput) (*model.Level, error) {
+	if r.Taxonomy == nil {
+		return nil, gqlerror.Errorf("taxonomy store not configured")
+	}
+	level, err := r.Taxonomy.CreateLevel(ctx, input.Code, input.Name)
+	if err != nil {
+		return nil, mapTaxonomyError("level", err)
+	}
+	return mapLevel(level), nil
+}
+
+// UpdateLevel is the resolver for the updateLevel field.
+func (r *mutationResolver) UpdateLevel(ctx context.Context, id string, input model.UpdateLevelInput) (*model.Level, error) {
+	if r.Taxonomy == nil {
+		return nil, gqlerror.Errorf("taxonomy store not configured")
+	}
+	level, err := r.Taxonomy.UpdateLevel(ctx, id, input.Code, input.Name)
+	if err != nil {
+		return nil, mapTaxonomyError("level", err)
+	}
+	return mapLevel(level), nil
+}
+
+// DeleteLevel is the resolver for the deleteLevel field.
+func (r *mutationResolver) DeleteLevel(ctx context.Context, id string) (bool, error) {
+	if r.Taxonomy == nil {
+		return false, gqlerror.Errorf("taxonomy store not configured")
+	}
+	if err := r.Taxonomy.DeleteLevel(ctx, id); err != nil {
+		return false, mapTaxonomyError("level", err)
+	}
+	return true, nil
+}
+
+// CreateTag is the resolver for the createTag field.
+func (r *mutationResolver) CreateTag(ctx context.Context, input model.CreateTagInput) (*model.Tag, error) {
+	if r.Taxonomy == nil {
+		return nil, gqlerror.Errorf("taxonomy store not configured")
+	}
+	tag, err := r.Taxonomy.CreateTag(ctx, input.Slug, input.Name)
+	if err != nil {
+		return nil, mapTaxonomyError("tag", err)
+	}
+	return mapTag(tag), nil
+}
+
+// UpdateTag is the resolver for the updateTag field.
+func (r *mutationResolver) UpdateTag(ctx context.Context, id string, input model.UpdateTagInput) (*model.Tag, error) {
+	if r.Taxonomy == nil {
+		return nil, gqlerror.Errorf("taxonomy store not configured")
+	}
+	tag, err := r.Taxonomy.UpdateTag(ctx, id, input.Slug, input.Name)
+	if err != nil {
+		return nil, mapTaxonomyError("tag", err)
+	}
+	return mapTag(tag), nil
+}
+
+// DeleteTag is the resolver for the deleteTag field.
+func (r *mutationResolver) DeleteTag(ctx context.Context, id string) (bool, error) {
+	if r.Taxonomy == nil {
+		return false, gqlerror.Errorf("taxonomy store not configured")
+	}
+	if err := r.Taxonomy.DeleteTag(ctx, id); err != nil {
+		return false, mapTaxonomyError("tag", err)
+	}
+	return true, nil
+}
 
 // Health is the resolver for the health field.
 func (r *queryResolver) Health(ctx context.Context) (string, error) {
@@ -50,7 +158,188 @@ func (r *queryResolver) LessonByCode(ctx context.Context, code string) (*model.L
 	}, nil
 }
 
+// Topic is the resolver for the topic field.
+func (r *queryResolver) Topic(ctx context.Context, id *string, slug *string) (*model.Topic, error) {
+	if r.Taxonomy == nil {
+		return nil, gqlerror.Errorf("taxonomy store not configured")
+	}
+	if id == nil && slug == nil {
+		return nil, nil
+	}
+	var (
+		topic *taxonomy.Topic
+		err   error
+	)
+	switch {
+	case id != nil:
+		topic, err = r.Taxonomy.GetTopicByID(ctx, *id)
+	case slug != nil:
+		topic, err = r.Taxonomy.GetTopicBySlug(ctx, *slug)
+	}
+	if err != nil {
+		if errors.Is(err, taxonomy.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return mapTopic(topic), nil
+}
+
+// Topics is the resolver for the topics field.
+func (r *queryResolver) Topics(ctx context.Context) ([]*model.Topic, error) {
+	if r.Taxonomy == nil {
+		return nil, gqlerror.Errorf("taxonomy store not configured")
+	}
+	topics, err := r.Taxonomy.ListTopics(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*model.Topic, 0, len(topics))
+	for _, topic := range topics {
+		result = append(result, mapTopic(&topic))
+	}
+	return result, nil
+}
+
+// Level is the resolver for the level field.
+func (r *queryResolver) Level(ctx context.Context, id *string, code *string) (*model.Level, error) {
+	if r.Taxonomy == nil {
+		return nil, gqlerror.Errorf("taxonomy store not configured")
+	}
+	if id == nil && code == nil {
+		return nil, nil
+	}
+	var (
+		level *taxonomy.Level
+		err   error
+	)
+	switch {
+	case id != nil:
+		level, err = r.Taxonomy.GetLevelByID(ctx, *id)
+	case code != nil:
+		level, err = r.Taxonomy.GetLevelByCode(ctx, *code)
+	}
+	if err != nil {
+		if errors.Is(err, taxonomy.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return mapLevel(level), nil
+}
+
+// Levels is the resolver for the levels field.
+func (r *queryResolver) Levels(ctx context.Context) ([]*model.Level, error) {
+	if r.Taxonomy == nil {
+		return nil, gqlerror.Errorf("taxonomy store not configured")
+	}
+	levels, err := r.Taxonomy.ListLevels(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*model.Level, 0, len(levels))
+	for _, level := range levels {
+		result = append(result, mapLevel(&level))
+	}
+	return result, nil
+}
+
+// Tag is the resolver for the tag field.
+func (r *queryResolver) Tag(ctx context.Context, id *string, slug *string) (*model.Tag, error) {
+	if r.Taxonomy == nil {
+		return nil, gqlerror.Errorf("taxonomy store not configured")
+	}
+	if id == nil && slug == nil {
+		return nil, nil
+	}
+	var (
+		tag *taxonomy.Tag
+		err error
+	)
+	switch {
+	case id != nil:
+		tag, err = r.Taxonomy.GetTagByID(ctx, *id)
+	case slug != nil:
+		tag, err = r.Taxonomy.GetTagBySlug(ctx, *slug)
+	}
+	if err != nil {
+		if errors.Is(err, taxonomy.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return mapTag(tag), nil
+}
+
+// Tags is the resolver for the tags field.
+func (r *queryResolver) Tags(ctx context.Context) ([]*model.Tag, error) {
+	if r.Taxonomy == nil {
+		return nil, gqlerror.Errorf("taxonomy store not configured")
+	}
+	tags, err := r.Taxonomy.ListTags(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*model.Tag, 0, len(tags))
+	for _, tag := range tags {
+		result = append(result, mapTag(&tag))
+	}
+	return result, nil
+}
+
+// Mutation returns generated.MutationResolver implementation.
+func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+func mapTaxonomyError(resource string, err error) error {
+	if err == nil {
+		return nil
+	}
+	switch {
+	case errors.Is(err, taxonomy.ErrDuplicate):
+		return gqlerror.Errorf("%s already exists", resource)
+	case errors.Is(err, taxonomy.ErrNotFound):
+		return gqlerror.Errorf("%s not found", resource)
+	default:
+		return err
+	}
+}
+
+func mapTopic(topic *taxonomy.Topic) *model.Topic {
+	if topic == nil {
+		return nil
+	}
+	return &model.Topic{
+		ID:        topic.ID,
+		Slug:      topic.Slug,
+		Name:      topic.Name,
+		CreatedAt: topic.CreatedAt,
+	}
+}
+
+func mapLevel(level *taxonomy.Level) *model.Level {
+	if level == nil {
+		return nil
+	}
+	return &model.Level{
+		ID:   level.ID,
+		Code: level.Code,
+		Name: level.Name,
+	}
+}
+
+func mapTag(tag *taxonomy.Tag) *model.Tag {
+	if tag == nil {
+		return nil
+	}
+	return &model.Tag{
+		ID:   tag.ID,
+		Slug: tag.Slug,
+		Name: tag.Name,
+	}
+}
