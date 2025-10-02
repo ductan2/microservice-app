@@ -32,6 +32,12 @@ This backend is designed for an English learning application using a **microserv
   - Emits events when a user completes a lesson
 - **Purpose:** Maintains user learning state and supports gamification.
 
+
+### 4. Notification Service
+
+- **Features:**
+  - Sends email with html template
+  - Tracks email 
 ---
 
 ## Infrastructure Stack

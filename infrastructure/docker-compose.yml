@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # =====================
   # Database & Queue
@@ -122,6 +120,10 @@ services:
       dockerfile: Dockerfile
     container_name: user-services
     restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.user.rule=PathPrefix(`/api/user`)"
+      - "traefik.http.services.user.loadbalancer.server.port=8001"
     ports:
       - "${USER_SERVICES_PORT:-8001}:8001"
     environment:
@@ -151,8 +153,19 @@ services:
       dockerfile: Dockerfile
     container_name: lesson-services
     restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.lesson.rule=PathPrefix(`/api/lesson`)"
+      - "traefik.http.services.lesson.loadbalancer.server.port=8000"
+      # Middleware JWT ForwardAuth
+      - "traefik.http.middlewares.jwt-auth.forwardauth.address=http://user-services:8001/api/v1/profile/check-auth"
+      - "traefik.http.middlewares.jwt-auth.forwardauth.authResponseHeaders=X-User-ID,X-User-Email,X-Session-ID"
+      - "traefik.http.middlewares.jwt-auth.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.lesson-stripprefix.stripprefix.prefixes=/api/lesson"
+      - "traefik.http.routers.lesson.middlewares=jwt-auth@docker,lesson-stripprefix@docker"
+
     ports:
-      - "${LESSON_SERVICES_PORT:-8002}:8002"
+      - "${LESSON_SERVICES_PORT:-8005}:8000"
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -173,6 +186,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      user-services:
+        condition: service_started
 
   content-services:
     build:
@@ -180,6 +195,10 @@ services:
       dockerfile: Dockerfile
     container_name: content-services
     restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.content.rule=PathPrefix(`/api/content`)"
+      - "traefik.http.services.content.loadbalancer.server.port=8003"
     ports:
       - "${CONTENT_SERVICES_PORT:-8003}:8003"
     environment:
@@ -209,6 +228,10 @@ services:
       dockerfile: Dockerfile
     container_name: notification-services
     restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.notification.rule=PathPrefix(`/api/notification`)"
+      - "traefik.http.services.notification.loadbalancer.server.port=8004"
     ports:
       - "${NOTIFICATION_SERVICES_PORT:-8004}:8004"
     environment:
@@ -220,6 +243,24 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+    
+
+  traefik:
+    image: traefik:v3.5.3
+    container_name: traefik
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--log.level=INFO"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - user-services
   
   # =====================
   # Monitoring Stack

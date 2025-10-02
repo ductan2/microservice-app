@@ -12,6 +12,7 @@ func RegisterProfileRoutes(router *gin.RouterGroup, controller *controllers.Prof
 	profile := router.Group("/profile")
 	profile.Use(middleware.AuthRequired(sessionCache))
 	{
+		profile.GET("/check-auth", controller.CheckAuth)
 		profile.GET("", controller.GetProfile)    // GET /profile
 		profile.PUT("", controller.UpdateProfile) // PUT /profile
 	}
