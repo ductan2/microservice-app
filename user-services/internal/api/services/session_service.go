@@ -2,10 +2,20 @@ package services
 
 import (
 	"context"
+	"errors"
+	"time"
+
 	"user-services/internal/api/dto"
 	"user-services/internal/api/repositories"
+	"user-services/internal/models"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
+var (
+	ErrSessionNotFound   = errors.New("session not found")
+	defaultSessionExpiry = 30 * 24 * time.Hour
 )
 
 type SessionService interface {
@@ -27,26 +37,73 @@ func NewSessionService(sessionRepo repositories.SessionRepository) SessionServic
 }
 
 func (s *sessionService) CreateSession(ctx context.Context, userID uuid.UUID, userAgent, ipAddr string) (*dto.SessionResponse, error) {
-	// TODO: implement
-	return nil, nil
+	now := time.Now()
+	session := &models.Session{
+		UserID:    userID,
+		UserAgent: userAgent,
+		IPAddr:    ipAddr,
+		CreatedAt: now,
+		ExpiresAt: now.Add(defaultSessionExpiry),
+	}
+
+	if err := s.sessionRepo.Create(ctx, session); err != nil {
+		return nil, err
+	}
+
+	response := modelToSessionDTO(*session)
+	response.IsCurrent = true
+
+	return &response, nil
 }
 
 func (s *sessionService) GetUserSessions(ctx context.Context, userID uuid.UUID) ([]dto.SessionResponse, error) {
-	// TODO: implement
-	return nil, nil
+	sessions, err := s.sessionRepo.GetByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	responses := make([]dto.SessionResponse, 0, len(sessions))
+	for _, session := range sessions {
+		if session.RevokedAt.Valid {
+			continue
+		}
+		if session.ExpiresAt.Before(now) {
+			continue
+		}
+
+		responses = append(responses, modelToSessionDTO(session))
+	}
+
+	return responses, nil
 }
 
 func (s *sessionService) RevokeSession(ctx context.Context, sessionID uuid.UUID) error {
-	// TODO: implement
+	if err := s.sessionRepo.Revoke(ctx, sessionID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrSessionNotFound
+		}
+		return err
+	}
+
 	return nil
 }
 
 func (s *sessionService) RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error {
-	// TODO: implement
-	return nil
+	return s.sessionRepo.RevokeAllByUserID(ctx, userID)
 }
 
 func (s *sessionService) CleanupExpiredSessions(ctx context.Context) error {
-	// TODO: implement
-	return nil
+	return s.sessionRepo.DeleteExpired(ctx)
+}
+
+func modelToSessionDTO(session models.Session) dto.SessionResponse {
+	return dto.SessionResponse{
+		ID:        session.ID,
+		UserAgent: session.UserAgent,
+		IPAddr:    session.IPAddr,
+		CreatedAt: session.CreatedAt,
+		ExpiresAt: session.ExpiresAt,
+		IsCurrent: false,
+	}
 }

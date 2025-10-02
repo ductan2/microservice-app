@@ -30,26 +30,49 @@ func (r *sessionRepository) Create(ctx context.Context, session *models.Session)
 }
 
 func (r *sessionRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Session, error) {
-	// TODO: implement
-	return nil, nil
+	var session models.Session
+	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&session).Error; err != nil {
+		return nil, err
+	}
+	return &session, nil
 }
 
 func (r *sessionRepository) GetByUserID(ctx context.Context, userID uuid.UUID) ([]models.Session, error) {
-	// TODO: implement
-	return nil, nil
+	var sessions []models.Session
+	if err := r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		Order("created_at DESC").
+		Find(&sessions).Error; err != nil {
+		return nil, err
+	}
+	return sessions, nil
 }
 
 func (r *sessionRepository) Revoke(ctx context.Context, id uuid.UUID) error {
-	// TODO: implement
+	result := r.db.WithContext(ctx).
+		Model(&models.Session{}).
+		Where("id = ? AND revoked_at IS NULL", id).
+		Update("revoked_at", gorm.Expr("now()"))
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
 	return nil
 }
 
 func (r *sessionRepository) RevokeAllByUserID(ctx context.Context, userID uuid.UUID) error {
-	// TODO: implement
-	return nil
+	return r.db.WithContext(ctx).
+		Model(&models.Session{}).
+		Where("user_id = ? AND revoked_at IS NULL", userID).
+		Update("revoked_at", gorm.Expr("now()")).
+		Error
 }
 
 func (r *sessionRepository) DeleteExpired(ctx context.Context) error {
-	// TODO: implement
-	return nil
+	return r.db.WithContext(ctx).
+		Where("expires_at < now()").
+		Delete(&models.Session{}).
+		Error
 }
