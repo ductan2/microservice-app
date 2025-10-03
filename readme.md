@@ -42,7 +42,7 @@ This backend is designed for an English learning application using a **microserv
 
 - **Purpose:** Keeps users engaged & informed.
 
-### 5. Aggregator service
+### 5. BFF service
 - **Purpose:** The Aggregator Service (also called API Composition Layer / Backend-for-Frontend) is responsible for combining data from multiple domain services (User, Lesson, Progress, Content) into a single API response. Instead of the client making multiple calls, the aggregator merges responses and optimizes communication.
 
 
