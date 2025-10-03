@@ -8,6 +8,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 // Topic is the resolver for the topic field.
@@ -70,6 +71,25 @@ func (r *lessonResolver) Level(ctx context.Context, obj *model.Lesson) (*model.L
 	}
 
 	return mapLevel(level), nil
+}
+
+// Sections is the resolver for the sections field.
+func (r *lessonResolver) Sections(ctx context.Context, obj *model.Lesson) ([]*model.LessonSection, error) {
+	if r.LessonService == nil {
+		return nil, gqlerror.Errorf("lesson service not configured")
+	}
+
+	lessonID, err := uuid.Parse(obj.ID)
+	if err != nil {
+		return nil, gqlerror.Errorf("invalid lesson ID: %v", err)
+	}
+
+	sections, err := r.LessonService.GetLessonSections(ctx, lessonID)
+	if err != nil {
+		return nil, mapLessonSectionError(err)
+	}
+
+	return mapLessonSections(sections), nil
 }
 
 // Lesson returns generated.LessonResolver implementation.

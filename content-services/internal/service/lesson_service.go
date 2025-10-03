@@ -111,10 +111,18 @@ func (s *lessonService) UpdateLesson(ctx context.Context, id uuid.UUID, updates 
 		existing.Description = updates.Description
 	}
 	if updates.TopicID != nil {
-		existing.TopicID = updates.TopicID
+		if *updates.TopicID == uuid.Nil {
+			existing.TopicID = nil
+		} else {
+			existing.TopicID = updates.TopicID
+		}
 	}
 	if updates.LevelID != nil {
-		existing.LevelID = updates.LevelID
+		if *updates.LevelID == uuid.Nil {
+			existing.LevelID = nil
+		} else {
+			existing.LevelID = updates.LevelID
+		}
 	}
 
 	existing.UpdatedAt = time.Now().UTC()
