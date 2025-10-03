@@ -39,3 +39,22 @@ func (r *quizResolver) Questions(ctx context.Context, obj *model.Quiz) ([]*model
 
 	return result, nil
 }
+
+// Tags is the resolver for the tags field.
+func (r *quizResolver) Tags(ctx context.Context, obj *model.Quiz) ([]*model.Tag, error) {
+	if r.TagRepo == nil {
+		return []*model.Tag{}, nil
+	}
+
+	quizID, err := uuid.Parse(obj.ID)
+	if err != nil {
+		return nil, gqlerror.Errorf("invalid quiz ID: %v", err)
+	}
+
+	tags, err := r.TagRepo.GetContentTags(ctx, "quiz", quizID)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapRepositoryTags(tags), nil
+}

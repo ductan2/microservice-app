@@ -32,3 +32,22 @@ func (r *flashcardSetResolver) Cards(ctx context.Context, obj *model.FlashcardSe
 func (r *Resolver) FlashcardSet() generated.FlashcardSetResolver { return &flashcardSetResolver{r} }
 
 type flashcardSetResolver struct{ *Resolver }
+
+// Tags is the resolver for the tags field.
+func (r *flashcardSetResolver) Tags(ctx context.Context, obj *model.FlashcardSet) ([]*model.Tag, error) {
+	if r.TagRepo == nil {
+		return []*model.Tag{}, nil
+	}
+
+	setID, err := uuid.Parse(obj.ID)
+	if err != nil {
+		return nil, gqlerror.Errorf("invalid flashcard set id")
+	}
+
+	tags, err := r.TagRepo.GetContentTags(ctx, "flashcard_set", setID)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapRepositoryTags(tags), nil
+}
