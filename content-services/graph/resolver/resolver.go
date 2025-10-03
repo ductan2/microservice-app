@@ -1,6 +1,7 @@
 package resolver
 
 import (
+	"content-services/internal/service"
 	"content-services/internal/taxonomy"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -10,4 +11,5 @@ import (
 type Resolver struct {
 	DB       *mongo.Database
 	Taxonomy *taxonomy.Store
+	Media    service.MediaService
 }

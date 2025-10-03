@@ -14,3 +14,11 @@ resolver:
   layout: follow-schema
   dir: graph/resolver
   package: resolver
+
+models:
+  Time:
+    model:
+      - time.Time
+  Upload:
+    model:
+      - github.com/99designs/gqlgen/graphql.Upload

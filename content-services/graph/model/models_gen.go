@@ -3,7 +3,13 @@
 package model
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"strconv"
 	"time"
+
+	"github.com/99designs/gqlgen/graphql"
 )
 
 type CreateLevelInput struct {
@@ -38,6 +44,19 @@ type Level struct {
 	Name string `json:"name"`
 }
 
+type MediaAsset struct {
+	ID          string    `json:"id"`
+	StorageKey  string    `json:"storageKey"`
+	Kind        MediaKind `json:"kind"`
+	MimeType    string    `json:"mimeType"`
+	Bytes       int       `json:"bytes"`
+	DurationMs  *int      `json:"durationMs,omitempty"`
+	Sha256      string    `json:"sha256"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UploadedBy  *string   `json:"uploadedBy,omitempty"`
+	DownloadURL string    `json:"downloadURL"`
+}
+
 type Mutation struct {
 }
 
@@ -70,4 +89,67 @@ type UpdateTagInput struct {
 type UpdateTopicInput struct {
 	Slug *string `json:"slug,omitempty"`
 	Name *string `json:"name,omitempty"`
+}
+
+type UploadMediaInput struct {
+	File       graphql.Upload `json:"file"`
+	Kind       MediaKind      `json:"kind"`
+	MimeType   string         `json:"mimeType"`
+	Filename   *string        `json:"filename,omitempty"`
+	UploadedBy *string        `json:"uploadedBy,omitempty"`
+}
+
+type MediaKind string
+
+const (
+	MediaKindImage MediaKind = "IMAGE"
+	MediaKindAudio MediaKind = "AUDIO"
+)
+
+var AllMediaKind = []MediaKind{
+	MediaKindImage,
+	MediaKindAudio,
+}
+
+func (e MediaKind) IsValid() bool {
+	switch e {
+	case MediaKindImage, MediaKindAudio:
+		return true
+	}
+	return false
+}
+
+func (e MediaKind) String() string {
+	return string(e)
+}
+
+func (e *MediaKind) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = MediaKind(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid MediaKind", str)
+	}
+	return nil
+}
+
+func (e MediaKind) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *MediaKind) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e MediaKind) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

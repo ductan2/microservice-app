@@ -15,6 +15,9 @@ type Query {
 
   tag(id: ID, slug: String): Tag
   tags: [Tag!]!
+
+  mediaAsset(id: ID!): MediaAsset
+  mediaAssets(ids: [ID!]!): [MediaAsset!]!
 }
 
 type Mutation {
@@ -29,6 +32,9 @@ type Mutation {
   createTag(input: CreateTagInput!): Tag!
   updateTag(id: ID!, input: UpdateTagInput!): Tag!
   deleteTag(id: ID!): Boolean!
+
+  uploadMedia(input: UploadMediaInput!): MediaAsset!
+  deleteMedia(id: ID!): Boolean!
 }
 
 type Lesson {
@@ -91,6 +97,33 @@ input UpdateTagInput {
   name: String
 }
 
+enum MediaKind {
+  IMAGE
+  AUDIO
+}
+
+type MediaAsset {
+  id: ID!
+  storageKey: String!
+  kind: MediaKind!
+  mimeType: String!
+  bytes: Int!
+  durationMs: Int
+  sha256: String!
+  createdAt: Time!
+  uploadedBy: ID
+  downloadURL: String!
+}
+
+input UploadMediaInput {
+  file: Upload!
+  kind: MediaKind!
+  mimeType: String!
+  filename: String
+  uploadedBy: ID
+}
+
 scalar Time
+scalar Upload
 
 

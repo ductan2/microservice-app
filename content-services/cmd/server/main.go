@@ -5,7 +5,10 @@ import (
 	gqlresolver "content-services/graph/resolver"
 	"content-services/internal/config"
 	"content-services/internal/db"
+	"content-services/internal/repository"
 	"content-services/internal/server"
+	"content-services/internal/service"
+	"content-services/internal/storage"
 	"content-services/internal/taxonomy"
 	"context"
 	"net/http"
@@ -42,7 +45,22 @@ func main() {
 	}
 
 	// Build GraphQL server
-	resolver := &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore}
+	mediaRepo := repository.NewMediaRepository(database)
+	s3Client, err := storage.NewS3Client(context.Background(), storage.S3Config{
+		Endpoint:        config.GetS3Endpoint(),
+		Region:          config.GetS3Region(),
+		Bucket:          config.GetS3Bucket(),
+		AccessKeyID:     config.GetS3AccessKeyID(),
+		SecretAccessKey: config.GetS3SecretAccessKey(),
+		UsePathStyle:    config.GetS3UsePathStyle(),
+		PresignExpires:  config.GetS3PresignTTL(),
+	})
+	if err != nil {
+		log.Fatalf("s3 init error: %v", err)
+	}
+	mediaService := service.NewMediaService(mediaRepo, s3Client, config.GetS3PresignTTL())
+
+	resolver := &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore, Media: mediaService}
 	gqlSrv := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	graphqlHandler := handler.NewDefaultServer(gqlSrv)
 

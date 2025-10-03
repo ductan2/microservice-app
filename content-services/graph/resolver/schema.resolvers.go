@@ -7,11 +7,16 @@ package resolver
 import (
 	"content-services/graph/generated"
 	"content-services/graph/model"
+	"content-services/internal/models"
+	"content-services/internal/repository"
 	"content-services/internal/taxonomy"
 	"context"
 	"errors"
+	"io"
+	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -117,6 +122,63 @@ func (r *mutationResolver) DeleteTag(ctx context.Context, id string) (bool, erro
 	}
 	if err := r.Taxonomy.DeleteTag(ctx, id); err != nil {
 		return false, mapTaxonomyError("tag", err)
+	}
+	return true, nil
+}
+
+// UploadMedia is the resolver for the uploadMedia field.
+func (r *mutationResolver) UploadMedia(ctx context.Context, input model.UploadMediaInput) (*model.MediaAsset, error) {
+	if r.Media == nil {
+		return nil, gqlerror.Errorf("media service not configured")
+	}
+
+	upload := input.File
+	defer func() {
+		if closer, ok := upload.File.(io.ReadCloser); ok {
+			closer.Close()
+		}
+	}()
+
+	filename := upload.Filename
+	if input.Filename != nil && *input.Filename != "" {
+		filename = *input.Filename
+	}
+	if filename == "" {
+		filename = "upload"
+	}
+
+	kind := strings.ToLower(input.Kind.String())
+	var userID uuid.UUID
+	if input.UploadedBy != nil && *input.UploadedBy != "" {
+		parsed, err := uuid.Parse(*input.UploadedBy)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid uploadedBy: %v", err)
+		}
+		userID = parsed
+	}
+
+	media, err := r.Media.UploadMedia(ctx, upload.File, filename, input.MimeType, kind, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.mapMediaAsset(ctx, media)
+}
+
+// DeleteMedia is the resolver for the deleteMedia field.
+func (r *mutationResolver) DeleteMedia(ctx context.Context, id string) (bool, error) {
+	if r.Media == nil {
+		return false, gqlerror.Errorf("media service not configured")
+	}
+	mediaID, err := uuid.Parse(id)
+	if err != nil {
+		return false, gqlerror.Errorf("invalid media id: %v", err)
+	}
+	if err := r.Media.DeleteMedia(ctx, mediaID); err != nil {
+		if errors.Is(err, repository.ErrMediaNotFound) {
+			return false, gqlerror.Errorf("media asset not found")
+		}
+		return false, err
 	}
 	return true, nil
 }
@@ -287,6 +349,65 @@ func (r *queryResolver) Tags(ctx context.Context) ([]*model.Tag, error) {
 	return result, nil
 }
 
+// MediaAsset is the resolver for the mediaAsset field.
+func (r *queryResolver) MediaAsset(ctx context.Context, id string) (*model.MediaAsset, error) {
+	if r.Media == nil {
+		return nil, gqlerror.Errorf("media service not configured")
+	}
+	mediaID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, gqlerror.Errorf("invalid media id: %v", err)
+	}
+	media, err := r.Media.GetMediaByID(ctx, mediaID)
+	if err != nil {
+		if errors.Is(err, repository.ErrMediaNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.mapMediaAsset(ctx, media)
+}
+
+// MediaAssets is the resolver for the mediaAssets field.
+func (r *queryResolver) MediaAssets(ctx context.Context, ids []string) ([]*model.MediaAsset, error) {
+	if r.Media == nil {
+		return nil, gqlerror.Errorf("media service not configured")
+	}
+	if len(ids) == 0 {
+		return []*model.MediaAsset{}, nil
+	}
+	uuids := make([]uuid.UUID, len(ids))
+	for i, id := range ids {
+		parsed, err := uuid.Parse(id)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid media id: %v", err)
+		}
+		uuids[i] = parsed
+	}
+	assets, err := r.Media.GetMediaByIDs(ctx, uuids)
+	if err != nil {
+		return nil, err
+	}
+	assetMap := make(map[uuid.UUID]models.MediaAsset, len(assets))
+	for i := range assets {
+		asset := assets[i]
+		assetMap[asset.ID] = asset
+	}
+	result := make([]*model.MediaAsset, 0, len(ids))
+	for _, id := range uuids {
+		asset, ok := assetMap[id]
+		if !ok {
+			continue
+		}
+		mapped, err := r.mapMediaAsset(ctx, &asset)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, mapped)
+	}
+	return result, nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
@@ -295,51 +416,3 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-func mapTaxonomyError(resource string, err error) error {
-	if err == nil {
-		return nil
-	}
-	switch {
-	case errors.Is(err, taxonomy.ErrDuplicate):
-		return gqlerror.Errorf("%s already exists", resource)
-	case errors.Is(err, taxonomy.ErrNotFound):
-		return gqlerror.Errorf("%s not found", resource)
-	default:
-		return err
-	}
-}
-
-func mapTopic(topic *taxonomy.Topic) *model.Topic {
-	if topic == nil {
-		return nil
-	}
-	return &model.Topic{
-		ID:        topic.ID,
-		Slug:      topic.Slug,
-		Name:      topic.Name,
-		CreatedAt: topic.CreatedAt,
-	}
-}
-
-func mapLevel(level *taxonomy.Level) *model.Level {
-	if level == nil {
-		return nil
-	}
-	return &model.Level{
-		ID:   level.ID,
-		Code: level.Code,
-		Name: level.Name,
-	}
-}
-
-func mapTag(tag *taxonomy.Tag) *model.Tag {
-	if tag == nil {
-		return nil
-	}
-	return &model.Tag{
-		ID:   tag.ID,
-		Slug: tag.Slug,
-		Name: tag.Name,
-	}
-}
