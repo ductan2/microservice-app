@@ -39,6 +39,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Lesson() LessonResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 }
@@ -50,10 +51,14 @@ type ComplexityRoot struct {
 	Lesson struct {
 		Code        func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
+		CreatedBy   func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		IsPublished func(childComplexity int) int
+		Level       func(childComplexity int) int
+		PublishedAt func(childComplexity int) int
 		Title       func(childComplexity int) int
+		Topic       func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
 		Version     func(childComplexity int) int
 	}
@@ -78,21 +83,23 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateLevel func(childComplexity int, input model.CreateLevelInput) int
-		CreateTag   func(childComplexity int, input model.CreateTagInput) int
-		CreateTopic func(childComplexity int, input model.CreateTopicInput) int
-		DeleteLevel func(childComplexity int, id string) int
-		DeleteMedia func(childComplexity int, id string) int
-		DeleteTag   func(childComplexity int, id string) int
-		DeleteTopic func(childComplexity int, id string) int
-		UpdateLevel func(childComplexity int, id string, input model.UpdateLevelInput) int
-		UpdateTag   func(childComplexity int, id string, input model.UpdateTagInput) int
-		UpdateTopic func(childComplexity int, id string, input model.UpdateTopicInput) int
-		UploadMedia func(childComplexity int, input model.UploadMediaInput) int
+		CreateLesson func(childComplexity int, input model.CreateLessonInput) int
+		CreateLevel  func(childComplexity int, input model.CreateLevelInput) int
+		CreateTag    func(childComplexity int, input model.CreateTagInput) int
+		CreateTopic  func(childComplexity int, input model.CreateTopicInput) int
+		DeleteLevel  func(childComplexity int, id string) int
+		DeleteMedia  func(childComplexity int, id string) int
+		DeleteTag    func(childComplexity int, id string) int
+		DeleteTopic  func(childComplexity int, id string) int
+		UpdateLevel  func(childComplexity int, id string, input model.UpdateLevelInput) int
+		UpdateTag    func(childComplexity int, id string, input model.UpdateTagInput) int
+		UpdateTopic  func(childComplexity int, id string, input model.UpdateTopicInput) int
+		UploadMedia  func(childComplexity int, input model.UploadMediaInput) int
 	}
 
 	Query struct {
 		Health       func(childComplexity int) int
+		Lesson       func(childComplexity int, id string) int
 		LessonByCode func(childComplexity int, code string) int
 		Level        func(childComplexity int, id *string, code *string) int
 		Levels       func(childComplexity int) int
@@ -118,6 +125,10 @@ type ComplexityRoot struct {
 	}
 }
 
+type LessonResolver interface {
+	Topic(ctx context.Context, obj *model.Lesson) (*model.Topic, error)
+	Level(ctx context.Context, obj *model.Lesson) (*model.Level, error)
+}
 type MutationResolver interface {
 	CreateTopic(ctx context.Context, input model.CreateTopicInput) (*model.Topic, error)
 	UpdateTopic(ctx context.Context, id string, input model.UpdateTopicInput) (*model.Topic, error)
@@ -130,10 +141,10 @@ type MutationResolver interface {
 	DeleteTag(ctx context.Context, id string) (bool, error)
 	UploadMedia(ctx context.Context, input model.UploadMediaInput) (*model.MediaAsset, error)
 	DeleteMedia(ctx context.Context, id string) (bool, error)
+	CreateLesson(ctx context.Context, input model.CreateLessonInput) (*model.Lesson, error)
 }
 type QueryResolver interface {
 	Health(ctx context.Context) (string, error)
-	LessonByCode(ctx context.Context, code string) (*model.Lesson, error)
 	Topic(ctx context.Context, id *string, slug *string) (*model.Topic, error)
 	Topics(ctx context.Context) ([]*model.Topic, error)
 	Level(ctx context.Context, id *string, code *string) (*model.Level, error)
@@ -142,6 +153,8 @@ type QueryResolver interface {
 	Tags(ctx context.Context) ([]*model.Tag, error)
 	MediaAsset(ctx context.Context, id string) (*model.MediaAsset, error)
 	MediaAssets(ctx context.Context, ids []string) ([]*model.MediaAsset, error)
+	Lesson(ctx context.Context, id string) (*model.Lesson, error)
+	LessonByCode(ctx context.Context, code string) (*model.Lesson, error)
 }
 
 type executableSchema struct {
@@ -175,6 +188,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Lesson.CreatedAt(childComplexity), true
+	case "Lesson.createdBy":
+		if e.complexity.Lesson.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.Lesson.CreatedBy(childComplexity), true
 	case "Lesson.description":
 		if e.complexity.Lesson.Description == nil {
 			break
@@ -193,12 +212,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Lesson.IsPublished(childComplexity), true
+	case "Lesson.level":
+		if e.complexity.Lesson.Level == nil {
+			break
+		}
+
+		return e.complexity.Lesson.Level(childComplexity), true
+	case "Lesson.publishedAt":
+		if e.complexity.Lesson.PublishedAt == nil {
+			break
+		}
+
+		return e.complexity.Lesson.PublishedAt(childComplexity), true
 	case "Lesson.title":
 		if e.complexity.Lesson.Title == nil {
 			break
 		}
 
 		return e.complexity.Lesson.Title(childComplexity), true
+	case "Lesson.topic":
+		if e.complexity.Lesson.Topic == nil {
+			break
+		}
+
+		return e.complexity.Lesson.Topic(childComplexity), true
 	case "Lesson.updatedAt":
 		if e.complexity.Lesson.UpdatedAt == nil {
 			break
@@ -292,6 +329,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.MediaAsset.UploadedBy(childComplexity), true
 
+	case "Mutation.createLesson":
+		if e.complexity.Mutation.CreateLesson == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createLesson_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateLesson(childComplexity, args["input"].(model.CreateLessonInput)), true
 	case "Mutation.createLevel":
 		if e.complexity.Mutation.CreateLevel == nil {
 			break
@@ -420,6 +468,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Health(childComplexity), true
+	case "Query.lesson":
+		if e.complexity.Query.Lesson == nil {
+			break
+		}
+
+		args, err := ec.field_Query_lesson_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Lesson(childComplexity, args["id"].(string)), true
 	case "Query.lessonByCode":
 		if e.complexity.Query.LessonByCode == nil {
 			break
@@ -557,6 +616,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputCreateLessonInput,
 		ec.unmarshalInputCreateLevelInput,
 		ec.unmarshalInputCreateTagInput,
 		ec.unmarshalInputCreateTopicInput,
@@ -668,7 +728,6 @@ var sources = []*ast.Source{
 
 type Query {
   health: String!
-  lessonByCode(code: String!): Lesson
 
   topic(id: ID, slug: String): Topic
   topics: [Topic!]!
@@ -681,6 +740,9 @@ type Query {
 
   mediaAsset(id: ID!): MediaAsset
   mediaAssets(ids: [ID!]!): [MediaAsset!]!
+
+  lesson(id: ID!): Lesson
+  lessonByCode(code: String!): Lesson
 }
 
 type Mutation {
@@ -698,17 +760,9 @@ type Mutation {
 
   uploadMedia(input: UploadMediaInput!): MediaAsset!
   deleteMedia(id: ID!): Boolean!
-}
 
-type Lesson {
-  id: ID!
-  code: String
-  title: String!
-  description: String
-  isPublished: Boolean!
-  version: Int!
-  createdAt: Time!
-  updatedAt: Time!
+  createLesson(input: CreateLessonInput!): Lesson!
+
 }
 
 type Topic {
@@ -786,6 +840,31 @@ input UploadMediaInput {
   uploadedBy: ID
 }
 
+
+type Lesson {
+  id: ID!
+  code: String
+  title: String!
+  description: String
+  topic: Topic
+  level: Level
+  isPublished: Boolean!
+  version: Int!
+  createdBy: ID
+  createdAt: Time!
+  updatedAt: Time!
+  publishedAt: Time
+}
+
+input CreateLessonInput {
+  code: String
+  title: String!
+  description: String
+  topicId: ID
+  levelId: ID
+  createdBy: ID
+}
+
 scalar Time
 scalar Upload
 
@@ -797,6 +876,17 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_createLesson_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateLessonInput2contentᚑservicesᚋgraphᚋmodelᚐCreateLessonInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createLevel_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -953,6 +1043,17 @@ func (ec *executionContext) field_Query_lessonByCode_args(ctx context.Context, r
 		return nil, err
 	}
 	args["code"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_lesson_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -1194,6 +1295,82 @@ func (ec *executionContext) fieldContext_Lesson_description(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Lesson_topic(ctx context.Context, field graphql.CollectedField, obj *model.Lesson) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Lesson_topic,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Lesson().Topic(ctx, obj)
+		},
+		nil,
+		ec.marshalOTopic2ᚖcontentᚑservicesᚋgraphᚋmodelᚐTopic,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Lesson_topic(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Lesson",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Topic_id(ctx, field)
+			case "slug":
+				return ec.fieldContext_Topic_slug(ctx, field)
+			case "name":
+				return ec.fieldContext_Topic_name(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Topic_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Topic", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Lesson_level(ctx context.Context, field graphql.CollectedField, obj *model.Lesson) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Lesson_level,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Lesson().Level(ctx, obj)
+		},
+		nil,
+		ec.marshalOLevel2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLevel,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Lesson_level(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Lesson",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Level_id(ctx, field)
+			case "code":
+				return ec.fieldContext_Level_code(ctx, field)
+			case "name":
+				return ec.fieldContext_Level_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Level", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Lesson_isPublished(ctx context.Context, field graphql.CollectedField, obj *model.Lesson) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1252,6 +1429,35 @@ func (ec *executionContext) fieldContext_Lesson_version(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Lesson_createdBy(ctx context.Context, field graphql.CollectedField, obj *model.Lesson) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Lesson_createdBy,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedBy, nil
+		},
+		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Lesson_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Lesson",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Lesson_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Lesson) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1298,6 +1504,35 @@ func (ec *executionContext) _Lesson_updatedAt(ctx context.Context, field graphql
 }
 
 func (ec *executionContext) fieldContext_Lesson_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Lesson",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Lesson_publishedAt(ctx context.Context, field graphql.CollectedField, obj *model.Lesson) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Lesson_publishedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.PublishedAt, nil
+		},
+		nil,
+		ec.marshalOTime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Lesson_publishedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Lesson",
 		Field:      field,
@@ -2212,6 +2447,73 @@ func (ec *executionContext) fieldContext_Mutation_deleteMedia(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createLesson(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createLesson,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreateLesson(ctx, fc.Args["input"].(model.CreateLessonInput))
+		},
+		nil,
+		ec.marshalNLesson2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLesson,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createLesson(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Lesson_id(ctx, field)
+			case "code":
+				return ec.fieldContext_Lesson_code(ctx, field)
+			case "title":
+				return ec.fieldContext_Lesson_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Lesson_description(ctx, field)
+			case "topic":
+				return ec.fieldContext_Lesson_topic(ctx, field)
+			case "level":
+				return ec.fieldContext_Lesson_level(ctx, field)
+			case "isPublished":
+				return ec.fieldContext_Lesson_isPublished(ctx, field)
+			case "version":
+				return ec.fieldContext_Lesson_version(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Lesson_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Lesson_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Lesson_updatedAt(ctx, field)
+			case "publishedAt":
+				return ec.fieldContext_Lesson_publishedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Lesson", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createLesson_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_health(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2237,65 +2539,6 @@ func (ec *executionContext) fieldContext_Query_health(_ context.Context, field g
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_lessonByCode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Query_lessonByCode,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().LessonByCode(ctx, fc.Args["code"].(string))
-		},
-		nil,
-		ec.marshalOLesson2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLesson,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Query_lessonByCode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Lesson_id(ctx, field)
-			case "code":
-				return ec.fieldContext_Lesson_code(ctx, field)
-			case "title":
-				return ec.fieldContext_Lesson_title(ctx, field)
-			case "description":
-				return ec.fieldContext_Lesson_description(ctx, field)
-			case "isPublished":
-				return ec.fieldContext_Lesson_isPublished(ctx, field)
-			case "version":
-				return ec.fieldContext_Lesson_version(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Lesson_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Lesson_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Lesson", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_lessonByCode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -2682,6 +2925,140 @@ func (ec *executionContext) fieldContext_Query_mediaAssets(ctx context.Context, 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_mediaAssets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_lesson(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_lesson,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().Lesson(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalOLesson2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLesson,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_lesson(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Lesson_id(ctx, field)
+			case "code":
+				return ec.fieldContext_Lesson_code(ctx, field)
+			case "title":
+				return ec.fieldContext_Lesson_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Lesson_description(ctx, field)
+			case "topic":
+				return ec.fieldContext_Lesson_topic(ctx, field)
+			case "level":
+				return ec.fieldContext_Lesson_level(ctx, field)
+			case "isPublished":
+				return ec.fieldContext_Lesson_isPublished(ctx, field)
+			case "version":
+				return ec.fieldContext_Lesson_version(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Lesson_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Lesson_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Lesson_updatedAt(ctx, field)
+			case "publishedAt":
+				return ec.fieldContext_Lesson_publishedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Lesson", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_lesson_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_lessonByCode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_lessonByCode,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().LessonByCode(ctx, fc.Args["code"].(string))
+		},
+		nil,
+		ec.marshalOLesson2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLesson,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_lessonByCode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Lesson_id(ctx, field)
+			case "code":
+				return ec.fieldContext_Lesson_code(ctx, field)
+			case "title":
+				return ec.fieldContext_Lesson_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Lesson_description(ctx, field)
+			case "topic":
+				return ec.fieldContext_Lesson_topic(ctx, field)
+			case "level":
+				return ec.fieldContext_Lesson_level(ctx, field)
+			case "isPublished":
+				return ec.fieldContext_Lesson_isPublished(ctx, field)
+			case "version":
+				return ec.fieldContext_Lesson_version(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Lesson_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Lesson_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Lesson_updatedAt(ctx, field)
+			case "publishedAt":
+				return ec.fieldContext_Lesson_publishedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Lesson", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_lessonByCode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4445,6 +4822,68 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCreateLessonInput(ctx context.Context, obj any) (model.CreateLessonInput, error) {
+	var it model.CreateLessonInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"code", "title", "description", "topicId", "levelId", "createdBy"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "topicId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("topicId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TopicID = data
+		case "levelId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("levelId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LevelID = data
+		case "createdBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdBy"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedBy = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateLevelInput(ctx context.Context, obj any) (model.CreateLevelInput, error) {
 	var it model.CreateLevelInput
 	asMap := map[string]any{}
@@ -4726,37 +5165,107 @@ func (ec *executionContext) _Lesson(ctx context.Context, sel ast.SelectionSet, o
 		case "id":
 			out.Values[i] = ec._Lesson_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "code":
 			out.Values[i] = ec._Lesson_code(ctx, field, obj)
 		case "title":
 			out.Values[i] = ec._Lesson_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "description":
 			out.Values[i] = ec._Lesson_description(ctx, field, obj)
+		case "topic":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Lesson_topic(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "level":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Lesson_level(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "isPublished":
 			out.Values[i] = ec._Lesson_isPublished(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "version":
 			out.Values[i] = ec._Lesson_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "createdBy":
+			out.Values[i] = ec._Lesson_createdBy(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Lesson_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._Lesson_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "publishedAt":
+			out.Values[i] = ec._Lesson_publishedAt(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5003,6 +5512,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createLesson":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createLesson(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5058,25 +5574,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "lessonByCode":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_lessonByCode(ctx, field)
 				return res
 			}
 
@@ -5241,6 +5738,44 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "lesson":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_lesson(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "lessonByCode":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_lessonByCode(ctx, field)
 				return res
 			}
 
@@ -5735,6 +6270,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNCreateLessonInput2contentᚑservicesᚋgraphᚋmodelᚐCreateLessonInput(ctx context.Context, v any) (model.CreateLessonInput, error) {
+	res, err := ec.unmarshalInputCreateLessonInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNCreateLevelInput2contentᚑservicesᚋgraphᚋmodelᚐCreateLevelInput(ctx context.Context, v any) (model.CreateLevelInput, error) {
 	res, err := ec.unmarshalInputCreateLevelInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5810,6 +6350,20 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNLesson2contentᚑservicesᚋgraphᚋmodelᚐLesson(ctx context.Context, sel ast.SelectionSet, v model.Lesson) graphql.Marshaler {
+	return ec._Lesson(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLesson2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLesson(ctx context.Context, sel ast.SelectionSet, v *model.Lesson) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Lesson(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNLevel2contentᚑservicesᚋgraphᚋmodelᚐLevel(ctx context.Context, sel ast.SelectionSet, v model.Level) graphql.Marshaler {
@@ -6478,6 +7032,21 @@ func (ec *executionContext) marshalOTag2ᚖcontentᚑservicesᚋgraphᚋmodelᚐ
 		return graphql.Null
 	}
 	return ec._Tag(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v any) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputTime(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Time(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOTopic2ᚖcontentᚑservicesᚋgraphᚋmodelᚐTopic(ctx context.Context, sel ast.SelectionSet, v *model.Topic) graphql.Marshaler {

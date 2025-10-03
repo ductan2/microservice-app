@@ -14,11 +14,9 @@ import (
 	"errors"
 	"io"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 // CreateTopic is the resolver for the createTopic field.
@@ -183,41 +181,87 @@ func (r *mutationResolver) DeleteMedia(ctx context.Context, id string) (bool, er
 	return true, nil
 }
 
+// CreateLesson is the resolver for the createLesson field.
+func (r *mutationResolver) CreateLesson(ctx context.Context, input model.CreateLessonInput) (*model.Lesson, error) {
+	if r.LessonService == nil {
+		return nil, gqlerror.Errorf("lesson service not configured")
+	}
+
+	// Validate required fields
+	if input.Title == "" {
+		return nil, gqlerror.Errorf("title is required")
+	}
+
+	// Create lesson model
+	lesson := &models.Lesson{
+		Title:       input.Title,
+		Description: derefString(input.Description),
+	}
+
+	// Handle optional code
+	if input.Code != nil && *input.Code != "" {
+		lesson.Code = *input.Code
+	}
+
+	// Handle optional topic
+	if input.TopicID != nil {
+		// Validate topic exists
+		if r.Taxonomy != nil {
+			_, err := r.Taxonomy.GetTopicByID(ctx, *input.TopicID)
+			if err != nil {
+				if errors.Is(err, taxonomy.ErrNotFound) {
+					return nil, gqlerror.Errorf("topic not found: %s", *input.TopicID)
+				}
+				return nil, err
+			}
+		}
+		topicID, err := uuid.Parse(*input.TopicID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid topic ID: %v", err)
+		}
+		lesson.TopicID = &topicID
+	}
+
+	// Handle optional level
+	if input.LevelID != nil {
+		// Validate level exists
+		if r.Taxonomy != nil {
+			_, err := r.Taxonomy.GetLevelByID(ctx, *input.LevelID)
+			if err != nil {
+				if errors.Is(err, taxonomy.ErrNotFound) {
+					return nil, gqlerror.Errorf("level not found: %s", *input.LevelID)
+				}
+				return nil, err
+			}
+		}
+		levelID, err := uuid.Parse(*input.LevelID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid level ID: %v", err)
+		}
+		lesson.LevelID = &levelID
+	}
+
+	// Handle optional created by
+	if input.CreatedBy != nil {
+		createdBy, err := uuid.Parse(*input.CreatedBy)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid created by ID: %v", err)
+		}
+		lesson.CreatedBy = &createdBy
+	}
+
+	// Create the lesson via service
+	createdLesson, err := r.LessonService.CreateLesson(ctx, lesson, nil) // No tags for now
+	if err != nil {
+		return nil, mapLessonError(err)
+	}
+
+	return mapLesson(createdLesson), nil
+}
+
 // Health is the resolver for the health field.
 func (r *queryResolver) Health(ctx context.Context) (string, error) {
 	return "ok", nil
-}
-
-// LessonByCode is the resolver for the lessonByCode field.
-func (r *queryResolver) LessonByCode(ctx context.Context, code string) (*model.Lesson, error) {
-	if r.DB == nil {
-		return nil, nil
-	}
-	col := r.DB.Collection("lessons")
-	var doc struct {
-		ID          string    `bson:"id"`
-		Code        *string   `bson:"code"`
-		Title       string    `bson:"title"`
-		Description *string   `bson:"description"`
-		IsPublished bool      `bson:"is_published"`
-		Version     int       `bson:"version"`
-		CreatedAt   time.Time `bson:"created_at"`
-		UpdatedAt   time.Time `bson:"updated_at"`
-	}
-	err := col.FindOne(ctx, bson.M{"code": code}).Decode(&doc)
-	if err != nil {
-		return nil, nil
-	}
-	return &model.Lesson{
-		ID:          doc.ID,
-		Code:        doc.Code,
-		Title:       doc.Title,
-		Description: doc.Description,
-		IsPublished: doc.IsPublished,
-		Version:     doc.Version,
-		CreatedAt:   doc.CreatedAt,
-		UpdatedAt:   doc.UpdatedAt,
-	}, nil
 }
 
 // Topic is the resolver for the topic field.
@@ -408,11 +452,120 @@ func (r *queryResolver) MediaAssets(ctx context.Context, ids []string) ([]*model
 	return result, nil
 }
 
+// Lesson is the resolver for the lesson field.
+func (r *queryResolver) Lesson(ctx context.Context, id string) (*model.Lesson, error) {
+	lessonService := r.Resolver.LessonService
+	if lessonService == nil {
+		return nil, gqlerror.Errorf("lesson service not configured")
+	}
+
+	lessonID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, gqlerror.Errorf("invalid lesson ID: %v", err)
+	}
+
+	lessonDoc, err := lessonService.GetLessonByID(ctx, lessonID)
+	if err != nil {
+		return nil, mapLessonError(err)
+	}
+
+	return mapLesson(lessonDoc), nil
+}
+
+// LessonByCode is the resolver for the lessonByCode field.
+func (r *queryResolver) LessonByCode(ctx context.Context, code string) (*model.Lesson, error) {
+	lessonService := r.Resolver.LessonService
+	if lessonService == nil {
+		return nil, gqlerror.Errorf("lesson service not configured")
+	}
+
+	lessonDoc, err := lessonService.GetLessonByCode(ctx, code)
+	if err != nil {
+		return nil, mapLessonError(err)
+	}
+
+	return mapLesson(lessonDoc), nil
+}
+
+// Topic is the resolver for the topic field.
+func (r *lessonResolver) Topic(ctx context.Context, obj *model.Lesson) (*model.Topic, error) {
+	// Parse lesson to get topicID
+	lessonID, err := uuid.Parse(obj.ID)
+	if err != nil {
+		return nil, nil
+	}
+
+	// Get lesson from database to access topicID
+	lessonDoc, err := r.LessonService.GetLessonByID(ctx, lessonID)
+	if err != nil {
+		return nil, nil
+	}
+
+	// If no topic assigned, return nil
+	if lessonDoc.TopicID == nil {
+		return nil, nil
+	}
+
+	// Fetch topic from taxonomy store
+	if r.Taxonomy == nil {
+		return nil, nil
+	}
+
+	topic, err := r.Taxonomy.GetTopicByID(ctx, lessonDoc.TopicID.String())
+	if err != nil {
+		if errors.Is(err, taxonomy.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return mapTopic(topic), nil
+}
+
+// Level is the resolver for the level field.
+func (r *lessonResolver) Level(ctx context.Context, obj *model.Lesson) (*model.Level, error) {
+	// Parse lesson to get levelID
+	lessonID, err := uuid.Parse(obj.ID)
+	if err != nil {
+		return nil, nil
+	}
+
+	// Get lesson from database to access levelID
+	lessonDoc, err := r.LessonService.GetLessonByID(ctx, lessonID)
+	if err != nil {
+		return nil, nil
+	}
+
+	// If no level assigned, return nil
+	if lessonDoc.LevelID == nil {
+		return nil, nil
+	}
+
+	// Fetch level from taxonomy store
+	if r.Taxonomy == nil {
+		return nil, nil
+	}
+
+	level, err := r.Taxonomy.GetLevelByID(ctx, lessonDoc.LevelID.String())
+	if err != nil {
+		if errors.Is(err, taxonomy.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return mapLevel(level), nil
+}
+
+// Lesson returns generated.LessonResolver implementation.
+func (r *Resolver) Lesson() generated.LessonResolver { return &lessonResolver{r} }
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+type lessonResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

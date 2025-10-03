@@ -46,6 +46,12 @@ func main() {
 
 	// Build GraphQL server
 	mediaRepo := repository.NewMediaRepository(database)
+	lessonRepo := repository.NewLessonRepository(database)
+	sectionRepo := repository.NewLessonSectionRepository(database)
+	// Note: outboxRepo would need a separate database connection for transactional outbox pattern
+	// For now, passing nil - this should be properly implemented later
+	var outboxRepo repository.OutboxRepository = nil
+
 	s3Client, err := storage.NewS3Client(context.Background(), storage.S3Config{
 		Endpoint:        config.GetS3Endpoint(),
 		Region:          config.GetS3Region(),
@@ -59,8 +65,9 @@ func main() {
 		log.Fatalf("s3 init error: %v", err)
 	}
 	mediaService := service.NewMediaService(mediaRepo, s3Client, config.GetS3PresignTTL())
+	lessonService := service.NewLessonService(lessonRepo, sectionRepo, outboxRepo)
 
-	resolver := &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore, Media: mediaService}
+	resolver := &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore, Media: mediaService, LessonService: lessonService}
 	gqlSrv := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	graphqlHandler := handler.NewDefaultServer(gqlSrv)
 

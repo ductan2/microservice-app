@@ -4,6 +4,7 @@ import (
 	"content-services/graph/model"
 	"content-services/internal/models"
 	"content-services/internal/taxonomy"
+	"content-services/internal/types"
 	"context"
 	"errors"
 	"strings"
@@ -12,6 +13,39 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
+// toStringPtr converts a string to *string, returns nil if empty
+func toStringPtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+// derefString safely dereferences a *string, returns empty string if nil
+func derefString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+// derefInt safely dereferences an *int, returns 0 if nil
+func derefInt(i *int) int {
+	if i == nil {
+		return 0
+	}
+	return *i
+}
+
+// toIntPtr converts an int to *int, returns nil if zero
+func toIntPtr(i int) *int {
+	if i == 0 {
+		return nil
+	}
+	return &i
+}
+
+// mapTaxonomyError maps taxonomy store errors to GraphQL errors
 func mapTaxonomyError(resource string, err error) error {
 	if err == nil {
 		return nil
@@ -26,6 +60,7 @@ func mapTaxonomyError(resource string, err error) error {
 	}
 }
 
+// mapTopic converts taxonomy.Topic to model.Topic
 func mapTopic(topic *taxonomy.Topic) *model.Topic {
 	if topic == nil {
 		return nil
@@ -38,6 +73,7 @@ func mapTopic(topic *taxonomy.Topic) *model.Topic {
 	}
 }
 
+// mapLevel converts taxonomy.Level to model.Level
 func mapLevel(level *taxonomy.Level) *model.Level {
 	if level == nil {
 		return nil
@@ -49,6 +85,7 @@ func mapLevel(level *taxonomy.Level) *model.Level {
 	}
 }
 
+// mapTag converts taxonomy.Tag to model.Tag
 func mapTag(tag *taxonomy.Tag) *model.Tag {
 	if tag == nil {
 		return nil
@@ -60,22 +97,83 @@ func mapTag(tag *taxonomy.Tag) *model.Tag {
 	}
 }
 
+// ============= LESSON MAPPERS =============
+
+// mapLessonError maps lesson store errors to GraphQL errors
+func mapLessonError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	switch {
+	case errors.Is(err, types.ErrLessonNotFound):
+		return gqlerror.Errorf("lesson not found")
+	case errors.Is(err, types.ErrDuplicateCode):
+		return gqlerror.Errorf("lesson code already exists")
+	case errors.Is(err, types.ErrAlreadyPublished):
+		return gqlerror.Errorf("lesson is already published")
+	default:
+		return err
+	}
+}
+
+// mapLesson converts models.Lesson to model.Lesson
+func mapLesson(l *models.Lesson) *model.Lesson {
+	if l == nil {
+		return nil
+	}
+
+	var code *string
+	if l.Code != "" {
+		code = &l.Code
+	}
+
+	var createdBy *string
+	if l.CreatedBy != nil {
+		id := l.CreatedBy.String()
+		createdBy = &id
+	}
+
+	mapped := &model.Lesson{
+		ID:          l.ID.String(),
+		Code:        code,
+		Title:       l.Title,
+		Description: toStringPtr(l.Description),
+		IsPublished: l.IsPublished,
+		Version:     l.Version,
+		CreatedBy:   createdBy,
+		CreatedAt:   l.CreatedAt,
+		UpdatedAt:   l.UpdatedAt,
+	}
+
+	if l.PublishedAt.Valid {
+		mapped.PublishedAt = &l.PublishedAt.Time
+	}
+
+	// Note: Topic and Level are resolved separately via field resolvers
+	// They are not set here
+
+	return mapped
+}
+
+// mapMediaAsset converts models.MediaAsset to model.MediaAsset with presigned URL
 func (r *Resolver) mapMediaAsset(ctx context.Context, media *models.MediaAsset) (*model.MediaAsset, error) {
 	if media == nil {
 		return nil, nil
 	}
+
 	var uploadedBy *string
 	if media.UploadedBy != nil {
 		id := media.UploadedBy.String()
 		uploadedBy = &id
 	}
-	var duration *int
-	if media.DurationMs > 0 {
-		duration = &media.DurationMs
-	}
+
+	duration := toIntPtr(media.DurationMs)
+
 	if media.ID == uuid.Nil {
 		media.ID = uuid.New()
 	}
+
 	downloadURL := ""
 	if r.Media != nil {
 		url, err := r.Media.GetPresignedURL(ctx, media.ID)
@@ -84,6 +182,7 @@ func (r *Resolver) mapMediaAsset(ctx context.Context, media *models.MediaAsset) 
 		}
 		downloadURL = url
 	}
+
 	return &model.MediaAsset{
 		ID:          media.ID.String(),
 		StorageKey:  media.StorageKey,
@@ -98,6 +197,7 @@ func (r *Resolver) mapMediaAsset(ctx context.Context, media *models.MediaAsset) 
 	}, nil
 }
 
+// mapMediaKind converts string to model.MediaKind enum
 func mapMediaKind(kind string) model.MediaKind {
 	switch strings.ToLower(kind) {
 	case "image":

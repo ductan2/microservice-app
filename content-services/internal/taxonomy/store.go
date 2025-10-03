@@ -20,17 +20,19 @@ var (
 
 // Store wraps Mongo collections that hold taxonomy data.
 type Store struct {
-	topics *mongo.Collection
-	levels *mongo.Collection
-	tags   *mongo.Collection
+	topics  *mongo.Collection
+	levels  *mongo.Collection
+	tags    *mongo.Collection
+	lessons *mongo.Collection
 }
 
 // NewStore prepares a taxonomy store backed by Mongo collections and ensures indexes.
 func NewStore(ctx context.Context, db *mongo.Database) (*Store, error) {
 	store := &Store{
-		topics: db.Collection("topics"),
-		levels: db.Collection("levels"),
-		tags:   db.Collection("tags"),
+		topics:  db.Collection("topics"),
+		levels:  db.Collection("levels"),
+		tags:    db.Collection("tags"),
+		lessons: db.Collection("lessons"),
 	}
 
 	if err := store.ensureIndexes(ctx); err != nil {
@@ -64,6 +66,24 @@ func (s *Store) ensureIndexes(ctx context.Context) error {
 			indexes: []mongo.IndexModel{
 				{Keys: bson.D{{Key: "slug", Value: 1}}, Options: options.Index().SetUnique(true)},
 				{Keys: bson.D{{Key: "name", Value: 1}}},
+			},
+		},
+		{
+			collection: s.lessons,
+			indexes: []mongo.IndexModel{
+				{
+					Keys:    bson.D{{Key: "code", Value: 1}},
+					Options: options.Index().SetUnique(true).SetSparse(true),
+				},
+				{
+					Keys: bson.D{
+						{Key: "topic_id", Value: 1},
+						{Key: "level_id", Value: 1},
+						{Key: "is_published", Value: 1},
+					},
+				},
+				{Keys: bson.D{{Key: "created_at", Value: -1}}},
+				{Keys: bson.D{{Key: "updated_at", Value: -1}}},
 			},
 		},
 	}
@@ -103,6 +123,28 @@ type Tag struct {
 	ID   string `bson:"_id"`
 	Slug string `bson:"slug"`
 	Name string `bson:"name"`
+}
+
+// Lesson represents a lesson document.
+type Lesson struct {
+	ID          string    `bson:"_id"`
+	Code        string    `bson:"code"`
+	Title       string    `bson:"title"`
+	Description string    `bson:"description"`
+	TopicID     string    `bson:"topic_id"`
+	LevelID     string    `bson:"level_id"`
+	IsPublished bool      `bson:"is_published"`
+	Version     int       `bson:"version"`
+	CreatedAt   time.Time `bson:"created_at"`
+	UpdatedAt   time.Time `bson:"updated_at"`
+}
+type CreateLessonInput struct {
+	Code        *string
+	Title       string
+	Description string
+	TopicID     *string
+	LevelID     *string
+	CreatedBy   *string
 }
 
 // CreateTopic inserts a new topic document.

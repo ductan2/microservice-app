@@ -22,3 +22,9 @@ models:
   Upload:
     model:
       - github.com/99designs/gqlgen/graphql.Upload
+  Lesson:
+    fields:
+      topic:
+        resolver: true
+      level:
+        resolver: true

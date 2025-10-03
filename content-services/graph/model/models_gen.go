@@ -12,6 +12,15 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
+type CreateLessonInput struct {
+	Code        *string `json:"code,omitempty"`
+	Title       string  `json:"title"`
+	Description *string `json:"description,omitempty"`
+	TopicID     *string `json:"topicId,omitempty"`
+	LevelID     *string `json:"levelId,omitempty"`
+	CreatedBy   *string `json:"createdBy,omitempty"`
+}
+
 type CreateLevelInput struct {
 	Code string `json:"code"`
 	Name string `json:"name"`
@@ -28,14 +37,18 @@ type CreateTopicInput struct {
 }
 
 type Lesson struct {
-	ID          string    `json:"id"`
-	Code        *string   `json:"code,omitempty"`
-	Title       string    `json:"title"`
-	Description *string   `json:"description,omitempty"`
-	IsPublished bool      `json:"isPublished"`
-	Version     int       `json:"version"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	ID          string     `json:"id"`
+	Code        *string    `json:"code,omitempty"`
+	Title       string     `json:"title"`
+	Description *string    `json:"description,omitempty"`
+	Topic       *Topic     `json:"topic,omitempty"`
+	Level       *Level     `json:"level,omitempty"`
+	IsPublished bool       `json:"isPublished"`
+	Version     int        `json:"version"`
+	CreatedBy   *string    `json:"createdBy,omitempty"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	UpdatedAt   time.Time  `json:"updatedAt"`
+	PublishedAt *time.Time `json:"publishedAt,omitempty"`
 }
 
 type Level struct {

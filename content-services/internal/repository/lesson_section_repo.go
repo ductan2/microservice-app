@@ -5,7 +5,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type LessonSectionRepository interface {
@@ -18,10 +18,10 @@ type LessonSectionRepository interface {
 }
 
 type lessonSectionRepository struct {
-	db *gorm.DB
+	db *mongo.Database
 }
 
-func NewLessonSectionRepository(db *gorm.DB) LessonSectionRepository {
+func NewLessonSectionRepository(db *mongo.Database) LessonSectionRepository {
 	return &lessonSectionRepository{db: db}
 }
 
