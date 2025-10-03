@@ -31,15 +31,15 @@ type Tag struct {
 
 // MediaAsset for images and audio files
 type MediaAsset struct {
-	ID         uuid.UUID  `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	StorageKey string     `gorm:"type:text;uniqueIndex;not null" json:"storage_key"` // S3/MinIO key
-	Kind       string     `gorm:"type:text;not null;check:kind IN ('image','audio')" json:"kind"`
-	MimeType   string     `gorm:"type:text;not null" json:"mime_type"`
-	Bytes      int        `json:"bytes,omitempty"`
-	DurationMs int        `json:"duration_ms,omitempty"` // for audio
-	SHA256     string     `gorm:"type:text;not null;index:media_sha_idx" json:"sha256"`
-	CreatedAt  time.Time  `gorm:"default:now();not null" json:"created_at"`
-	UploadedBy *uuid.UUID `gorm:"type:uuid" json:"uploaded_by,omitempty"` // logical FK to users
+	ID         uuid.UUID  `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id" bson:"_id"`
+	StorageKey string     `gorm:"type:text;uniqueIndex;not null" json:"storage_key" bson:"storage_key"` // S3/MinIO key
+	Kind       string     `gorm:"type:text;not null;check:kind IN ('image','audio')" json:"kind" bson:"kind"`
+	MimeType   string     `gorm:"type:text;not null" json:"mime_type" bson:"mime_type"`
+	Bytes      int        `json:"bytes,omitempty" bson:"bytes"`
+	DurationMs int        `json:"duration_ms,omitempty" bson:"duration_ms"` // for audio
+	SHA256     string     `gorm:"type:text;not null;index:media_sha_idx" json:"sha256" bson:"sha256"`
+	CreatedAt  time.Time  `gorm:"default:now();not null" json:"created_at" bson:"created_at"`
+	UploadedBy *uuid.UUID `gorm:"type:uuid" json:"uploaded_by,omitempty" bson:"uploaded_by,omitempty"` // logical FK to users
 }
 
 // Lesson modular content with versioning

@@ -64,16 +64,31 @@ type ComplexityRoot struct {
 		Name func(childComplexity int) int
 	}
 
+	MediaAsset struct {
+		Bytes       func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		DownloadURL func(childComplexity int) int
+		DurationMs  func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Kind        func(childComplexity int) int
+		MimeType    func(childComplexity int) int
+		Sha256      func(childComplexity int) int
+		StorageKey  func(childComplexity int) int
+		UploadedBy  func(childComplexity int) int
+	}
+
 	Mutation struct {
 		CreateLevel func(childComplexity int, input model.CreateLevelInput) int
 		CreateTag   func(childComplexity int, input model.CreateTagInput) int
 		CreateTopic func(childComplexity int, input model.CreateTopicInput) int
 		DeleteLevel func(childComplexity int, id string) int
+		DeleteMedia func(childComplexity int, id string) int
 		DeleteTag   func(childComplexity int, id string) int
 		DeleteTopic func(childComplexity int, id string) int
 		UpdateLevel func(childComplexity int, id string, input model.UpdateLevelInput) int
 		UpdateTag   func(childComplexity int, id string, input model.UpdateTagInput) int
 		UpdateTopic func(childComplexity int, id string, input model.UpdateTopicInput) int
+		UploadMedia func(childComplexity int, input model.UploadMediaInput) int
 	}
 
 	Query struct {
@@ -81,6 +96,8 @@ type ComplexityRoot struct {
 		LessonByCode func(childComplexity int, code string) int
 		Level        func(childComplexity int, id *string, code *string) int
 		Levels       func(childComplexity int) int
+		MediaAsset   func(childComplexity int, id string) int
+		MediaAssets  func(childComplexity int, ids []string) int
 		Tag          func(childComplexity int, id *string, slug *string) int
 		Tags         func(childComplexity int) int
 		Topic        func(childComplexity int, id *string, slug *string) int
@@ -111,6 +128,8 @@ type MutationResolver interface {
 	CreateTag(ctx context.Context, input model.CreateTagInput) (*model.Tag, error)
 	UpdateTag(ctx context.Context, id string, input model.UpdateTagInput) (*model.Tag, error)
 	DeleteTag(ctx context.Context, id string) (bool, error)
+	UploadMedia(ctx context.Context, input model.UploadMediaInput) (*model.MediaAsset, error)
+	DeleteMedia(ctx context.Context, id string) (bool, error)
 }
 type QueryResolver interface {
 	Health(ctx context.Context) (string, error)
@@ -121,6 +140,8 @@ type QueryResolver interface {
 	Levels(ctx context.Context) ([]*model.Level, error)
 	Tag(ctx context.Context, id *string, slug *string) (*model.Tag, error)
 	Tags(ctx context.Context) ([]*model.Tag, error)
+	MediaAsset(ctx context.Context, id string) (*model.MediaAsset, error)
+	MediaAssets(ctx context.Context, ids []string) ([]*model.MediaAsset, error)
 }
 
 type executableSchema struct {
@@ -210,6 +231,67 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Level.Name(childComplexity), true
 
+	case "MediaAsset.bytes":
+		if e.complexity.MediaAsset.Bytes == nil {
+			break
+		}
+
+		return e.complexity.MediaAsset.Bytes(childComplexity), true
+	case "MediaAsset.createdAt":
+		if e.complexity.MediaAsset.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.MediaAsset.CreatedAt(childComplexity), true
+	case "MediaAsset.downloadURL":
+		if e.complexity.MediaAsset.DownloadURL == nil {
+			break
+		}
+
+		return e.complexity.MediaAsset.DownloadURL(childComplexity), true
+	case "MediaAsset.durationMs":
+		if e.complexity.MediaAsset.DurationMs == nil {
+			break
+		}
+
+		return e.complexity.MediaAsset.DurationMs(childComplexity), true
+	case "MediaAsset.id":
+		if e.complexity.MediaAsset.ID == nil {
+			break
+		}
+
+		return e.complexity.MediaAsset.ID(childComplexity), true
+	case "MediaAsset.kind":
+		if e.complexity.MediaAsset.Kind == nil {
+			break
+		}
+
+		return e.complexity.MediaAsset.Kind(childComplexity), true
+	case "MediaAsset.mimeType":
+		if e.complexity.MediaAsset.MimeType == nil {
+			break
+		}
+
+		return e.complexity.MediaAsset.MimeType(childComplexity), true
+	case "MediaAsset.sha256":
+		if e.complexity.MediaAsset.Sha256 == nil {
+			break
+		}
+
+		return e.complexity.MediaAsset.Sha256(childComplexity), true
+	case "MediaAsset.storageKey":
+		if e.complexity.MediaAsset.StorageKey == nil {
+			break
+		}
+
+		return e.complexity.MediaAsset.StorageKey(childComplexity), true
+	case "MediaAsset.uploadedBy":
+		if e.complexity.MediaAsset.UploadedBy == nil {
+			break
+		}
+
+		return e.complexity.MediaAsset.UploadedBy(childComplexity), true
+
 	case "Mutation.createLevel":
 		if e.complexity.Mutation.CreateLevel == nil {
 			break
@@ -254,6 +336,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteLevel(childComplexity, args["id"].(string)), true
+	case "Mutation.deleteMedia":
+		if e.complexity.Mutation.DeleteMedia == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteMedia_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteMedia(childComplexity, args["id"].(string)), true
 	case "Mutation.deleteTag":
 		if e.complexity.Mutation.DeleteTag == nil {
 			break
@@ -309,6 +402,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateTopic(childComplexity, args["id"].(string), args["input"].(model.UpdateTopicInput)), true
+	case "Mutation.uploadMedia":
+		if e.complexity.Mutation.UploadMedia == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_uploadMedia_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UploadMedia(childComplexity, args["input"].(model.UploadMediaInput)), true
 
 	case "Query.health":
 		if e.complexity.Query.Health == nil {
@@ -344,6 +448,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Levels(childComplexity), true
+	case "Query.mediaAsset":
+		if e.complexity.Query.MediaAsset == nil {
+			break
+		}
+
+		args, err := ec.field_Query_mediaAsset_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.MediaAsset(childComplexity, args["id"].(string)), true
+	case "Query.mediaAssets":
+		if e.complexity.Query.MediaAssets == nil {
+			break
+		}
+
+		args, err := ec.field_Query_mediaAssets_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.MediaAssets(childComplexity, args["ids"].([]string)), true
 	case "Query.tag":
 		if e.complexity.Query.Tag == nil {
 			break
@@ -437,6 +563,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateLevelInput,
 		ec.unmarshalInputUpdateTagInput,
 		ec.unmarshalInputUpdateTopicInput,
+		ec.unmarshalInputUploadMediaInput,
 	)
 	first := true
 
@@ -551,6 +678,9 @@ type Query {
 
   tag(id: ID, slug: String): Tag
   tags: [Tag!]!
+
+  mediaAsset(id: ID!): MediaAsset
+  mediaAssets(ids: [ID!]!): [MediaAsset!]!
 }
 
 type Mutation {
@@ -565,6 +695,9 @@ type Mutation {
   createTag(input: CreateTagInput!): Tag!
   updateTag(id: ID!, input: UpdateTagInput!): Tag!
   deleteTag(id: ID!): Boolean!
+
+  uploadMedia(input: UploadMediaInput!): MediaAsset!
+  deleteMedia(id: ID!): Boolean!
 }
 
 type Lesson {
@@ -627,7 +760,34 @@ input UpdateTagInput {
   name: String
 }
 
+enum MediaKind {
+  IMAGE
+  AUDIO
+}
+
+type MediaAsset {
+  id: ID!
+  storageKey: String!
+  kind: MediaKind!
+  mimeType: String!
+  bytes: Int!
+  durationMs: Int
+  sha256: String!
+  createdAt: Time!
+  uploadedBy: ID
+  downloadURL: String!
+}
+
+input UploadMediaInput {
+  file: Upload!
+  kind: MediaKind!
+  mimeType: String!
+  filename: String
+  uploadedBy: ID
+}
+
 scalar Time
+scalar Upload
 
 
 `, BuiltIn: false},
@@ -672,6 +832,17 @@ func (ec *executionContext) field_Mutation_createTopic_args(ctx context.Context,
 }
 
 func (ec *executionContext) field_Mutation_deleteLevel_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteMedia_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
@@ -752,6 +923,17 @@ func (ec *executionContext) field_Mutation_updateTopic_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_uploadMedia_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUploadMediaInput2contentᚑservicesᚋgraphᚋmodelᚐUploadMediaInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -787,6 +969,28 @@ func (ec *executionContext) field_Query_level_args(ctx context.Context, rawArgs 
 		return nil, err
 	}
 	args["code"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_mediaAsset_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_mediaAssets_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ids", ec.unmarshalNID2ᚕstringᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["ids"] = arg0
 	return args, nil
 }
 
@@ -1183,6 +1387,296 @@ func (ec *executionContext) _Level_name(ctx context.Context, field graphql.Colle
 func (ec *executionContext) fieldContext_Level_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Level",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAsset_id(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAsset_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAsset_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAsset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAsset_storageKey(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAsset_storageKey,
+		func(ctx context.Context) (any, error) {
+			return obj.StorageKey, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAsset_storageKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAsset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAsset_kind(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAsset_kind,
+		func(ctx context.Context) (any, error) {
+			return obj.Kind, nil
+		},
+		nil,
+		ec.marshalNMediaKind2contentᚑservicesᚋgraphᚋmodelᚐMediaKind,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAsset_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAsset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type MediaKind does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAsset_mimeType(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAsset_mimeType,
+		func(ctx context.Context) (any, error) {
+			return obj.MimeType, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAsset_mimeType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAsset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAsset_bytes(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAsset_bytes,
+		func(ctx context.Context) (any, error) {
+			return obj.Bytes, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAsset_bytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAsset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAsset_durationMs(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAsset_durationMs,
+		func(ctx context.Context) (any, error) {
+			return obj.DurationMs, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAsset_durationMs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAsset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAsset_sha256(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAsset_sha256,
+		func(ctx context.Context) (any, error) {
+			return obj.Sha256, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAsset_sha256(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAsset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAsset_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAsset_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAsset_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAsset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAsset_uploadedBy(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAsset_uploadedBy,
+		func(ctx context.Context) (any, error) {
+			return obj.UploadedBy, nil
+		},
+		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAsset_uploadedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAsset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAsset_downloadURL(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAsset_downloadURL,
+		func(ctx context.Context) (any, error) {
+			return obj.DownloadURL, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAsset_downloadURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAsset",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1614,6 +2108,110 @@ func (ec *executionContext) fieldContext_Mutation_deleteTag(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_uploadMedia(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_uploadMedia,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UploadMedia(ctx, fc.Args["input"].(model.UploadMediaInput))
+		},
+		nil,
+		ec.marshalNMediaAsset2ᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAsset,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_uploadMedia(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_MediaAsset_id(ctx, field)
+			case "storageKey":
+				return ec.fieldContext_MediaAsset_storageKey(ctx, field)
+			case "kind":
+				return ec.fieldContext_MediaAsset_kind(ctx, field)
+			case "mimeType":
+				return ec.fieldContext_MediaAsset_mimeType(ctx, field)
+			case "bytes":
+				return ec.fieldContext_MediaAsset_bytes(ctx, field)
+			case "durationMs":
+				return ec.fieldContext_MediaAsset_durationMs(ctx, field)
+			case "sha256":
+				return ec.fieldContext_MediaAsset_sha256(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_MediaAsset_createdAt(ctx, field)
+			case "uploadedBy":
+				return ec.fieldContext_MediaAsset_uploadedBy(ctx, field)
+			case "downloadURL":
+				return ec.fieldContext_MediaAsset_downloadURL(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MediaAsset", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_uploadMedia_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteMedia(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteMedia,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteMedia(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteMedia(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteMedia_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_health(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1960,6 +2558,132 @@ func (ec *executionContext) fieldContext_Query_tags(_ context.Context, field gra
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_mediaAsset(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_mediaAsset,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().MediaAsset(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalOMediaAsset2ᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAsset,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_mediaAsset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_MediaAsset_id(ctx, field)
+			case "storageKey":
+				return ec.fieldContext_MediaAsset_storageKey(ctx, field)
+			case "kind":
+				return ec.fieldContext_MediaAsset_kind(ctx, field)
+			case "mimeType":
+				return ec.fieldContext_MediaAsset_mimeType(ctx, field)
+			case "bytes":
+				return ec.fieldContext_MediaAsset_bytes(ctx, field)
+			case "durationMs":
+				return ec.fieldContext_MediaAsset_durationMs(ctx, field)
+			case "sha256":
+				return ec.fieldContext_MediaAsset_sha256(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_MediaAsset_createdAt(ctx, field)
+			case "uploadedBy":
+				return ec.fieldContext_MediaAsset_uploadedBy(ctx, field)
+			case "downloadURL":
+				return ec.fieldContext_MediaAsset_downloadURL(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MediaAsset", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_mediaAsset_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_mediaAssets(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_mediaAssets,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().MediaAssets(ctx, fc.Args["ids"].([]string))
+		},
+		nil,
+		ec.marshalNMediaAsset2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAssetᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_mediaAssets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_MediaAsset_id(ctx, field)
+			case "storageKey":
+				return ec.fieldContext_MediaAsset_storageKey(ctx, field)
+			case "kind":
+				return ec.fieldContext_MediaAsset_kind(ctx, field)
+			case "mimeType":
+				return ec.fieldContext_MediaAsset_mimeType(ctx, field)
+			case "bytes":
+				return ec.fieldContext_MediaAsset_bytes(ctx, field)
+			case "durationMs":
+				return ec.fieldContext_MediaAsset_durationMs(ctx, field)
+			case "sha256":
+				return ec.fieldContext_MediaAsset_sha256(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_MediaAsset_createdAt(ctx, field)
+			case "uploadedBy":
+				return ec.fieldContext_MediaAsset_uploadedBy(ctx, field)
+			case "downloadURL":
+				return ec.fieldContext_MediaAsset_downloadURL(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MediaAsset", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_mediaAssets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -3925,6 +4649,61 @@ func (ec *executionContext) unmarshalInputUpdateTopicInput(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUploadMediaInput(ctx context.Context, obj any) (model.UploadMediaInput, error) {
+	var it model.UploadMediaInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"file", "kind", "mimeType", "filename", "uploadedBy"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "file":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
+			data, err := ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.File = data
+		case "kind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			data, err := ec.unmarshalNMediaKind2contentᚑservicesᚋgraphᚋmodelᚐMediaKind(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kind = data
+		case "mimeType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mimeType"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MimeType = data
+		case "filename":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filename"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Filename = data
+		case "uploadedBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("uploadedBy"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UploadedBy = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -4050,6 +4829,84 @@ func (ec *executionContext) _Level(ctx context.Context, sel ast.SelectionSet, ob
 	return out
 }
 
+var mediaAssetImplementors = []string{"MediaAsset"}
+
+func (ec *executionContext) _MediaAsset(ctx context.Context, sel ast.SelectionSet, obj *model.MediaAsset) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mediaAssetImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MediaAsset")
+		case "id":
+			out.Values[i] = ec._MediaAsset_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "storageKey":
+			out.Values[i] = ec._MediaAsset_storageKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "kind":
+			out.Values[i] = ec._MediaAsset_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mimeType":
+			out.Values[i] = ec._MediaAsset_mimeType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bytes":
+			out.Values[i] = ec._MediaAsset_bytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "durationMs":
+			out.Values[i] = ec._MediaAsset_durationMs(ctx, field, obj)
+		case "sha256":
+			out.Values[i] = ec._MediaAsset_sha256(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._MediaAsset_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "uploadedBy":
+			out.Values[i] = ec._MediaAsset_uploadedBy(ctx, field, obj)
+		case "downloadURL":
+			out.Values[i] = ec._MediaAsset_downloadURL(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -4128,6 +4985,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteTag":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteTag(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "uploadMedia":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_uploadMedia(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteMedia":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteMedia(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -4326,6 +5197,47 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_tags(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "mediaAsset":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_mediaAsset(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "mediaAssets":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_mediaAssets(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -4854,6 +5766,36 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
+func (ec *executionContext) unmarshalNID2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNID2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNID2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNID2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4926,6 +5868,74 @@ func (ec *executionContext) marshalNLevel2ᚖcontentᚑservicesᚋgraphᚋmodel�
 		return graphql.Null
 	}
 	return ec._Level(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMediaAsset2contentᚑservicesᚋgraphᚋmodelᚐMediaAsset(ctx context.Context, sel ast.SelectionSet, v model.MediaAsset) graphql.Marshaler {
+	return ec._MediaAsset(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMediaAsset2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAssetᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MediaAsset) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNMediaAsset2ᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAsset(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNMediaAsset2ᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAsset(ctx context.Context, sel ast.SelectionSet, v *model.MediaAsset) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MediaAsset(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNMediaKind2contentᚑservicesᚋgraphᚋmodelᚐMediaKind(ctx context.Context, v any) (model.MediaKind, error) {
+	var res model.MediaKind
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMediaKind2contentᚑservicesᚋgraphᚋmodelᚐMediaKind(ctx context.Context, sel ast.SelectionSet, v model.MediaKind) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
@@ -5003,19 +6013,12 @@ func (ec *executionContext) marshalNTag2ᚖcontentᚑservicesᚋgraphᚋmodelᚐ
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {
-	res, err := graphql.UnmarshalTime(v)
+	res, err := ec.unmarshalInputTime(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalTime(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
+	return ec._Time(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNTopic2contentᚑservicesᚋgraphᚋmodelᚐTopic(ctx context.Context, sel ast.SelectionSet, v model.Topic) graphql.Marshaler {
@@ -5088,6 +6091,27 @@ func (ec *executionContext) unmarshalNUpdateTagInput2contentᚑservicesᚋgraph�
 
 func (ec *executionContext) unmarshalNUpdateTopicInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateTopicInput(ctx context.Context, v any) (model.UpdateTopicInput, error) {
 	res, err := ec.unmarshalInputUpdateTopicInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v any) (graphql.Upload, error) {
+	res, err := graphql.UnmarshalUpload(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v graphql.Upload) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalUpload(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNUploadMediaInput2contentᚑservicesᚋgraphᚋmodelᚐUploadMediaInput(ctx context.Context, v any) (model.UploadMediaInput, error) {
+	res, err := ec.unmarshalInputUploadMediaInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -5392,6 +6416,24 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalInt(*v)
+	return res
+}
+
 func (ec *executionContext) marshalOLesson2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLesson(ctx context.Context, sel ast.SelectionSet, v *model.Lesson) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -5404,6 +6446,13 @@ func (ec *executionContext) marshalOLevel2ᚖcontentᚑservicesᚋgraphᚋmodel�
 		return graphql.Null
 	}
 	return ec._Level(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOMediaAsset2ᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAsset(ctx context.Context, sel ast.SelectionSet, v *model.MediaAsset) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._MediaAsset(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {
