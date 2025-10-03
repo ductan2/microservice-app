@@ -21,6 +21,8 @@ type Query {
   lesson(id: ID!): Lesson
   lessonByCode(code: String!): Lesson
 
+  quiz(id: ID!): Quiz
+  quizzes(lessonId: ID, page: Int = 1, pageSize: Int = 20): QuizListResult!
   flashcardSet(id: ID!): FlashcardSet
   flashcardSets(topicId: ID, levelId: ID, page: Int, pageSize: Int): FlashcardSetList!
   lessons(filter: LessonFilterInput, page: Int, pageSize: Int): LessonCollection!
@@ -55,6 +57,9 @@ type Mutation {
 
   createFlashcardSet(input: CreateFlashcardSetInput!): FlashcardSet!
   addFlashcard(input: AddFlashcardInput!): Flashcard!
+
+  createQuiz(input: CreateQuizInput!): Quiz!
+  addQuizQuestion(quizId: ID!, input: CreateQuizQuestionInput!): QuizQuestion!
 
 }
 
@@ -159,6 +164,46 @@ input CreateLessonInput {
   createdBy: ID
 }
 
+type Quiz {
+  id: ID!
+  lessonId: ID
+  title: String!
+  description: String
+  totalPoints: Int!
+  timeLimitS: Int
+  createdAt: Time!
+  questions: [QuizQuestion!]!
+}
+
+type QuizQuestion {
+  id: ID!
+  quizId: ID!
+  ord: Int!
+  type: String!
+  prompt: String!
+  promptMedia: ID
+  points: Int!
+  metadata: JSON!
+}
+
+type QuizListResult {
+  items: [Quiz!]!
+  totalCount: Int!
+}
+
+input CreateQuizInput {
+  lessonId: ID
+  title: String!
+  description: String
+  timeLimitS: Int
+}
+
+input CreateQuizQuestionInput {
+  type: String!
+  prompt: String!
+  promptMedia: ID
+  points: Int = 1
+  metadata: JSON
 input UpdateLessonInput {
   title: String
   description: String
@@ -207,6 +252,7 @@ input UpdateLessonSectionInput {
 
 scalar Time
 scalar Upload
+scalar JSON
 scalar Map
 
 type FlashcardSet {

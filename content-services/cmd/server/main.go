@@ -48,6 +48,8 @@ func main() {
 	mediaRepo := repository.NewMediaRepository(database)
 	lessonRepo := repository.NewLessonRepository(database)
 	sectionRepo := repository.NewLessonSectionRepository(database)
+	quizRepo := repository.NewQuizRepository(database)
+	quizQuestionRepo := repository.NewQuizQuestionRepository(database)
 	flashcardSetRepo := repository.NewFlashcardSetRepository(database)
 	flashcardRepo := repository.NewFlashcardRepository(database)
 	// Note: outboxRepo would need a separate database connection for transactional outbox pattern
@@ -69,6 +71,9 @@ func main() {
 	}
 	mediaService := service.NewMediaService(mediaRepo, s3Client, config.GetS3PresignTTL())
 	lessonService := service.NewLessonService(lessonRepo, sectionRepo, outboxRepo)
+	quizService := service.NewQuizService(quizRepo, quizQuestionRepo, nil, nil, outboxRepo)
+
+	resolver := &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore, Media: mediaService, LessonService: lessonService, QuizService: quizService}
 	flashcardService := service.NewFlashcardService(flashcardSetRepo, flashcardRepo, tagRepo)
 
 	resolver := &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore, Media: mediaService, LessonService: lessonService, Flashcards: flashcardService}

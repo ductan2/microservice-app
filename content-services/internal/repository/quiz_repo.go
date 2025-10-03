@@ -3,9 +3,13 @@ package repository
 import (
 	"content-services/internal/models"
 	"context"
+	"errors"
+	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type QuizRepository interface {
@@ -34,108 +38,355 @@ type QuestionOptionRepository interface {
 }
 
 type quizRepository struct {
-	db *gorm.DB
+	collection *mongo.Collection
 }
 
 type quizQuestionRepository struct {
-	db *gorm.DB
+	collection *mongo.Collection
 }
 
 type questionOptionRepository struct {
-	db *gorm.DB
+	collection *mongo.Collection
 }
 
-func NewQuizRepository(db *gorm.DB) QuizRepository {
-	return &quizRepository{db: db}
+func NewQuizRepository(db *mongo.Database) QuizRepository {
+	return &quizRepository{collection: db.Collection("quizzes")}
 }
 
-func NewQuizQuestionRepository(db *gorm.DB) QuizQuestionRepository {
-	return &quizQuestionRepository{db: db}
+func NewQuizQuestionRepository(db *mongo.Database) QuizQuestionRepository {
+	return &quizQuestionRepository{collection: db.Collection("quiz_questions")}
 }
 
-func NewQuestionOptionRepository(db *gorm.DB) QuestionOptionRepository {
-	return &questionOptionRepository{db: db}
+func NewQuestionOptionRepository(db *mongo.Database) QuestionOptionRepository {
+	return &questionOptionRepository{collection: db.Collection("question_options")}
+}
+
+type quizDoc struct {
+	ID          string    `bson:"_id"`
+	LessonID    *string   `bson:"lesson_id,omitempty"`
+	Title       string    `bson:"title"`
+	Description string    `bson:"description"`
+	TotalPoints int       `bson:"total_points"`
+	TimeLimitS  int       `bson:"time_limit_s,omitempty"`
+	CreatedAt   time.Time `bson:"created_at"`
+}
+
+func quizDocFromModel(quiz *models.Quiz) *quizDoc {
+	doc := &quizDoc{
+		ID:          quiz.ID.String(),
+		Title:       quiz.Title,
+		Description: quiz.Description,
+		TotalPoints: quiz.TotalPoints,
+		TimeLimitS:  quiz.TimeLimitS,
+		CreatedAt:   quiz.CreatedAt,
+	}
+
+	if quiz.LessonID != nil {
+		lessonID := quiz.LessonID.String()
+		doc.LessonID = &lessonID
+	}
+
+	return doc
+}
+
+func (d *quizDoc) toModel() *models.Quiz {
+	quiz := &models.Quiz{
+		ID:          uuid.MustParse(d.ID),
+		Title:       d.Title,
+		Description: d.Description,
+		TotalPoints: d.TotalPoints,
+		TimeLimitS:  d.TimeLimitS,
+		CreatedAt:   d.CreatedAt,
+	}
+
+	if d.LessonID != nil && *d.LessonID != "" {
+		id, err := uuid.Parse(*d.LessonID)
+		if err == nil {
+			quiz.LessonID = &id
+		}
+	}
+
+	return quiz
+}
+
+type quizQuestionDoc struct {
+	ID          string         `bson:"_id"`
+	QuizID      string         `bson:"quiz_id"`
+	Ord         int            `bson:"ord"`
+	Type        string         `bson:"type"`
+	Prompt      string         `bson:"prompt"`
+	PromptMedia *string        `bson:"prompt_media,omitempty"`
+	Points      int            `bson:"points"`
+	Metadata    map[string]any `bson:"metadata"`
+}
+
+func quizQuestionDocFromModel(question *models.QuizQuestion) *quizQuestionDoc {
+	doc := &quizQuestionDoc{
+		ID:       question.ID.String(),
+		QuizID:   question.QuizID.String(),
+		Ord:      question.Ord,
+		Type:     question.Type,
+		Prompt:   question.Prompt,
+		Points:   question.Points,
+		Metadata: question.Metadata,
+	}
+
+	if question.PromptMedia != nil {
+		mediaID := question.PromptMedia.String()
+		doc.PromptMedia = &mediaID
+	}
+
+	return doc
+}
+
+func (d *quizQuestionDoc) toModel() *models.QuizQuestion {
+	question := &models.QuizQuestion{
+		ID:       uuid.MustParse(d.ID),
+		QuizID:   uuid.MustParse(d.QuizID),
+		Ord:      d.Ord,
+		Type:     d.Type,
+		Prompt:   d.Prompt,
+		Points:   d.Points,
+		Metadata: d.Metadata,
+	}
+
+	if d.PromptMedia != nil && *d.PromptMedia != "" {
+		id, err := uuid.Parse(*d.PromptMedia)
+		if err == nil {
+			question.PromptMedia = &id
+		}
+	}
+
+	return question
 }
 
 // Quiz implementations
 func (r *quizRepository) Create(ctx context.Context, quiz *models.Quiz) error {
-	// TODO: implement
-	return nil
+	if quiz == nil {
+		return errors.New("quiz: nil quiz")
+	}
+	if quiz.ID == uuid.Nil {
+		quiz.ID = uuid.New()
+	}
+	if quiz.CreatedAt.IsZero() {
+		quiz.CreatedAt = time.Now().UTC()
+	}
+
+	_, err := r.collection.InsertOne(ctx, quizDocFromModel(quiz))
+	return err
 }
 
 func (r *quizRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Quiz, error) {
-	// TODO: implement
-	return nil, nil
+	var doc quizDoc
+	err := r.collection.FindOne(ctx, bson.M{"_id": id.String()}).Decode(&doc)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, mongo.ErrNoDocuments
+		}
+		return nil, err
+	}
+	return doc.toModel(), nil
 }
 
 func (r *quizRepository) List(ctx context.Context, lessonID *uuid.UUID, limit, offset int) ([]models.Quiz, int64, error) {
-	// TODO: implement with filters
-	return nil, 0, nil
+	filter := bson.M{}
+	if lessonID != nil {
+		filter["lesson_id"] = lessonID.String()
+	}
+
+	findOptions := options.Find()
+	if limit > 0 {
+		l := int64(limit)
+		findOptions.SetLimit(l)
+	}
+	if offset > 0 {
+		findOptions.SetSkip(int64(offset))
+	}
+	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
+
+	cursor, err := r.collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	var quizzes []models.Quiz
+	for cursor.Next(ctx) {
+		var doc quizDoc
+		if err := cursor.Decode(&doc); err != nil {
+			return nil, 0, err
+		}
+		quizzes = append(quizzes, *doc.toModel())
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	total, err := r.collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return quizzes, total, nil
 }
 
 func (r *quizRepository) Update(ctx context.Context, quiz *models.Quiz) error {
-	// TODO: implement
-	return nil
+	if quiz == nil {
+		return errors.New("quiz: nil quiz")
+	}
+	update := bson.M{
+		"title":        quiz.Title,
+		"description":  quiz.Description,
+		"total_points": quiz.TotalPoints,
+		"time_limit_s": quiz.TimeLimitS,
+	}
+	if quiz.LessonID != nil {
+		update["lesson_id"] = quiz.LessonID.String()
+	} else {
+		update["lesson_id"] = nil
+	}
+
+	_, err := r.collection.UpdateByID(ctx, quiz.ID.String(), bson.M{"$set": update})
+	return err
 }
 
 func (r *quizRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	// TODO: implement
+	res, err := r.collection.DeleteOne(ctx, bson.M{"_id": id.String()})
+	if err != nil {
+		return err
+	}
+	if res.DeletedCount == 0 {
+		return mongo.ErrNoDocuments
+	}
 	return nil
 }
 
 // QuizQuestion implementations
 func (r *quizQuestionRepository) Create(ctx context.Context, question *models.QuizQuestion) error {
-	// TODO: implement - auto-increment ord
-	return nil
+	if question == nil {
+		return errors.New("quiz question: nil question")
+	}
+	if question.ID == uuid.Nil {
+		question.ID = uuid.New()
+	}
+	if question.Metadata == nil {
+		question.Metadata = map[string]any{}
+	}
+
+	if question.Ord == 0 {
+		opts := options.FindOne().SetSort(bson.D{{Key: "ord", Value: -1}})
+		var last quizQuestionDoc
+		err := r.collection.FindOne(ctx, bson.M{"quiz_id": question.QuizID.String()}, opts).Decode(&last)
+		if err != nil {
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				question.Ord = 1
+			} else {
+				return err
+			}
+		} else {
+			question.Ord = last.Ord + 1
+		}
+	}
+
+	_, err := r.collection.InsertOne(ctx, quizQuestionDocFromModel(question))
+	return err
 }
 
 func (r *quizQuestionRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.QuizQuestion, error) {
-	// TODO: implement
-	return nil, nil
+	var doc quizQuestionDoc
+	err := r.collection.FindOne(ctx, bson.M{"_id": id.String()}).Decode(&doc)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, mongo.ErrNoDocuments
+		}
+		return nil, err
+	}
+	return doc.toModel(), nil
 }
 
 func (r *quizQuestionRepository) GetByQuizID(ctx context.Context, quizID uuid.UUID) ([]models.QuizQuestion, error) {
-	// TODO: implement - order by ord
-	return nil, nil
+	cursor, err := r.collection.Find(ctx, bson.M{"quiz_id": quizID.String()}, options.Find().SetSort(bson.D{{Key: "ord", Value: 1}}))
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var questions []models.QuizQuestion
+	for cursor.Next(ctx) {
+		var doc quizQuestionDoc
+		if err := cursor.Decode(&doc); err != nil {
+			return nil, err
+		}
+		questions = append(questions, *doc.toModel())
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return questions, nil
 }
 
 func (r *quizQuestionRepository) Update(ctx context.Context, question *models.QuizQuestion) error {
-	// TODO: implement
-	return nil
+	if question == nil {
+		return errors.New("quiz question: nil question")
+	}
+
+	update := bson.M{
+		"ord":      question.Ord,
+		"type":     question.Type,
+		"prompt":   question.Prompt,
+		"points":   question.Points,
+		"metadata": question.Metadata,
+	}
+	if question.PromptMedia != nil {
+		update["prompt_media"] = question.PromptMedia.String()
+	} else {
+		update["prompt_media"] = nil
+	}
+
+	_, err := r.collection.UpdateByID(ctx, question.ID.String(), bson.M{"$set": update})
+	return err
 }
 
 func (r *quizQuestionRepository) Reorder(ctx context.Context, quizID uuid.UUID, questionIDs []uuid.UUID) error {
-	// TODO: implement
+	for idx, id := range questionIDs {
+		ord := idx + 1
+		_, err := r.collection.UpdateOne(ctx, bson.M{"_id": id.String(), "quiz_id": quizID.String()}, bson.M{"$set": bson.M{"ord": ord}})
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 func (r *quizQuestionRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	// TODO: implement
+	res, err := r.collection.DeleteOne(ctx, bson.M{"_id": id.String()})
+	if err != nil {
+		return err
+	}
+	if res.DeletedCount == 0 {
+		return mongo.ErrNoDocuments
+	}
 	return nil
 }
 
 // QuestionOption implementations
 func (r *questionOptionRepository) Create(ctx context.Context, option *models.QuestionOption) error {
-	// TODO: implement - auto-increment ord
-	return nil
+	return errors.New("question options not implemented")
 }
 
 func (r *questionOptionRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.QuestionOption, error) {
-	// TODO: implement
-	return nil, nil
+	return nil, errors.New("question options not implemented")
 }
 
 func (r *questionOptionRepository) GetByQuestionID(ctx context.Context, questionID uuid.UUID) ([]models.QuestionOption, error) {
-	// TODO: implement - order by ord
-	return nil, nil
+	return nil, errors.New("question options not implemented")
 }
 
 func (r *questionOptionRepository) Update(ctx context.Context, option *models.QuestionOption) error {
-	// TODO: implement
-	return nil
+	return errors.New("question options not implemented")
 }
 
 func (r *questionOptionRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	// TODO: implement
-	return nil
+	return errors.New("question options not implemented")
 }

@@ -48,6 +48,21 @@ type CreateLevelInput struct {
 	Name string `json:"name"`
 }
 
+type CreateQuizInput struct {
+	LessonID    *string `json:"lessonId,omitempty"`
+	Title       string  `json:"title"`
+	Description *string `json:"description,omitempty"`
+	TimeLimitS  *int    `json:"timeLimitS,omitempty"`
+}
+
+type CreateQuizQuestionInput struct {
+	Type        string         `json:"type"`
+	Prompt      string         `json:"prompt"`
+	PromptMedia *string        `json:"promptMedia,omitempty"`
+	Points      *int           `json:"points,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
+}
+
 type CreateTagInput struct {
 	Slug string `json:"slug"`
 	Name string `json:"name"`
@@ -148,6 +163,33 @@ type Mutation struct {
 }
 
 type Query struct {
+}
+
+type Quiz struct {
+	ID          string          `json:"id"`
+	LessonID    *string         `json:"lessonId,omitempty"`
+	Title       string          `json:"title"`
+	Description *string         `json:"description,omitempty"`
+	TotalPoints int             `json:"totalPoints"`
+	TimeLimitS  *int            `json:"timeLimitS,omitempty"`
+	CreatedAt   time.Time       `json:"createdAt"`
+	Questions   []*QuizQuestion `json:"questions"`
+}
+
+type QuizListResult struct {
+	Items      []*Quiz `json:"items"`
+	TotalCount int     `json:"totalCount"`
+}
+
+type QuizQuestion struct {
+	ID          string         `json:"id"`
+	QuizID      string         `json:"quizId"`
+	Ord         int            `json:"ord"`
+	Type        string         `json:"type"`
+	Prompt      string         `json:"prompt"`
+	PromptMedia *string        `json:"promptMedia,omitempty"`
+	Points      int            `json:"points"`
+	Metadata    map[string]any `json:"metadata"`
 }
 
 type Tag struct {
