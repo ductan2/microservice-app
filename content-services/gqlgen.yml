@@ -32,3 +32,8 @@ models:
     fields:
       cards:
         resolver: true
+      sections:
+        resolver: true
+  Map:
+    model:
+      - github.com/99designs/gqlgen/graphql.Map

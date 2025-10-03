@@ -243,7 +243,32 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-    
+
+  bff-services:
+    build:
+      context: ../bff-services
+      dockerfile: Dockerfile
+    container_name: bff-services
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bff.rule=PathPrefix(`/api/bff`)"
+      - "traefik.http.services.bff.loadbalancer.server.port=8010"
+      - "traefik.http.middlewares.bff-stripprefix.stripprefix.prefixes=/api/bff"
+      - "traefik.http.routers.bff.middlewares=bff-stripprefix@docker"
+    ports:
+      - "${BFF_SERVICES_PORT:-8010}:8010"
+    environment:
+      - PORT=8010
+    depends_on:
+      user-services:
+        condition: service_started
+      lesson-services:
+        condition: service_started
+      content-services:
+        condition: service_started
+      notification-services:
+        condition: service_started
 
   traefik:
     image: traefik:v3.5.3

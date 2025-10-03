@@ -1,6 +1,9 @@
 # user-services
 
-Minimal Go backend using Gin, listening on port 8001 by default.
+User service for authentication, sessions, profiles, password reset, and MFA. Go + Gin. Default port 8001.
+
+- Base API URL: /api/v1
+- Health URL: /health
 
 ## Run
 
@@ -68,13 +71,323 @@ REDIS_ADDR=redis:6379
 RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
 ```
 
-## Endpoints
+---
 
-- `GET /health` -> `{ "status": "ok" }`
-- `POST /register` -> `{ "message" :"success | fail" }`
-- `POST /login` -> `{ "token" : "....."}`
+## Authentication
 
-## SQL 
+Protected endpoints require an Authorization header with a Bearer JWT. The token is validated and the session is checked in Redis.
+
+Header:
+- Authorization: Bearer <access_token>
+
+On successful auth, middleware attaches per-request context (also surfaced by /api/v1/profile/check-auth):
+- X-User-ID
+- X-User-Email
+- X-Session-ID
+
+## Common response format
+
+Most endpoints return this envelope:
+
+```json path=null start=null
+{
+  "status": "success" | "error",
+  "message": "optional message",
+  "data": { /* endpoint-specific */ },
+  "error": { /* optional error details */ }
+}
+```
+
+Exceptions:
+- GET /health returns raw: { "status": "ok" }
+- Password endpoints currently respond with raw JSON like {"message": ...} or {"error": ...}
+- 204 responses have no body
+
+## Data models (DTOs)
+
+- PublicUser
+```json path=null start=null
+{
+  "id": "uuid",
+  "email": "string",
+  "email_verified": true,
+  "status": "active|locked|disabled|deleted",
+  "profile": {
+    "display_name": "string",
+    "avatar_url": "string",
+    "locale": "string",
+    "time_zone": "string",
+    "updated_at": "RFC3339 timestamp"
+  },
+  "roles": ["string"],
+  "created_at": "RFC3339 timestamp",
+  "updated_at": "RFC3339 timestamp"
+}
+```
+
+- UserProfile
+```json path=null start=null
+{
+  "display_name": "string",
+  "avatar_url": "string",
+  "locale": "string",
+  "time_zone": "string",
+  "updated_at": "RFC3339 timestamp"
+}
+```
+
+- SessionResponse
+```json path=null start=null
+{
+  "id": "uuid",
+  "user_agent": "string",
+  "ip_addr": "string",
+  "created_at": "RFC3339 timestamp",
+  "expires_at": "RFC3339 timestamp",
+  "is_current": true
+}
+```
+
+- MFA objects
+```json path=null start=null
+{
+  "id": "uuid",
+  "type": "totp|webauthn",
+  "label": "string",
+  "secret": "string",
+  "qr_code_url": "data:image/png;base64,...",
+  "added_at": "RFC3339 timestamp"
+}
+```
+
+---
+
+## API Reference
+
+Base: /api/v1
+
+### Health
+- GET /health
+  - 200
+  ```json path=null start=null
+  { "status": "ok" }
+  ```
+
+### Auth
+
+- POST /api/v1/register
+  - Request
+  ```json path=null start=null
+  { "email": "user@example.com", "name": "Jane", "password": "Str0ngP@ssword" }
+  ```
+  - 201
+  ```json path=null start=null
+  {
+    "status": "success",
+    "data": {
+      "message": "Registration successful! Please check your email to verify your account.",
+      "email": "user@example.com"
+    }
+  }
+  ```
+  - 400/500: error envelope
+
+- POST /api/v1/login
+  - Request
+  ```json path=null start=null
+  { "email": "user@example.com", "password": "Str0ngP@ssword", "mfa_code": "123456" }
+  ```
+  - 200
+  ```json path=null start=null
+  {
+    "status": "success",
+    "data": {
+      "access_token": "jwt...",
+      "refresh_token": "jwt...",
+      "expires_at": "RFC3339 timestamp",
+      "mfa_required": false,
+      "user": {
+        "id": "uuid",
+        "email": "user@example.com",
+        "email_verified": true,
+        "status": "active",
+        "profile": {
+          "display_name": "Jane",
+          "avatar_url": "https://...",
+          "locale": "en",
+          "time_zone": "UTC",
+          "updated_at": "RFC3339 timestamp"
+        },
+        "created_at": "RFC3339 timestamp",
+        "updated_at": "RFC3339 timestamp"
+      }
+    }
+  }
+  ```
+  - 401
+  ```json path=null start=null
+  { "status": "error", "message": "Invalid email or password" }
+  ```
+  - 401 (MFA)
+  ```json path=null start=null
+  { "status": "error", "message": "Invalid MFA code" }
+  ```
+
+- POST /api/v1/logout
+  - 200
+  ```json path=null start=null
+  { "status": "success", "data": { "message": "Logged out successfully" } }
+  ```
+
+- GET /api/v1/verify-email?token=...
+  - 200
+  ```json path=null start=null
+  { "status": "success", "data": { "message": "Email verified successfully! You can now login." } }
+  ```
+  - 400
+  ```json path=null start=null
+  { "status": "error", "message": "Verification token is required" }
+  ```
+
+### Profile (requires Authorization: Bearer <token>)
+
+- GET /api/v1/profile
+  - 200
+  ```json path=null start=null
+  { "status": "success", "data": { "display_name": "Jane", "avatar_url": "...", "locale": "en", "time_zone": "UTC", "updated_at": "RFC3339" } }
+  ```
+  - 401 error envelope
+
+- PUT /api/v1/profile
+  - Request
+  ```json path=null start=null
+  { "display_name": "Jane", "avatar_url": "https://...", "locale": "en", "time_zone": "UTC" }
+  ```
+  - 200: updated profile in envelope
+
+- GET /api/v1/profile/check-auth
+  - 200: empty data; headers include X-User-ID, X-User-Email, X-Session-ID
+
+### Password
+
+- POST /api/v1/password/reset/request
+  - Request
+  ```json path=null start=null
+  { "email": "user@example.com" }
+  ```
+  - 200
+  ```json path=null start=null
+  { "message": "If the email exists, a password reset link has been sent" }
+  ```
+  - 400/500
+  ```json path=null start=null
+  { "error": "..." }
+  ```
+
+- POST /api/v1/password/reset/confirm
+  - Request
+  ```json path=null start=null
+  { "token": "reset-token", "new_password": "NewStr0ngP@ss" }
+  ```
+  - 200
+  ```json path=null start=null
+  { "message": "Password has been reset successfully" }
+  ```
+  - 400
+  ```json path=null start=null
+  { "error": "..." }
+  ```
+
+- POST /api/v1/password/change (requires Authorization)
+  - Request
+  ```json path=null start=null
+  { "old_password": "OldPass", "new_password": "NewStr0ngP@ss" }
+  ```
+  - 200
+  ```json path=null start=null
+  { "message": "Password changed successfully" }
+  ```
+  - 400/401/500 with {"error": "..."}
+
+### MFA (requires Authorization)
+
+- POST /api/v1/mfa/setup
+  - Request
+  ```json path=null start=null
+  { "type": "totp", "label": "Authenticator" }
+  ```
+  - 200: MFA setup info (TOTP includes secret and QR code data URL)
+
+- POST /api/v1/mfa/verify
+  - Request
+  ```json path=null start=null
+  { "method_id": "uuid", "code": "123456" }
+  ```
+  - 200
+  ```json path=null start=null
+  { "status": "success", "data": { "message": "MFA verified successfully" } }
+  ```
+
+- POST /api/v1/mfa/disable
+  - Request
+  ```json path=null start=null
+  { "method_id": "uuid", "password": "Str0ngP@ssword" }
+  ```
+  - 200
+  ```json path=null start=null
+  { "status": "success", "data": { "message": "MFA disabled" } }
+  ```
+
+- GET /api/v1/mfa/methods
+  - 200: array of MFA methods in envelope
+
+### Sessions (requires Authorization)
+
+- GET /api/v1/sessions
+  - 200
+  ```json path=null start=null
+  { "status": "success", "data": [ { "id": "uuid", "user_agent": "...", "ip_addr": "...", "created_at": "...", "expires_at": "...", "is_current": true } ] }
+  ```
+
+- DELETE /api/v1/sessions/:id
+  - 204 No Content
+
+- POST /api/v1/sessions/revoke-all
+  - 204 No Content
+
+---
+
+## Curl quickstart
+
+- Register
+```bash path=null start=null
+curl -s -X POST http://localhost:8001/api/v1/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com","name":"Jane","password":"Str0ngP@ssword"}'
+```
+
+- Login
+```bash path=null start=null
+curl -s -X POST http://localhost:8001/api/v1/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com","password":"Str0ngP@ssword"}'
+```
+
+- Get profile
+```bash path=null start=null
+TOKEN=<access_token>
+curl -s http://localhost:8001/api/v1/profile \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+---
+
+## Notes
+- Role and audit endpoints exist in code scaffolding but are not currently registered in the router.
+- Refresh token DTOs exist but a refresh endpoint is not exposed in routes.
+- Session validation depends on Redis being available and seeded by login flow.
+
+## SQL
 ``` sql
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
