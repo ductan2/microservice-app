@@ -204,6 +204,7 @@ input CreateQuizQuestionInput {
   promptMedia: ID
   points: Int = 1
   metadata: JSON
+}
 input UpdateLessonInput {
   title: String
   description: String

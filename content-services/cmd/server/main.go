@@ -76,7 +76,7 @@ func main() {
 	resolver := &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore, Media: mediaService, LessonService: lessonService, QuizService: quizService}
 	flashcardService := service.NewFlashcardService(flashcardSetRepo, flashcardRepo, tagRepo)
 
-	resolver := &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore, Media: mediaService, LessonService: lessonService, Flashcards: flashcardService}
+	resolver = &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore, Media: mediaService, LessonService: lessonService, Flashcards: flashcardService}
 	gqlSrv := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	graphqlHandler := handler.NewDefaultServer(gqlSrv)
 

@@ -130,7 +130,9 @@ func mapFlashcardError(err error) error {
 		return gqlerror.Errorf("flashcard not found")
 	default:
 		return err
-    
+	}
+}
+
 // mapLessonSectionError maps lesson section errors to GraphQL errors.
 func mapLessonSectionError(err error) error {
 	if err == nil {
@@ -388,6 +390,7 @@ func mapQuizQuestion(q *models.QuizQuestion) *model.QuizQuestion {
 		Points:      q.Points,
 		Metadata:    metadata,
 	}
+}
 // mapFlashcardSet converts models.FlashcardSet to model.FlashcardSet.
 func mapFlashcardSet(set *models.FlashcardSet) *model.FlashcardSet {
 	if set == nil {
