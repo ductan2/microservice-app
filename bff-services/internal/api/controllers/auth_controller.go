@@ -31,7 +31,7 @@ func (a *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	respondWithEnvelope(c, resp)
+	respondWithServiceResponse(c, resp)
 }
 
 func (a *AuthController) Login(c *gin.Context) {
@@ -47,19 +47,36 @@ func (a *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	respondWithEnvelope(c, resp)
+	respondWithServiceResponse(c, resp)
 }
 
-func respondWithEnvelope(c *gin.Context, resp *services.HTTPResponse) {
-	if resp == nil {
-		c.Status(http.StatusNoContent)
+func (a *AuthController) Logout(c *gin.Context) {
+	token, ok := requireBearerToken(c)
+	if !ok {
 		return
 	}
 
-	if resp.IsBodyEmpty() {
-		c.Status(resp.StatusCode)
+	resp, err := a.userService.Logout(c.Request.Context(), token)
+	if err != nil {
+		utils.Fail(c, "Unable to logout", http.StatusBadGateway, err.Error())
 		return
 	}
 
-	c.JSON(resp.StatusCode, resp.Body)
+	respondWithServiceResponse(c, resp)
+}
+
+func (a *AuthController) VerifyEmail(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		utils.Fail(c, "Verification token is required", http.StatusBadRequest, "missing token")
+		return
+	}
+
+	resp, err := a.userService.VerifyEmail(c.Request.Context(), token)
+	if err != nil {
+		utils.Fail(c, "Unable to verify email", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(c, resp)
 }
