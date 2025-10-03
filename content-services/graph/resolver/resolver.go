@@ -13,4 +13,5 @@ type Resolver struct {
 	Taxonomy      *taxonomy.Store
 	Media         service.MediaService
 	LessonService service.LessonService
+	QuizService   service.QuizService
 }

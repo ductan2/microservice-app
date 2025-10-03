@@ -20,6 +20,9 @@ type Query {
 
   lesson(id: ID!): Lesson
   lessonByCode(code: String!): Lesson
+
+  quiz(id: ID!): Quiz
+  quizzes(lessonId: ID, page: Int = 1, pageSize: Int = 20): QuizListResult!
 }
 
 type Mutation {
@@ -39,6 +42,9 @@ type Mutation {
   deleteMedia(id: ID!): Boolean!
 
   createLesson(input: CreateLessonInput!): Lesson!
+
+  createQuiz(input: CreateQuizInput!): Quiz!
+  addQuizQuestion(quizId: ID!, input: CreateQuizQuestionInput!): QuizQuestion!
 
 }
 
@@ -142,7 +148,50 @@ input CreateLessonInput {
   createdBy: ID
 }
 
+type Quiz {
+  id: ID!
+  lessonId: ID
+  title: String!
+  description: String
+  totalPoints: Int!
+  timeLimitS: Int
+  createdAt: Time!
+  questions: [QuizQuestion!]!
+}
+
+type QuizQuestion {
+  id: ID!
+  quizId: ID!
+  ord: Int!
+  type: String!
+  prompt: String!
+  promptMedia: ID
+  points: Int!
+  metadata: JSON!
+}
+
+type QuizListResult {
+  items: [Quiz!]!
+  totalCount: Int!
+}
+
+input CreateQuizInput {
+  lessonId: ID
+  title: String!
+  description: String
+  timeLimitS: Int
+}
+
+input CreateQuizQuestionInput {
+  type: String!
+  prompt: String!
+  promptMedia: ID
+  points: Int = 1
+  metadata: JSON
+}
+
 scalar Time
 scalar Upload
+scalar JSON
 
 

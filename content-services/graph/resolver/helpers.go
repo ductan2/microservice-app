@@ -197,6 +197,61 @@ func (r *Resolver) mapMediaAsset(ctx context.Context, media *models.MediaAsset) 
 	}, nil
 }
 
+// mapQuiz converts models.Quiz to model.Quiz (questions resolved separately)
+func mapQuiz(q *models.Quiz) *model.Quiz {
+	if q == nil {
+		return nil
+	}
+
+	var lessonID *string
+	if q.LessonID != nil {
+		id := q.LessonID.String()
+		lessonID = &id
+	}
+
+	description := toStringPtr(q.Description)
+	timeLimit := toIntPtr(q.TimeLimitS)
+
+	return &model.Quiz{
+		ID:          q.ID.String(),
+		LessonID:    lessonID,
+		Title:       q.Title,
+		Description: description,
+		TotalPoints: q.TotalPoints,
+		TimeLimitS:  timeLimit,
+		CreatedAt:   q.CreatedAt,
+	}
+}
+
+// mapQuizQuestion converts models.QuizQuestion to model.QuizQuestion
+func mapQuizQuestion(q *models.QuizQuestion) *model.QuizQuestion {
+	if q == nil {
+		return nil
+	}
+
+	var promptMedia *string
+	if q.PromptMedia != nil {
+		id := q.PromptMedia.String()
+		promptMedia = &id
+	}
+
+	metadata := map[string]any{}
+	if q.Metadata != nil {
+		metadata = q.Metadata
+	}
+
+	return &model.QuizQuestion{
+		ID:          q.ID.String(),
+		QuizID:      q.QuizID.String(),
+		Ord:         q.Ord,
+		Type:        q.Type,
+		Prompt:      q.Prompt,
+		PromptMedia: promptMedia,
+		Points:      q.Points,
+		Metadata:    metadata,
+	}
+}
+
 // mapMediaKind converts string to model.MediaKind enum
 func mapMediaKind(kind string) model.MediaKind {
 	switch strings.ToLower(kind) {

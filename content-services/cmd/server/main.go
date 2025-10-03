@@ -48,6 +48,8 @@ func main() {
 	mediaRepo := repository.NewMediaRepository(database)
 	lessonRepo := repository.NewLessonRepository(database)
 	sectionRepo := repository.NewLessonSectionRepository(database)
+	quizRepo := repository.NewQuizRepository(database)
+	quizQuestionRepo := repository.NewQuizQuestionRepository(database)
 	// Note: outboxRepo would need a separate database connection for transactional outbox pattern
 	// For now, passing nil - this should be properly implemented later
 	var outboxRepo repository.OutboxRepository = nil
@@ -66,8 +68,9 @@ func main() {
 	}
 	mediaService := service.NewMediaService(mediaRepo, s3Client, config.GetS3PresignTTL())
 	lessonService := service.NewLessonService(lessonRepo, sectionRepo, outboxRepo)
+	quizService := service.NewQuizService(quizRepo, quizQuestionRepo, nil, nil, outboxRepo)
 
-	resolver := &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore, Media: mediaService, LessonService: lessonService}
+	resolver := &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore, Media: mediaService, LessonService: lessonService, QuizService: quizService}
 	gqlSrv := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	graphqlHandler := handler.NewDefaultServer(gqlSrv)
 
