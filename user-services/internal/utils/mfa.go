@@ -13,6 +13,8 @@ import (
 var (
 	ErrMFARequired    = errors.New("mfa required")
 	ErrInvalidMFACode = errors.New("invalid mfa code")
+	ErrEmailNotVerified = errors.New("email not verified")
+	ErrInvalidCredentials = errors.New("invalid email or password")
 )
 
 // VerifyTOTP verifies a 6-digit TOTP code against the given base32 secret.

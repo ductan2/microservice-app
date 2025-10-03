@@ -2,6 +2,7 @@ package server
 
 import (
 	"bff-services/internal/api/controllers"
+	"bff-services/internal/config"
 	"bff-services/internal/services"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +18,19 @@ func NewRouter(deps Deps) *gin.Engine {
 	// Middlewares
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+	r.Use(func(c *gin.Context) {
+		origin := config.GetCORSOrigin()
+		c.Header("Access-Control-Allow-Origin", origin)
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
+		c.Header("Access-Control-Expose-Headers", "Content-Length")
+		c.Header("Access-Control-Allow-Credentials", "true")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
+	})
 
 	r.GET("/health", controllers.Health)
 

@@ -59,8 +59,12 @@ func (a AuthController) Login(c *gin.Context) {
 		switch err {
 		case utils.ErrInvalidMFACode:
 			utils.Fail(c, "Invalid MFA code", http.StatusUnauthorized, err.Error())
-		default:
+		case utils.ErrEmailNotVerified:
+			utils.Fail(c, "Email not verified", http.StatusUnauthorized, err.Error())
+		case utils.ErrInvalidCredentials:
 			utils.Fail(c, "Invalid email or password", http.StatusUnauthorized, err.Error())
+		default:
+			utils.Fail(c, "Internal server error", http.StatusInternalServerError, err.Error())
 		}
 		return
 	}

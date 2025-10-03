@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -19,4 +20,21 @@ func GetPort() string {
 		return p
 	}
 	return "8010"
+}
+
+func GetUserServiceURL() string {
+	log.Println("USER_SERVICE_URL", os.Getenv("USER_SERVICE_URL"))
+	if v := os.Getenv("USER_SERVICE_URL"); v != "" {
+
+		return v
+	}
+	return "http://localhost:8001"
+}
+
+// GetCORSOrigin returns allowed CORS origin from env CORS_URL; default http://localhost:3000
+func GetCORSOrigin() string {
+	if v := os.Getenv("CORS_URL"); v != "" {
+		return v
+	}
+	return "http://localhost:3000"
 }

@@ -189,16 +189,16 @@ func (s *AuthService) Login(ctx context.Context, email, password, mfaCode, userA
 	if err != nil {
 		// Log failed attempt (no user id)
 		_ = s.logLoginAttempt(ctx, nil, email, ipAddr, false, "invalid_credentials")
-		return AuthResult{}, errors.New("invalid email or password")
+		return AuthResult{}, utils.ErrInvalidCredentials
 	}
 	if !user.EmailVerified {
-		return AuthResult{}, errors.New("email not verified")
+		return AuthResult{}, utils.ErrEmailNotVerified
 	}
 
 	// 2) Verify password
 	if err := utils.CheckPassword(user.PasswordHash, password); err != nil {
 		_ = s.logLoginAttempt(ctx, &user.ID, email, ipAddr, false, "invalid_credentials")
-		return AuthResult{}, errors.New("invalid email or password")
+		return AuthResult{}, utils.ErrInvalidCredentials
 	}
 
 	// 3) If MFA enabled, verify code

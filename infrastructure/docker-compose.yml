@@ -260,6 +260,11 @@ services:
       - "${BFF_SERVICES_PORT:-8010}:8010"
     environment:
       - PORT=8010
+      - USER_SERVICE_URL=http://user-services:8001
+      - LESSON_SERVICE_URL=http://lesson-services:8000
+      - CONTENT_SERVICE_URL=http://content-services:8003
+      - NOTIFICATION_SERVICE_URL=http://notification-services:8004
+      - CORS_URL=http://localhost:3001
     depends_on:
       user-services:
         condition: service_started

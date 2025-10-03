@@ -4,9 +4,9 @@ import (
 	"bff-services/internal/config"
 	"bff-services/internal/server"
 	"bff-services/internal/services"
-	"bff-services/internal/utils"
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,21 +19,33 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
-	userServiceURL := utils.GetEnv("USER_SERVICE_URL", "http://localhost:8001")
-	userService := services.NewUserServiceClient(userServiceURL, nil)
+	userService := services.NewUserServiceClient(config.GetUserServiceURL(), nil)
 
 	addr := ":" + port
-	log.Printf("Starting server on %s", addr)
-	if err := server.NewRouter(server.Deps{
+	r := server.NewRouter(server.Deps{
 		UserService: userService,
-	}).Run(addr); err != nil {
-		log.Printf("Server error: %v", err)
-		os.Exit(1)
+	})
+
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: r,
 	}
 
-	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	// Wait for interrupt signal
+	log.Printf("Starting server on %s", addr)
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("Server error: %v", err)
+			os.Exit(1)
+		}
+	}()
+
+	// Wait for interrupt signal then attempt graceful shutdown
 	<-quit
 	log.Println("Shutting down server gracefully...")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("Server forced to shutdown: %v", err)
+	}
+	log.Println("Server exited")
 }
