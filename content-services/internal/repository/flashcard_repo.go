@@ -3,9 +3,20 @@ package repository
 import (
 	"content-services/internal/models"
 	"context"
+	"errors"
+	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+var (
+	// ErrFlashcardSetNotFound indicates a flashcard set lookup failed.
+	ErrFlashcardSetNotFound = errors.New("flashcard set not found")
+	// ErrFlashcardNotFound indicates a flashcard lookup failed.
+	ErrFlashcardNotFound = errors.New("flashcard not found")
 )
 
 type FlashcardSetRepository interface {
@@ -26,74 +37,218 @@ type FlashcardRepository interface {
 }
 
 type flashcardSetRepository struct {
-	db *gorm.DB
+	collection *mongo.Collection
 }
 
 type flashcardRepository struct {
-	db *gorm.DB
+	collection *mongo.Collection
 }
 
-func NewFlashcardSetRepository(db *gorm.DB) FlashcardSetRepository {
-	return &flashcardSetRepository{db: db}
+func NewFlashcardSetRepository(db *mongo.Database) FlashcardSetRepository {
+	return &flashcardSetRepository{collection: db.Collection("flashcard_sets")}
 }
 
-func NewFlashcardRepository(db *gorm.DB) FlashcardRepository {
-	return &flashcardRepository{db: db}
+func NewFlashcardRepository(db *mongo.Database) FlashcardRepository {
+	return &flashcardRepository{collection: db.Collection("flashcards")}
 }
 
-// FlashcardSet implementations
 func (r *flashcardSetRepository) Create(ctx context.Context, set *models.FlashcardSet) error {
-	// TODO: implement
-	return nil
+	if set.ID == uuid.Nil {
+		set.ID = uuid.New()
+	}
+	if set.CreatedAt.IsZero() {
+		set.CreatedAt = time.Now().UTC()
+	}
+	_, err := r.collection.InsertOne(ctx, set)
+	return err
 }
 
 func (r *flashcardSetRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.FlashcardSet, error) {
-	// TODO: implement
-	return nil, nil
+	var set models.FlashcardSet
+	err := r.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&set)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, ErrFlashcardSetNotFound
+		}
+		return nil, err
+	}
+	return &set, nil
 }
 
 func (r *flashcardSetRepository) List(ctx context.Context, topicID, levelID *uuid.UUID, limit, offset int) ([]models.FlashcardSet, int64, error) {
-	// TODO: implement with filters
-	return nil, 0, nil
+	filter := bson.M{}
+	if topicID != nil {
+		filter["topic_id"] = *topicID
+	}
+	if levelID != nil {
+		filter["level_id"] = *levelID
+	}
+
+	findOpts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+	if offset > 0 {
+		findOpts.SetSkip(int64(offset))
+	}
+	if limit > 0 {
+		findOpts.SetLimit(int64(limit))
+	}
+
+	cursor, err := r.collection.Find(ctx, filter, findOpts)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	var sets []models.FlashcardSet
+	for cursor.Next(ctx) {
+		var set models.FlashcardSet
+		if err := cursor.Decode(&set); err != nil {
+			return nil, 0, err
+		}
+		sets = append(sets, set)
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	total, err := r.collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return sets, total, nil
 }
 
 func (r *flashcardSetRepository) Update(ctx context.Context, set *models.FlashcardSet) error {
-	// TODO: implement
+	update := bson.M{
+		"$set": bson.M{
+			"title":       set.Title,
+			"description": set.Description,
+			"topic_id":    set.TopicID,
+			"level_id":    set.LevelID,
+			"created_by":  set.CreatedBy,
+		},
+	}
+
+	res, err := r.collection.UpdateByID(ctx, set.ID, update)
+	if err != nil {
+		return err
+	}
+	if res.MatchedCount == 0 {
+		return ErrFlashcardSetNotFound
+	}
 	return nil
 }
 
 func (r *flashcardSetRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	// TODO: implement
+	res, err := r.collection.DeleteOne(ctx, bson.M{"_id": id})
+	if err != nil {
+		return err
+	}
+	if res.DeletedCount == 0 {
+		return ErrFlashcardSetNotFound
+	}
 	return nil
 }
 
-// Flashcard implementations
 func (r *flashcardRepository) Create(ctx context.Context, card *models.Flashcard) error {
-	// TODO: implement - auto-increment ord
-	return nil
+	if card.ID == uuid.Nil {
+		card.ID = uuid.New()
+	}
+	if card.CreatedAt.IsZero() {
+		card.CreatedAt = time.Now().UTC()
+	}
+	if card.Ord == 0 {
+		var last models.Flashcard
+		err := r.collection.FindOne(ctx, bson.M{"set_id": card.SetID}, options.FindOne().SetSort(bson.D{{Key: "ord", Value: -1}})).Decode(&last)
+		switch {
+		case err == nil:
+			card.Ord = last.Ord + 1
+		case errors.Is(err, mongo.ErrNoDocuments):
+			card.Ord = 1
+		default:
+			return err
+		}
+	}
+
+	_, err := r.collection.InsertOne(ctx, card)
+	return err
 }
 
 func (r *flashcardRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Flashcard, error) {
-	// TODO: implement
-	return nil, nil
+	var card models.Flashcard
+	err := r.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&card)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, ErrFlashcardNotFound
+		}
+		return nil, err
+	}
+	return &card, nil
 }
 
 func (r *flashcardRepository) GetBySetID(ctx context.Context, setID uuid.UUID) ([]models.Flashcard, error) {
-	// TODO: implement - order by ord
-	return nil, nil
+	cursor, err := r.collection.Find(ctx, bson.M{"set_id": setID}, options.Find().SetSort(bson.D{{Key: "ord", Value: 1}}))
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var cards []models.Flashcard
+	for cursor.Next(ctx) {
+		var card models.Flashcard
+		if err := cursor.Decode(&card); err != nil {
+			return nil, err
+		}
+		cards = append(cards, card)
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+	return cards, nil
 }
 
 func (r *flashcardRepository) Update(ctx context.Context, card *models.Flashcard) error {
-	// TODO: implement
+	update := bson.M{
+		"$set": bson.M{
+			"front_text":     card.FrontText,
+			"back_text":      card.BackText,
+			"front_media_id": card.FrontMediaID,
+			"back_media_id":  card.BackMediaID,
+			"ord":            card.Ord,
+			"hints":          card.Hints,
+		},
+	}
+
+	res, err := r.collection.UpdateByID(ctx, card.ID, update)
+	if err != nil {
+		return err
+	}
+	if res.MatchedCount == 0 {
+		return ErrFlashcardNotFound
+	}
 	return nil
 }
 
 func (r *flashcardRepository) Reorder(ctx context.Context, setID uuid.UUID, cardIDs []uuid.UUID) error {
-	// TODO: implement
+	for index, cardID := range cardIDs {
+		res, err := r.collection.UpdateOne(ctx, bson.M{"_id": cardID, "set_id": setID}, bson.M{"$set": bson.M{"ord": index + 1}})
+		if err != nil {
+			return err
+		}
+		if res.MatchedCount == 0 {
+			return ErrFlashcardNotFound
+		}
+	}
 	return nil
 }
 
 func (r *flashcardRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	// TODO: implement
+	res, err := r.collection.DeleteOne(ctx, bson.M{"_id": id})
+	if err != nil {
+		return err
+	}
+	if res.DeletedCount == 0 {
+		return ErrFlashcardNotFound
+	}
 	return nil
 }

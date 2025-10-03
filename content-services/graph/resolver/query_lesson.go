@@ -42,3 +42,61 @@ func (r *queryResolver) LessonByCode(ctx context.Context, code string) (*model.L
 
 	return mapLesson(lessonDoc), nil
 }
+
+// Lessons is the resolver for the lessons field.
+func (r *queryResolver) Lessons(ctx context.Context, filter *model.LessonFilterInput, page *int, pageSize *int) (*model.LessonCollection, error) {
+	lessonService := r.Resolver.LessonService
+	if lessonService == nil {
+		return nil, gqlerror.Errorf("lesson service not configured")
+	}
+
+	lessonFilter, err := buildLessonFilter(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	pageVal := 1
+	if page != nil && *page > 0 {
+		pageVal = *page
+	}
+
+	pageSizeVal := 20
+	if pageSize != nil && *pageSize > 0 {
+		pageSizeVal = *pageSize
+	}
+
+	lessons, total, err := lessonService.ListLessons(ctx, lessonFilter, pageVal, pageSizeVal)
+	if err != nil {
+		return nil, mapLessonError(err)
+	}
+
+	items := make([]*model.Lesson, 0, len(lessons))
+	for i := range lessons {
+		items = append(items, mapLesson(&lessons[i]))
+	}
+
+	return &model.LessonCollection{
+		Items:      items,
+		TotalCount: int(total),
+	}, nil
+}
+
+// LessonSections is the resolver for the lessonSections field.
+func (r *queryResolver) LessonSections(ctx context.Context, lessonID string) ([]*model.LessonSection, error) {
+	lessonService := r.Resolver.LessonService
+	if lessonService == nil {
+		return nil, gqlerror.Errorf("lesson service not configured")
+	}
+
+	id, err := uuid.Parse(lessonID)
+	if err != nil {
+		return nil, gqlerror.Errorf("invalid lesson ID: %v", err)
+	}
+
+	sections, err := lessonService.GetLessonSections(ctx, id)
+	if err != nil {
+		return nil, mapLessonSectionError(err)
+	}
+
+	return mapLessonSections(sections), nil
+}

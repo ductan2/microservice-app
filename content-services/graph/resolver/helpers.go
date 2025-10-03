@@ -3,6 +3,7 @@ package resolver
 import (
 	"content-services/graph/model"
 	"content-services/internal/models"
+	"content-services/internal/repository"
 	"content-services/internal/taxonomy"
 	"content-services/internal/types"
 	"context"
@@ -117,6 +118,33 @@ func mapLessonError(err error) error {
 	}
 }
 
+// mapFlashcardError converts flashcard repository errors to GraphQL-friendly errors.
+func mapFlashcardError(err error) error {
+	if err == nil {
+		return nil
+	}
+	switch {
+	case errors.Is(err, repository.ErrFlashcardSetNotFound):
+		return gqlerror.Errorf("flashcard set not found")
+	case errors.Is(err, repository.ErrFlashcardNotFound):
+		return gqlerror.Errorf("flashcard not found")
+	default:
+		return err
+    
+// mapLessonSectionError maps lesson section errors to GraphQL errors.
+func mapLessonSectionError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	switch {
+	case errors.Is(err, types.ErrLessonSectionNotFound):
+		return gqlerror.Errorf("lesson section not found")
+	default:
+		return mapLessonError(err)
+	}
+}
+
 // mapLesson converts models.Lesson to model.Lesson
 func mapLesson(l *models.Lesson) *model.Lesson {
 	if l == nil {
@@ -154,6 +182,116 @@ func mapLesson(l *models.Lesson) *model.Lesson {
 	// They are not set here
 
 	return mapped
+}
+
+// mapLessonSection converts models.LessonSection to model.LessonSection.
+func mapLessonSection(section *models.LessonSection) *model.LessonSection {
+	if section == nil {
+		return nil
+	}
+
+	return &model.LessonSection{
+		ID:        section.ID.String(),
+		LessonID:  section.LessonID.String(),
+		Ord:       section.Ord,
+		Type:      mapLessonSectionType(section.Type),
+		Body:      cloneBody(section.Body),
+		CreatedAt: section.CreatedAt,
+	}
+}
+
+// mapLessonSections converts a slice of models.LessonSection to GraphQL model.
+func mapLessonSections(sections []models.LessonSection) []*model.LessonSection {
+	if len(sections) == 0 {
+		return []*model.LessonSection{}
+	}
+
+	result := make([]*model.LessonSection, 0, len(sections))
+	for i := range sections {
+		result = append(result, mapLessonSection(&sections[i]))
+	}
+
+	return result
+}
+
+// mapLessonSectionType converts persisted type string to GraphQL enum.
+func mapLessonSectionType(sectionType string) model.LessonSectionType {
+	switch strings.ToLower(sectionType) {
+	case "dialog":
+		return model.LessonSectionTypeDialog
+	case "audio":
+		return model.LessonSectionTypeAudio
+	case "image":
+		return model.LessonSectionTypeImage
+	case "exercise":
+		return model.LessonSectionTypeExercise
+	default:
+		return model.LessonSectionTypeText
+	}
+}
+
+// normalizeLessonSectionType converts GraphQL enum to storage string.
+func normalizeLessonSectionType(sectionType model.LessonSectionType) string {
+	switch sectionType {
+	case model.LessonSectionTypeDialog:
+		return "dialog"
+	case model.LessonSectionTypeAudio:
+		return "audio"
+	case model.LessonSectionTypeImage:
+		return "image"
+	case model.LessonSectionTypeExercise:
+		return "exercise"
+	default:
+		return "text"
+	}
+}
+
+// buildLessonFilter converts GraphQL filter input to repository filter.
+func buildLessonFilter(input *model.LessonFilterInput) (*repository.LessonFilter, error) {
+	if input == nil {
+		return nil, nil
+	}
+
+	filter := &repository.LessonFilter{}
+
+	if input.TopicID != nil && *input.TopicID != "" {
+		topicID, err := uuid.Parse(*input.TopicID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid topic ID: %v", err)
+		}
+		filter.TopicID = &topicID
+	}
+
+	if input.LevelID != nil && *input.LevelID != "" {
+		levelID, err := uuid.Parse(*input.LevelID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid level ID: %v", err)
+		}
+		filter.LevelID = &levelID
+	}
+
+	if input.IsPublished != nil {
+		filter.IsPublished = input.IsPublished
+	}
+
+	if input.Search != nil {
+		filter.Search = strings.TrimSpace(*input.Search)
+	}
+
+	return filter, nil
+}
+
+func cloneBody(body map[string]any) map[string]any {
+	if body == nil {
+		return map[string]any{}
+	}
+
+	cloned := make(map[string]any, len(body))
+	for k, v := range body {
+		cloned[k] = v
+	}
+
+	return cloned
 }
 
 // mapMediaAsset converts models.MediaAsset to model.MediaAsset with presigned URL
@@ -250,6 +388,79 @@ func mapQuizQuestion(q *models.QuizQuestion) *model.QuizQuestion {
 		Points:      q.Points,
 		Metadata:    metadata,
 	}
+// mapFlashcardSet converts models.FlashcardSet to model.FlashcardSet.
+func mapFlashcardSet(set *models.FlashcardSet) *model.FlashcardSet {
+	if set == nil {
+		return nil
+	}
+	var (
+		topicID   *string
+		levelID   *string
+		createdBy *string
+	)
+	if set.TopicID != nil {
+		id := set.TopicID.String()
+		topicID = &id
+	}
+	if set.LevelID != nil {
+		id := set.LevelID.String()
+		levelID = &id
+	}
+	if set.CreatedBy != nil {
+		id := set.CreatedBy.String()
+		createdBy = &id
+	}
+	return &model.FlashcardSet{
+		ID:          set.ID.String(),
+		Title:       set.Title,
+		Description: toStringPtr(set.Description),
+		TopicID:     topicID,
+		LevelID:     levelID,
+		CreatedAt:   set.CreatedAt,
+		CreatedBy:   createdBy,
+	}
+}
+
+// mapFlashcard converts models.Flashcard to model.Flashcard.
+func mapFlashcard(card *models.Flashcard) *model.Flashcard {
+	if card == nil {
+		return nil
+	}
+	var (
+		frontMediaID *string
+		backMediaID  *string
+	)
+	if card.FrontMediaID != nil {
+		id := card.FrontMediaID.String()
+		frontMediaID = &id
+	}
+	if card.BackMediaID != nil {
+		id := card.BackMediaID.String()
+		backMediaID = &id
+	}
+	modelHints := make([]string, len(card.Hints))
+	copy(modelHints, card.Hints)
+
+	return &model.Flashcard{
+		ID:           card.ID.String(),
+		SetID:        card.SetID.String(),
+		FrontText:    card.FrontText,
+		BackText:     card.BackText,
+		FrontMediaID: frontMediaID,
+		BackMediaID:  backMediaID,
+		Ord:          card.Ord,
+		Hints:        modelHints,
+		CreatedAt:    card.CreatedAt,
+	}
+}
+
+// mapFlashcards converts slice of models.Flashcard to GraphQL models.
+func mapFlashcards(cards []models.Flashcard) []*model.Flashcard {
+	result := make([]*model.Flashcard, 0, len(cards))
+	for i := range cards {
+		result = append(result, mapFlashcard(&cards[i]))
+	}
+	return result
 }
 
 // mapMediaKind converts string to model.MediaKind enum

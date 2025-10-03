@@ -9,6 +9,8 @@ var (
 	ErrDuplicateCode = errors.New("lesson: duplicate code")
 	// ErrAlreadyPublished is returned when attempting to publish an already published lesson.
 	ErrAlreadyPublished = errors.New("lesson: already published")
+	// ErrLessonSectionNotFound is returned when a lesson section cannot be located.
+	ErrLessonSectionNotFound = errors.New("lesson section: not found")
 )
 
 // CreateLessonInput contains fields for creating a new lesson.

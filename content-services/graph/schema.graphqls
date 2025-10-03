@@ -23,6 +23,11 @@ type Query {
 
   quiz(id: ID!): Quiz
   quizzes(lessonId: ID, page: Int = 1, pageSize: Int = 20): QuizListResult!
+  flashcardSet(id: ID!): FlashcardSet
+  flashcardSets(topicId: ID, levelId: ID, page: Int, pageSize: Int): FlashcardSetList!
+  lessons(filter: LessonFilterInput, page: Int, pageSize: Int): LessonCollection!
+
+  lessonSections(lessonId: ID!): [LessonSection!]!
 }
 
 type Mutation {
@@ -42,6 +47,16 @@ type Mutation {
   deleteMedia(id: ID!): Boolean!
 
   createLesson(input: CreateLessonInput!): Lesson!
+  updateLesson(id: ID!, input: UpdateLessonInput!): Lesson!
+  publishLesson(id: ID!): Lesson!
+  unpublishLesson(id: ID!): Lesson!
+
+  createLessonSection(lessonId: ID!, input: CreateLessonSectionInput!): LessonSection!
+  updateLessonSection(id: ID!, input: UpdateLessonSectionInput!): LessonSection!
+  deleteLessonSection(id: ID!): Boolean!
+
+  createFlashcardSet(input: CreateFlashcardSetInput!): FlashcardSet!
+  addFlashcard(input: AddFlashcardInput!): Flashcard!
 
   createQuiz(input: CreateQuizInput!): Quiz!
   addQuizQuestion(quizId: ID!, input: CreateQuizQuestionInput!): QuizQuestion!
@@ -137,6 +152,7 @@ type Lesson {
   createdAt: Time!
   updatedAt: Time!
   publishedAt: Time
+  sections: [LessonSection!]!
 }
 
 input CreateLessonInput {
@@ -188,10 +204,102 @@ input CreateQuizQuestionInput {
   promptMedia: ID
   points: Int = 1
   metadata: JSON
+input UpdateLessonInput {
+  title: String
+  description: String
+  topicId: ID
+  levelId: ID
+}
+
+input LessonFilterInput {
+  topicId: ID
+  levelId: ID
+  isPublished: Boolean
+  search: String
+}
+
+type LessonCollection {
+  items: [Lesson!]!
+  totalCount: Int!
+}
+
+type LessonSection {
+  id: ID!
+  lessonId: ID!
+  ord: Int!
+  type: LessonSectionType!
+  body: Map!
+  createdAt: Time!
+}
+
+enum LessonSectionType {
+  TEXT
+  DIALOG
+  AUDIO
+  IMAGE
+  EXERCISE
+}
+
+input CreateLessonSectionInput {
+  type: LessonSectionType!
+  body: Map!
+}
+
+input UpdateLessonSectionInput {
+  type: LessonSectionType
+  body: Map
 }
 
 scalar Time
 scalar Upload
 scalar JSON
+scalar Map
+
+type FlashcardSet {
+  id: ID!
+  title: String!
+  description: String
+  topicId: ID
+  levelId: ID
+  createdAt: Time!
+  createdBy: ID
+  cards: [Flashcard!]!
+}
+
+type Flashcard {
+  id: ID!
+  setId: ID!
+  frontText: String!
+  backText: String!
+  frontMediaId: ID
+  backMediaId: ID
+  ord: Int!
+  hints: [String!]
+  createdAt: Time!
+}
+
+type FlashcardSetList {
+  items: [FlashcardSet!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+input CreateFlashcardSetInput {
+  title: String!
+  description: String
+  topicId: ID
+  levelId: ID
+  createdBy: ID
+}
+
+input AddFlashcardInput {
+  setId: ID!
+  frontText: String!
+  backText: String!
+  frontMediaId: ID
+  backMediaId: ID
+  hints: [String!]
+}
 
 

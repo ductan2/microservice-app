@@ -12,6 +12,23 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
+type AddFlashcardInput struct {
+	SetID        string   `json:"setId"`
+	FrontText    string   `json:"frontText"`
+	BackText     string   `json:"backText"`
+	FrontMediaID *string  `json:"frontMediaId,omitempty"`
+	BackMediaID  *string  `json:"backMediaId,omitempty"`
+	Hints        []string `json:"hints,omitempty"`
+}
+
+type CreateFlashcardSetInput struct {
+	Title       string  `json:"title"`
+	Description *string `json:"description,omitempty"`
+	TopicID     *string `json:"topicId,omitempty"`
+	LevelID     *string `json:"levelId,omitempty"`
+	CreatedBy   *string `json:"createdBy,omitempty"`
+}
+
 type CreateLessonInput struct {
 	Code        *string `json:"code,omitempty"`
 	Title       string  `json:"title"`
@@ -19,6 +36,11 @@ type CreateLessonInput struct {
 	TopicID     *string `json:"topicId,omitempty"`
 	LevelID     *string `json:"levelId,omitempty"`
 	CreatedBy   *string `json:"createdBy,omitempty"`
+}
+
+type CreateLessonSectionInput struct {
+	Type LessonSectionType `json:"type"`
+	Body map[string]any    `json:"body"`
 }
 
 type CreateLevelInput struct {
@@ -51,19 +73,71 @@ type CreateTopicInput struct {
 	Name string `json:"name"`
 }
 
+type Flashcard struct {
+	ID           string    `json:"id"`
+	SetID        string    `json:"setId"`
+	FrontText    string    `json:"frontText"`
+	BackText     string    `json:"backText"`
+	FrontMediaID *string   `json:"frontMediaId,omitempty"`
+	BackMediaID  *string   `json:"backMediaId,omitempty"`
+	Ord          int       `json:"ord"`
+	Hints        []string  `json:"hints,omitempty"`
+	CreatedAt    time.Time `json:"createdAt"`
+}
+
+type FlashcardSet struct {
+	ID          string       `json:"id"`
+	Title       string       `json:"title"`
+	Description *string      `json:"description,omitempty"`
+	TopicID     *string      `json:"topicId,omitempty"`
+	LevelID     *string      `json:"levelId,omitempty"`
+	CreatedAt   time.Time    `json:"createdAt"`
+	CreatedBy   *string      `json:"createdBy,omitempty"`
+	Cards       []*Flashcard `json:"cards"`
+}
+
+type FlashcardSetList struct {
+	Items      []*FlashcardSet `json:"items"`
+	TotalCount int             `json:"totalCount"`
+	Page       int             `json:"page"`
+	PageSize   int             `json:"pageSize"`
+}
+
 type Lesson struct {
-	ID          string     `json:"id"`
-	Code        *string    `json:"code,omitempty"`
-	Title       string     `json:"title"`
-	Description *string    `json:"description,omitempty"`
-	Topic       *Topic     `json:"topic,omitempty"`
-	Level       *Level     `json:"level,omitempty"`
-	IsPublished bool       `json:"isPublished"`
-	Version     int        `json:"version"`
-	CreatedBy   *string    `json:"createdBy,omitempty"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	UpdatedAt   time.Time  `json:"updatedAt"`
-	PublishedAt *time.Time `json:"publishedAt,omitempty"`
+	ID          string           `json:"id"`
+	Code        *string          `json:"code,omitempty"`
+	Title       string           `json:"title"`
+	Description *string          `json:"description,omitempty"`
+	Topic       *Topic           `json:"topic,omitempty"`
+	Level       *Level           `json:"level,omitempty"`
+	IsPublished bool             `json:"isPublished"`
+	Version     int              `json:"version"`
+	CreatedBy   *string          `json:"createdBy,omitempty"`
+	CreatedAt   time.Time        `json:"createdAt"`
+	UpdatedAt   time.Time        `json:"updatedAt"`
+	PublishedAt *time.Time       `json:"publishedAt,omitempty"`
+	Sections    []*LessonSection `json:"sections"`
+}
+
+type LessonCollection struct {
+	Items      []*Lesson `json:"items"`
+	TotalCount int       `json:"totalCount"`
+}
+
+type LessonFilterInput struct {
+	TopicID     *string `json:"topicId,omitempty"`
+	LevelID     *string `json:"levelId,omitempty"`
+	IsPublished *bool   `json:"isPublished,omitempty"`
+	Search      *string `json:"search,omitempty"`
+}
+
+type LessonSection struct {
+	ID        string            `json:"id"`
+	LessonID  string            `json:"lessonId"`
+	Ord       int               `json:"ord"`
+	Type      LessonSectionType `json:"type"`
+	Body      map[string]any    `json:"body"`
+	CreatedAt time.Time         `json:"createdAt"`
 }
 
 type Level struct {
@@ -131,6 +205,18 @@ type Topic struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+type UpdateLessonInput struct {
+	Title       *string `json:"title,omitempty"`
+	Description *string `json:"description,omitempty"`
+	TopicID     *string `json:"topicId,omitempty"`
+	LevelID     *string `json:"levelId,omitempty"`
+}
+
+type UpdateLessonSectionInput struct {
+	Type *LessonSectionType `json:"type,omitempty"`
+	Body map[string]any     `json:"body,omitempty"`
+}
+
 type UpdateLevelInput struct {
 	Code *string `json:"code,omitempty"`
 	Name *string `json:"name,omitempty"`
@@ -152,6 +238,67 @@ type UploadMediaInput struct {
 	MimeType   string         `json:"mimeType"`
 	Filename   *string        `json:"filename,omitempty"`
 	UploadedBy *string        `json:"uploadedBy,omitempty"`
+}
+
+type LessonSectionType string
+
+const (
+	LessonSectionTypeText     LessonSectionType = "TEXT"
+	LessonSectionTypeDialog   LessonSectionType = "DIALOG"
+	LessonSectionTypeAudio    LessonSectionType = "AUDIO"
+	LessonSectionTypeImage    LessonSectionType = "IMAGE"
+	LessonSectionTypeExercise LessonSectionType = "EXERCISE"
+)
+
+var AllLessonSectionType = []LessonSectionType{
+	LessonSectionTypeText,
+	LessonSectionTypeDialog,
+	LessonSectionTypeAudio,
+	LessonSectionTypeImage,
+	LessonSectionTypeExercise,
+}
+
+func (e LessonSectionType) IsValid() bool {
+	switch e {
+	case LessonSectionTypeText, LessonSectionTypeDialog, LessonSectionTypeAudio, LessonSectionTypeImage, LessonSectionTypeExercise:
+		return true
+	}
+	return false
+}
+
+func (e LessonSectionType) String() string {
+	return string(e)
+}
+
+func (e *LessonSectionType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = LessonSectionType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid LessonSectionType", str)
+	}
+	return nil
+}
+
+func (e LessonSectionType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *LessonSectionType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e LessonSectionType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 type MediaKind string
