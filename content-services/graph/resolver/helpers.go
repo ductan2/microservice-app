@@ -391,6 +391,63 @@ func mapQuizQuestion(q *models.QuizQuestion) *model.QuizQuestion {
 		Metadata:    metadata,
 	}
 }
+
+// mapQuestionOption converts models.QuestionOption to model.QuestionOption.
+func mapQuestionOption(option *models.QuestionOption) *model.QuestionOption {
+	if option == nil {
+		return nil
+	}
+
+	feedback := toStringPtr(option.Feedback)
+
+	return &model.QuestionOption{
+		ID:         option.ID.String(),
+		QuestionID: option.QuestionID.String(),
+		Ord:        option.Ord,
+		Label:      option.Label,
+		IsCorrect:  option.IsCorrect,
+		Feedback:   feedback,
+	}
+}
+
+// mapQuestionOptions converts a slice of models.QuestionOption to GraphQL models.
+func mapQuestionOptions(options []models.QuestionOption) []*model.QuestionOption {
+	result := make([]*model.QuestionOption, 0, len(options))
+	for i := range options {
+		option := options[i]
+		result = append(result, mapQuestionOption(&option))
+	}
+	return result
+}
+
+// mapRepositoryTags converts repository tag models to GraphQL models.
+func mapRepositoryTags(tags []models.Tag) []*model.Tag {
+	result := make([]*model.Tag, 0, len(tags))
+	for i := range tags {
+		tag := tags[i]
+		result = append(result, &model.Tag{
+			ID:   tag.ID.String(),
+			Slug: tag.Slug,
+			Name: tag.Name,
+		})
+	}
+	return result
+}
+
+// contentTagKindToModel converts GraphQL enum to repository kind string.
+func contentTagKindToModel(kind model.ContentTagKind) string {
+	switch kind {
+	case model.ContentTagKindLesson:
+		return "lesson"
+	case model.ContentTagKindQuiz:
+		return "quiz"
+	case model.ContentTagKindFlashcardSet:
+		return "flashcard_set"
+	default:
+		return strings.ToLower(string(kind))
+	}
+}
+
 // mapFlashcardSet converts models.FlashcardSet to model.FlashcardSet.
 func mapFlashcardSet(set *models.FlashcardSet) *model.FlashcardSet {
 	if set == nil {

@@ -71,12 +71,18 @@ func main() {
 	}
 	mediaService := service.NewMediaService(mediaRepo, s3Client, config.GetS3PresignTTL())
 	lessonService := service.NewLessonService(lessonRepo, sectionRepo, outboxRepo)
-	quizService := service.NewQuizService(quizRepo, quizQuestionRepo, nil, nil, outboxRepo)
-
-	resolver := &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore, Media: mediaService, LessonService: lessonService, QuizService: quizService}
+	quizService := service.NewQuizService(quizRepo, quizQuestionRepo, nil, tagRepo, outboxRepo)
 	flashcardService := service.NewFlashcardService(flashcardSetRepo, flashcardRepo, tagRepo)
 
-	resolver = &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore, Media: mediaService, LessonService: lessonService, Flashcards: flashcardService}
+	resolver := &gqlresolver.Resolver{
+		DB:            database,
+		Taxonomy:      taxonomyStore,
+		Media:         mediaService,
+		LessonService: lessonService,
+		QuizService:   quizService,
+		Flashcards:    flashcardService,
+		TagRepo:       tagRepo,
+	}
 	gqlSrv := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	graphqlHandler := handler.NewDefaultServer(gqlSrv)
 

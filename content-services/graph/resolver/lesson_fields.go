@@ -92,6 +92,25 @@ func (r *lessonResolver) Sections(ctx context.Context, obj *model.Lesson) ([]*mo
 	return mapLessonSections(sections), nil
 }
 
+// Tags is the resolver for the tags field.
+func (r *lessonResolver) Tags(ctx context.Context, obj *model.Lesson) ([]*model.Tag, error) {
+	if r.TagRepo == nil {
+		return []*model.Tag{}, nil
+	}
+
+	lessonID, err := uuid.Parse(obj.ID)
+	if err != nil {
+		return nil, gqlerror.Errorf("invalid lesson ID: %v", err)
+	}
+
+	tags, err := r.TagRepo.GetContentTags(ctx, "lesson", lessonID)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapRepositoryTags(tags), nil
+}
+
 // Lesson returns generated.LessonResolver implementation.
 func (r *Resolver) Lesson() generated.LessonResolver { return &lessonResolver{r} }
 

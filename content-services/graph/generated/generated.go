@@ -44,12 +44,20 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Quiz() QuizResolver
+	QuizQuestion() QuizQuestionResolver
 }
 
 type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	ContentTag struct {
+		Kind     func(childComplexity int) int
+		ObjectID func(childComplexity int) int
+		Tag      func(childComplexity int) int
+		TagID    func(childComplexity int) int
+	}
+
 	Flashcard struct {
 		BackMediaID  func(childComplexity int) int
 		BackText     func(childComplexity int) int
@@ -69,6 +77,7 @@ type ComplexityRoot struct {
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		LevelID     func(childComplexity int) int
+		Tags        func(childComplexity int) int
 		Title       func(childComplexity int) int
 		TopicID     func(childComplexity int) int
 	}
@@ -90,6 +99,7 @@ type ComplexityRoot struct {
 		Level       func(childComplexity int) int
 		PublishedAt func(childComplexity int) int
 		Sections    func(childComplexity int) int
+		Tags        func(childComplexity int) int
 		Title       func(childComplexity int) int
 		Topic       func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
@@ -130,28 +140,33 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddFlashcard        func(childComplexity int, input model.AddFlashcardInput) int
-		AddQuizQuestion     func(childComplexity int, quizID string, input model.CreateQuizQuestionInput) int
-		CreateFlashcardSet  func(childComplexity int, input model.CreateFlashcardSetInput) int
-		CreateLesson        func(childComplexity int, input model.CreateLessonInput) int
-		CreateLessonSection func(childComplexity int, lessonID string, input model.CreateLessonSectionInput) int
-		CreateLevel         func(childComplexity int, input model.CreateLevelInput) int
-		CreateQuiz          func(childComplexity int, input model.CreateQuizInput) int
-		CreateTag           func(childComplexity int, input model.CreateTagInput) int
-		CreateTopic         func(childComplexity int, input model.CreateTopicInput) int
-		DeleteLessonSection func(childComplexity int, id string) int
-		DeleteLevel         func(childComplexity int, id string) int
-		DeleteMedia         func(childComplexity int, id string) int
-		DeleteTag           func(childComplexity int, id string) int
-		DeleteTopic         func(childComplexity int, id string) int
-		PublishLesson       func(childComplexity int, id string) int
-		UnpublishLesson     func(childComplexity int, id string) int
-		UpdateLesson        func(childComplexity int, id string, input model.UpdateLessonInput) int
-		UpdateLessonSection func(childComplexity int, id string, input model.UpdateLessonSectionInput) int
-		UpdateLevel         func(childComplexity int, id string, input model.UpdateLevelInput) int
-		UpdateTag           func(childComplexity int, id string, input model.UpdateTagInput) int
-		UpdateTopic         func(childComplexity int, id string, input model.UpdateTopicInput) int
-		UploadMedia         func(childComplexity int, input model.UploadMediaInput) int
+		AddContentTag        func(childComplexity int, input model.ContentTagInput) int
+		AddFlashcard         func(childComplexity int, input model.AddFlashcardInput) int
+		AddQuestionOption    func(childComplexity int, questionID string, input model.CreateQuestionOptionInput) int
+		AddQuizQuestion      func(childComplexity int, quizID string, input model.CreateQuizQuestionInput) int
+		CreateFlashcardSet   func(childComplexity int, input model.CreateFlashcardSetInput) int
+		CreateLesson         func(childComplexity int, input model.CreateLessonInput) int
+		CreateLessonSection  func(childComplexity int, lessonID string, input model.CreateLessonSectionInput) int
+		CreateLevel          func(childComplexity int, input model.CreateLevelInput) int
+		CreateQuiz           func(childComplexity int, input model.CreateQuizInput) int
+		CreateTag            func(childComplexity int, input model.CreateTagInput) int
+		CreateTopic          func(childComplexity int, input model.CreateTopicInput) int
+		DeleteLessonSection  func(childComplexity int, id string) int
+		DeleteLevel          func(childComplexity int, id string) int
+		DeleteMedia          func(childComplexity int, id string) int
+		DeleteQuestionOption func(childComplexity int, id string) int
+		DeleteTag            func(childComplexity int, id string) int
+		DeleteTopic          func(childComplexity int, id string) int
+		PublishLesson        func(childComplexity int, id string) int
+		RemoveContentTag     func(childComplexity int, input model.ContentTagInput) int
+		UnpublishLesson      func(childComplexity int, id string) int
+		UpdateLesson         func(childComplexity int, id string, input model.UpdateLessonInput) int
+		UpdateLessonSection  func(childComplexity int, id string, input model.UpdateLessonSectionInput) int
+		UpdateLevel          func(childComplexity int, id string, input model.UpdateLevelInput) int
+		UpdateQuestionOption func(childComplexity int, id string, input model.UpdateQuestionOptionInput) int
+		UpdateTag            func(childComplexity int, id string, input model.UpdateTagInput) int
+		UpdateTopic          func(childComplexity int, id string, input model.UpdateTopicInput) int
+		UploadMedia          func(childComplexity int, input model.UploadMediaInput) int
 	}
 
 	Query struct {
@@ -174,12 +189,22 @@ type ComplexityRoot struct {
 		Topics         func(childComplexity int) int
 	}
 
+	QuestionOption struct {
+		Feedback   func(childComplexity int) int
+		ID         func(childComplexity int) int
+		IsCorrect  func(childComplexity int) int
+		Label      func(childComplexity int) int
+		Ord        func(childComplexity int) int
+		QuestionID func(childComplexity int) int
+	}
+
 	Quiz struct {
 		CreatedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		LessonID    func(childComplexity int) int
 		Questions   func(childComplexity int) int
+		Tags        func(childComplexity int) int
 		TimeLimitS  func(childComplexity int) int
 		Title       func(childComplexity int) int
 		TotalPoints func(childComplexity int) int
@@ -193,6 +218,7 @@ type ComplexityRoot struct {
 	QuizQuestion struct {
 		ID          func(childComplexity int) int
 		Metadata    func(childComplexity int) int
+		Options     func(childComplexity int) int
 		Ord         func(childComplexity int) int
 		Points      func(childComplexity int) int
 		Prompt      func(childComplexity int) int
@@ -216,11 +242,14 @@ type ComplexityRoot struct {
 }
 
 type FlashcardSetResolver interface {
+	Tags(ctx context.Context, obj *model.FlashcardSet) ([]*model.Tag, error)
 	Cards(ctx context.Context, obj *model.FlashcardSet) ([]*model.Flashcard, error)
 }
 type LessonResolver interface {
 	Topic(ctx context.Context, obj *model.Lesson) (*model.Topic, error)
 	Level(ctx context.Context, obj *model.Lesson) (*model.Level, error)
+
+	Tags(ctx context.Context, obj *model.Lesson) ([]*model.Tag, error)
 }
 type MutationResolver interface {
 	CreateTopic(ctx context.Context, input model.CreateTopicInput) (*model.Topic, error)
@@ -245,6 +274,11 @@ type MutationResolver interface {
 	AddFlashcard(ctx context.Context, input model.AddFlashcardInput) (*model.Flashcard, error)
 	CreateQuiz(ctx context.Context, input model.CreateQuizInput) (*model.Quiz, error)
 	AddQuizQuestion(ctx context.Context, quizID string, input model.CreateQuizQuestionInput) (*model.QuizQuestion, error)
+	AddQuestionOption(ctx context.Context, questionID string, input model.CreateQuestionOptionInput) (*model.QuestionOption, error)
+	UpdateQuestionOption(ctx context.Context, id string, input model.UpdateQuestionOptionInput) (*model.QuestionOption, error)
+	DeleteQuestionOption(ctx context.Context, id string) (bool, error)
+	AddContentTag(ctx context.Context, input model.ContentTagInput) (*model.ContentTag, error)
+	RemoveContentTag(ctx context.Context, input model.ContentTagInput) (bool, error)
 }
 type QueryResolver interface {
 	Health(ctx context.Context) (string, error)
@@ -266,7 +300,11 @@ type QueryResolver interface {
 	LessonSections(ctx context.Context, lessonID string) ([]*model.LessonSection, error)
 }
 type QuizResolver interface {
+	Tags(ctx context.Context, obj *model.Quiz) ([]*model.Tag, error)
 	Questions(ctx context.Context, obj *model.Quiz) ([]*model.QuizQuestion, error)
+}
+type QuizQuestionResolver interface {
+	Options(ctx context.Context, obj *model.QuizQuestion) ([]*model.QuestionOption, error)
 }
 
 type executableSchema struct {
@@ -287,6 +325,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "ContentTag.kind":
+		if e.complexity.ContentTag.Kind == nil {
+			break
+		}
+
+		return e.complexity.ContentTag.Kind(childComplexity), true
+	case "ContentTag.objectId":
+		if e.complexity.ContentTag.ObjectID == nil {
+			break
+		}
+
+		return e.complexity.ContentTag.ObjectID(childComplexity), true
+	case "ContentTag.tag":
+		if e.complexity.ContentTag.Tag == nil {
+			break
+		}
+
+		return e.complexity.ContentTag.Tag(childComplexity), true
+	case "ContentTag.tagId":
+		if e.complexity.ContentTag.TagID == nil {
+			break
+		}
+
+		return e.complexity.ContentTag.TagID(childComplexity), true
 
 	case "Flashcard.backMediaId":
 		if e.complexity.Flashcard.BackMediaID == nil {
@@ -379,6 +442,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.FlashcardSet.LevelID(childComplexity), true
+	case "FlashcardSet.tags":
+		if e.complexity.FlashcardSet.Tags == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSet.Tags(childComplexity), true
 	case "FlashcardSet.title":
 		if e.complexity.FlashcardSet.Title == nil {
 			break
@@ -471,6 +540,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Lesson.Sections(childComplexity), true
+	case "Lesson.tags":
+		if e.complexity.Lesson.Tags == nil {
+			break
+		}
+
+		return e.complexity.Lesson.Tags(childComplexity), true
 	case "Lesson.title":
 		if e.complexity.Lesson.Title == nil {
 			break
@@ -626,6 +701,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.MediaAsset.UploadedBy(childComplexity), true
 
+	case "Mutation.addContentTag":
+		if e.complexity.Mutation.AddContentTag == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addContentTag_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddContentTag(childComplexity, args["input"].(model.ContentTagInput)), true
 	case "Mutation.addFlashcard":
 		if e.complexity.Mutation.AddFlashcard == nil {
 			break
@@ -637,6 +723,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.AddFlashcard(childComplexity, args["input"].(model.AddFlashcardInput)), true
+	case "Mutation.addQuestionOption":
+		if e.complexity.Mutation.AddQuestionOption == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addQuestionOption_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddQuestionOption(childComplexity, args["questionId"].(string), args["input"].(model.CreateQuestionOptionInput)), true
 	case "Mutation.addQuizQuestion":
 		if e.complexity.Mutation.AddQuizQuestion == nil {
 			break
@@ -758,6 +855,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteMedia(childComplexity, args["id"].(string)), true
+	case "Mutation.deleteQuestionOption":
+		if e.complexity.Mutation.DeleteQuestionOption == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteQuestionOption_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteQuestionOption(childComplexity, args["id"].(string)), true
 	case "Mutation.deleteTag":
 		if e.complexity.Mutation.DeleteTag == nil {
 			break
@@ -791,6 +899,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.PublishLesson(childComplexity, args["id"].(string)), true
+	case "Mutation.removeContentTag":
+		if e.complexity.Mutation.RemoveContentTag == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeContentTag_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RemoveContentTag(childComplexity, args["input"].(model.ContentTagInput)), true
 	case "Mutation.unpublishLesson":
 		if e.complexity.Mutation.UnpublishLesson == nil {
 			break
@@ -835,6 +954,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateLevel(childComplexity, args["id"].(string), args["input"].(model.UpdateLevelInput)), true
+	case "Mutation.updateQuestionOption":
+		if e.complexity.Mutation.UpdateQuestionOption == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateQuestionOption_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateQuestionOption(childComplexity, args["id"].(string), args["input"].(model.UpdateQuestionOptionInput)), true
 	case "Mutation.updateTag":
 		if e.complexity.Mutation.UpdateTag == nil {
 			break
@@ -1037,6 +1167,43 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.Topics(childComplexity), true
 
+	case "QuestionOption.feedback":
+		if e.complexity.QuestionOption.Feedback == nil {
+			break
+		}
+
+		return e.complexity.QuestionOption.Feedback(childComplexity), true
+	case "QuestionOption.id":
+		if e.complexity.QuestionOption.ID == nil {
+			break
+		}
+
+		return e.complexity.QuestionOption.ID(childComplexity), true
+	case "QuestionOption.isCorrect":
+		if e.complexity.QuestionOption.IsCorrect == nil {
+			break
+		}
+
+		return e.complexity.QuestionOption.IsCorrect(childComplexity), true
+	case "QuestionOption.label":
+		if e.complexity.QuestionOption.Label == nil {
+			break
+		}
+
+		return e.complexity.QuestionOption.Label(childComplexity), true
+	case "QuestionOption.ord":
+		if e.complexity.QuestionOption.Ord == nil {
+			break
+		}
+
+		return e.complexity.QuestionOption.Ord(childComplexity), true
+	case "QuestionOption.questionId":
+		if e.complexity.QuestionOption.QuestionID == nil {
+			break
+		}
+
+		return e.complexity.QuestionOption.QuestionID(childComplexity), true
+
 	case "Quiz.createdAt":
 		if e.complexity.Quiz.CreatedAt == nil {
 			break
@@ -1067,6 +1234,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Quiz.Questions(childComplexity), true
+	case "Quiz.tags":
+		if e.complexity.Quiz.Tags == nil {
+			break
+		}
+
+		return e.complexity.Quiz.Tags(childComplexity), true
 	case "Quiz.timeLimitS":
 		if e.complexity.Quiz.TimeLimitS == nil {
 			break
@@ -1111,6 +1284,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.QuizQuestion.Metadata(childComplexity), true
+	case "QuizQuestion.options":
+		if e.complexity.QuizQuestion.Options == nil {
+			break
+		}
+
+		return e.complexity.QuizQuestion.Options(childComplexity), true
 	case "QuizQuestion.ord":
 		if e.complexity.QuizQuestion.Ord == nil {
 			break
@@ -1201,10 +1380,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAddFlashcardInput,
+		ec.unmarshalInputContentTagInput,
 		ec.unmarshalInputCreateFlashcardSetInput,
 		ec.unmarshalInputCreateLessonInput,
 		ec.unmarshalInputCreateLessonSectionInput,
 		ec.unmarshalInputCreateLevelInput,
+		ec.unmarshalInputCreateQuestionOptionInput,
 		ec.unmarshalInputCreateQuizInput,
 		ec.unmarshalInputCreateQuizQuestionInput,
 		ec.unmarshalInputCreateTagInput,
@@ -1213,6 +1394,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateLessonInput,
 		ec.unmarshalInputUpdateLessonSectionInput,
 		ec.unmarshalInputUpdateLevelInput,
+		ec.unmarshalInputUpdateQuestionOptionInput,
 		ec.unmarshalInputUpdateTagInput,
 		ec.unmarshalInputUpdateTopicInput,
 		ec.unmarshalInputUploadMediaInput,
@@ -1375,6 +1557,12 @@ type Mutation {
 
   createQuiz(input: CreateQuizInput!): Quiz!
   addQuizQuestion(quizId: ID!, input: CreateQuizQuestionInput!): QuizQuestion!
+  addQuestionOption(questionId: ID!, input: CreateQuestionOptionInput!): QuestionOption!
+  updateQuestionOption(id: ID!, input: UpdateQuestionOptionInput!): QuestionOption!
+  deleteQuestionOption(id: ID!): Boolean!
+
+  addContentTag(input: ContentTagInput!): ContentTag!
+  removeContentTag(input: ContentTagInput!): Boolean!
 
 }
 
@@ -1467,6 +1655,7 @@ type Lesson {
   createdAt: Time!
   updatedAt: Time!
   publishedAt: Time
+  tags: [Tag!]!
   sections: [LessonSection!]!
 }
 
@@ -1487,6 +1676,7 @@ type Quiz {
   totalPoints: Int!
   timeLimitS: Int
   createdAt: Time!
+  tags: [Tag!]!
   questions: [QuizQuestion!]!
 }
 
@@ -1499,6 +1689,7 @@ type QuizQuestion {
   promptMedia: ID
   points: Int!
   metadata: JSON!
+  options: [QuestionOption!]!
 }
 
 type QuizListResult {
@@ -1519,6 +1710,20 @@ input CreateQuizQuestionInput {
   promptMedia: ID
   points: Int = 1
   metadata: JSON
+}
+
+input CreateQuestionOptionInput {
+  ord: Int!
+  label: String!
+  isCorrect: Boolean!
+  feedback: String
+}
+
+input UpdateQuestionOptionInput {
+  ord: Int
+  label: String
+  isCorrect: Boolean
+  feedback: String
 }
 input UpdateLessonInput {
   title: String
@@ -1571,6 +1776,34 @@ scalar Upload
 scalar JSON
 scalar Map
 
+type QuestionOption {
+  id: ID!
+  questionId: ID!
+  ord: Int!
+  label: String!
+  isCorrect: Boolean!
+  feedback: String
+}
+
+enum ContentTagKind {
+  LESSON
+  QUIZ
+  FLASHCARD_SET
+}
+
+input ContentTagInput {
+  tagId: ID!
+  kind: ContentTagKind!
+  objectId: ID!
+}
+
+type ContentTag {
+  tagId: ID!
+  kind: ContentTagKind!
+  objectId: ID!
+  tag: Tag
+}
+
 type FlashcardSet {
   id: ID!
   title: String!
@@ -1579,6 +1812,7 @@ type FlashcardSet {
   levelId: ID
   createdAt: Time!
   createdBy: ID
+  tags: [Tag!]!
   cards: [Flashcard!]!
 }
 
@@ -1627,6 +1861,17 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_Mutation_addContentTag_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNContentTagInput2contentᚑservicesᚋgraphᚋmodelᚐContentTagInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_addFlashcard_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1635,6 +1880,22 @@ func (ec *executionContext) field_Mutation_addFlashcard_args(ctx context.Context
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_addQuestionOption_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "questionId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["questionId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateQuestionOptionInput2contentᚑservicesᚋgraphᚋmodelᚐCreateQuestionOptionInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -1769,6 +2030,17 @@ func (ec *executionContext) field_Mutation_deleteMedia_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteQuestionOption_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteTag_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1799,6 +2071,17 @@ func (ec *executionContext) field_Mutation_publishLesson_args(ctx context.Contex
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_removeContentTag_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNContentTagInput2contentᚑservicesᚋgraphᚋmodelᚐContentTagInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1854,6 +2137,22 @@ func (ec *executionContext) field_Mutation_updateLevel_args(ctx context.Context,
 	}
 	args["id"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateLevelInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateLevelInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateQuestionOption_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateQuestionOptionInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateQuestionOptionInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2159,6 +2458,130 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _ContentTag_tagId(ctx context.Context, field graphql.CollectedField, obj *model.ContentTag) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ContentTag_tagId,
+		func(ctx context.Context) (any, error) {
+			return obj.TagID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ContentTag_tagId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ContentTag",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ContentTag_kind(ctx context.Context, field graphql.CollectedField, obj *model.ContentTag) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ContentTag_kind,
+		func(ctx context.Context) (any, error) {
+			return obj.Kind, nil
+		},
+		nil,
+		ec.marshalNContentTagKind2contentᚑservicesᚋgraphᚋmodelᚐContentTagKind,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ContentTag_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ContentTag",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ContentTagKind does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ContentTag_objectId(ctx context.Context, field graphql.CollectedField, obj *model.ContentTag) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ContentTag_objectId,
+		func(ctx context.Context) (any, error) {
+			return obj.ObjectID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ContentTag_objectId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ContentTag",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ContentTag_tag(ctx context.Context, field graphql.CollectedField, obj *model.ContentTag) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ContentTag_tag,
+		func(ctx context.Context) (any, error) {
+			return obj.Tag, nil
+		},
+		nil,
+		ec.marshalOTag2ᚖcontentᚑservicesᚋgraphᚋmodelᚐTag,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ContentTag_tag(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ContentTag",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Tag_id(ctx, field)
+			case "slug":
+				return ec.fieldContext_Tag_slug(ctx, field)
+			case "name":
+				return ec.fieldContext_Tag_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Flashcard_id(ctx context.Context, field graphql.CollectedField, obj *model.Flashcard) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -2624,6 +3047,43 @@ func (ec *executionContext) fieldContext_FlashcardSet_createdBy(_ context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _FlashcardSet_tags(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSet_tags,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.FlashcardSet().Tags(ctx, obj)
+		},
+		nil,
+		ec.marshalNTag2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐTagᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSet_tags(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSet",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Tag_id(ctx, field)
+			case "slug":
+				return ec.fieldContext_Tag_slug(ctx, field)
+			case "name":
+				return ec.fieldContext_Tag_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _FlashcardSet_cards(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSet) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2711,6 +3171,8 @@ func (ec *executionContext) fieldContext_FlashcardSetList_items(_ context.Contex
 				return ec.fieldContext_FlashcardSet_createdAt(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_FlashcardSet_createdBy(ctx, field)
+			case "tags":
+				return ec.fieldContext_FlashcardSet_tags(ctx, field)
 			case "cards":
 				return ec.fieldContext_FlashcardSet_cards(ctx, field)
 			}
@@ -3173,6 +3635,43 @@ func (ec *executionContext) fieldContext_Lesson_publishedAt(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Lesson_tags(ctx context.Context, field graphql.CollectedField, obj *model.Lesson) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Lesson_tags,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Lesson().Tags(ctx, obj)
+		},
+		nil,
+		ec.marshalNTag2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐTagᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Lesson_tags(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Lesson",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Tag_id(ctx, field)
+			case "slug":
+				return ec.fieldContext_Tag_slug(ctx, field)
+			case "name":
+				return ec.fieldContext_Tag_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Lesson_sections(ctx context.Context, field graphql.CollectedField, obj *model.Lesson) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3264,6 +3763,8 @@ func (ec *executionContext) fieldContext_LessonCollection_items(_ context.Contex
 				return ec.fieldContext_Lesson_updatedAt(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_Lesson_publishedAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Lesson_tags(ctx, field)
 			case "sections":
 				return ec.fieldContext_Lesson_sections(ctx, field)
 			}
@@ -4427,6 +4928,8 @@ func (ec *executionContext) fieldContext_Mutation_createLesson(ctx context.Conte
 				return ec.fieldContext_Lesson_updatedAt(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_Lesson_publishedAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Lesson_tags(ctx, field)
 			case "sections":
 				return ec.fieldContext_Lesson_sections(ctx, field)
 			}
@@ -4496,6 +4999,8 @@ func (ec *executionContext) fieldContext_Mutation_updateLesson(ctx context.Conte
 				return ec.fieldContext_Lesson_updatedAt(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_Lesson_publishedAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Lesson_tags(ctx, field)
 			case "sections":
 				return ec.fieldContext_Lesson_sections(ctx, field)
 			}
@@ -4565,6 +5070,8 @@ func (ec *executionContext) fieldContext_Mutation_publishLesson(ctx context.Cont
 				return ec.fieldContext_Lesson_updatedAt(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_Lesson_publishedAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Lesson_tags(ctx, field)
 			case "sections":
 				return ec.fieldContext_Lesson_sections(ctx, field)
 			}
@@ -4634,6 +5141,8 @@ func (ec *executionContext) fieldContext_Mutation_unpublishLesson(ctx context.Co
 				return ec.fieldContext_Lesson_updatedAt(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_Lesson_publishedAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Lesson_tags(ctx, field)
 			case "sections":
 				return ec.fieldContext_Lesson_sections(ctx, field)
 			}
@@ -4844,6 +5353,8 @@ func (ec *executionContext) fieldContext_Mutation_createFlashcardSet(ctx context
 				return ec.fieldContext_FlashcardSet_createdAt(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_FlashcardSet_createdBy(ctx, field)
+			case "tags":
+				return ec.fieldContext_FlashcardSet_tags(ctx, field)
 			case "cards":
 				return ec.fieldContext_FlashcardSet_cards(ctx, field)
 			}
@@ -4964,6 +5475,8 @@ func (ec *executionContext) fieldContext_Mutation_createQuiz(ctx context.Context
 				return ec.fieldContext_Quiz_timeLimitS(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Quiz_createdAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Quiz_tags(ctx, field)
 			case "questions":
 				return ec.fieldContext_Quiz_questions(ctx, field)
 			}
@@ -5025,6 +5538,8 @@ func (ec *executionContext) fieldContext_Mutation_addQuizQuestion(ctx context.Co
 				return ec.fieldContext_QuizQuestion_points(ctx, field)
 			case "metadata":
 				return ec.fieldContext_QuizQuestion_metadata(ctx, field)
+			case "options":
+				return ec.fieldContext_QuizQuestion_options(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type QuizQuestion", field.Name)
 		},
@@ -5037,6 +5552,249 @@ func (ec *executionContext) fieldContext_Mutation_addQuizQuestion(ctx context.Co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_addQuizQuestion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_addQuestionOption(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_addQuestionOption,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().AddQuestionOption(ctx, fc.Args["questionId"].(string), fc.Args["input"].(model.CreateQuestionOptionInput))
+		},
+		nil,
+		ec.marshalNQuestionOption2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuestionOption,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_addQuestionOption(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_QuestionOption_id(ctx, field)
+			case "questionId":
+				return ec.fieldContext_QuestionOption_questionId(ctx, field)
+			case "ord":
+				return ec.fieldContext_QuestionOption_ord(ctx, field)
+			case "label":
+				return ec.fieldContext_QuestionOption_label(ctx, field)
+			case "isCorrect":
+				return ec.fieldContext_QuestionOption_isCorrect(ctx, field)
+			case "feedback":
+				return ec.fieldContext_QuestionOption_feedback(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type QuestionOption", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addQuestionOption_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateQuestionOption(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateQuestionOption,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateQuestionOption(ctx, fc.Args["id"].(string), fc.Args["input"].(model.UpdateQuestionOptionInput))
+		},
+		nil,
+		ec.marshalNQuestionOption2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuestionOption,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateQuestionOption(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_QuestionOption_id(ctx, field)
+			case "questionId":
+				return ec.fieldContext_QuestionOption_questionId(ctx, field)
+			case "ord":
+				return ec.fieldContext_QuestionOption_ord(ctx, field)
+			case "label":
+				return ec.fieldContext_QuestionOption_label(ctx, field)
+			case "isCorrect":
+				return ec.fieldContext_QuestionOption_isCorrect(ctx, field)
+			case "feedback":
+				return ec.fieldContext_QuestionOption_feedback(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type QuestionOption", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateQuestionOption_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteQuestionOption(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteQuestionOption,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteQuestionOption(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteQuestionOption(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteQuestionOption_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_addContentTag(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_addContentTag,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().AddContentTag(ctx, fc.Args["input"].(model.ContentTagInput))
+		},
+		nil,
+		ec.marshalNContentTag2ᚖcontentᚑservicesᚋgraphᚋmodelᚐContentTag,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_addContentTag(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "tagId":
+				return ec.fieldContext_ContentTag_tagId(ctx, field)
+			case "kind":
+				return ec.fieldContext_ContentTag_kind(ctx, field)
+			case "objectId":
+				return ec.fieldContext_ContentTag_objectId(ctx, field)
+			case "tag":
+				return ec.fieldContext_ContentTag_tag(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ContentTag", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addContentTag_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_removeContentTag(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_removeContentTag,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().RemoveContentTag(ctx, fc.Args["input"].(model.ContentTagInput))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_removeContentTag(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_removeContentTag_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -5509,6 +6267,8 @@ func (ec *executionContext) fieldContext_Query_lesson(ctx context.Context, field
 				return ec.fieldContext_Lesson_updatedAt(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_Lesson_publishedAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Lesson_tags(ctx, field)
 			case "sections":
 				return ec.fieldContext_Lesson_sections(ctx, field)
 			}
@@ -5578,6 +6338,8 @@ func (ec *executionContext) fieldContext_Query_lessonByCode(ctx context.Context,
 				return ec.fieldContext_Lesson_updatedAt(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_Lesson_publishedAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Lesson_tags(ctx, field)
 			case "sections":
 				return ec.fieldContext_Lesson_sections(ctx, field)
 			}
@@ -5637,6 +6399,8 @@ func (ec *executionContext) fieldContext_Query_quiz(ctx context.Context, field g
 				return ec.fieldContext_Quiz_timeLimitS(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Quiz_createdAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Quiz_tags(ctx, field)
 			case "questions":
 				return ec.fieldContext_Quiz_questions(ctx, field)
 			}
@@ -5743,6 +6507,8 @@ func (ec *executionContext) fieldContext_Query_flashcardSet(ctx context.Context,
 				return ec.fieldContext_FlashcardSet_createdAt(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_FlashcardSet_createdBy(ctx, field)
+			case "tags":
+				return ec.fieldContext_FlashcardSet_tags(ctx, field)
 			case "cards":
 				return ec.fieldContext_FlashcardSet_cards(ctx, field)
 			}
@@ -6024,6 +6790,180 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _QuestionOption_id(ctx context.Context, field graphql.CollectedField, obj *model.QuestionOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_QuestionOption_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_QuestionOption_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QuestionOption",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QuestionOption_questionId(ctx context.Context, field graphql.CollectedField, obj *model.QuestionOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_QuestionOption_questionId,
+		func(ctx context.Context) (any, error) {
+			return obj.QuestionID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_QuestionOption_questionId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QuestionOption",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QuestionOption_ord(ctx context.Context, field graphql.CollectedField, obj *model.QuestionOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_QuestionOption_ord,
+		func(ctx context.Context) (any, error) {
+			return obj.Ord, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_QuestionOption_ord(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QuestionOption",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QuestionOption_label(ctx context.Context, field graphql.CollectedField, obj *model.QuestionOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_QuestionOption_label,
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_QuestionOption_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QuestionOption",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QuestionOption_isCorrect(ctx context.Context, field graphql.CollectedField, obj *model.QuestionOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_QuestionOption_isCorrect,
+		func(ctx context.Context) (any, error) {
+			return obj.IsCorrect, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_QuestionOption_isCorrect(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QuestionOption",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QuestionOption_feedback(ctx context.Context, field graphql.CollectedField, obj *model.QuestionOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_QuestionOption_feedback,
+		func(ctx context.Context) (any, error) {
+			return obj.Feedback, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_QuestionOption_feedback(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QuestionOption",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Quiz_id(ctx context.Context, field graphql.CollectedField, obj *model.Quiz) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6227,6 +7167,43 @@ func (ec *executionContext) fieldContext_Quiz_createdAt(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Quiz_tags(ctx context.Context, field graphql.CollectedField, obj *model.Quiz) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Quiz_tags,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Quiz().Tags(ctx, obj)
+		},
+		nil,
+		ec.marshalNTag2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐTagᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Quiz_tags(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Quiz",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Tag_id(ctx, field)
+			case "slug":
+				return ec.fieldContext_Tag_slug(ctx, field)
+			case "name":
+				return ec.fieldContext_Tag_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Quiz_questions(ctx context.Context, field graphql.CollectedField, obj *model.Quiz) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6267,6 +7244,8 @@ func (ec *executionContext) fieldContext_Quiz_questions(_ context.Context, field
 				return ec.fieldContext_QuizQuestion_points(ctx, field)
 			case "metadata":
 				return ec.fieldContext_QuizQuestion_metadata(ctx, field)
+			case "options":
+				return ec.fieldContext_QuizQuestion_options(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type QuizQuestion", field.Name)
 		},
@@ -6312,6 +7291,8 @@ func (ec *executionContext) fieldContext_QuizListResult_items(_ context.Context,
 				return ec.fieldContext_Quiz_timeLimitS(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Quiz_createdAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Quiz_tags(ctx, field)
 			case "questions":
 				return ec.fieldContext_Quiz_questions(ctx, field)
 			}
@@ -6577,6 +7558,49 @@ func (ec *executionContext) fieldContext_QuizQuestion_metadata(_ context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type JSON does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QuizQuestion_options(ctx context.Context, field graphql.CollectedField, obj *model.QuizQuestion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_QuizQuestion_options,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.QuizQuestion().Options(ctx, obj)
+		},
+		nil,
+		ec.marshalNQuestionOption2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐQuestionOptionᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_QuizQuestion_options(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QuizQuestion",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_QuestionOption_id(ctx, field)
+			case "questionId":
+				return ec.fieldContext_QuestionOption_questionId(ctx, field)
+			case "ord":
+				return ec.fieldContext_QuestionOption_ord(ctx, field)
+			case "label":
+				return ec.fieldContext_QuestionOption_label(ctx, field)
+			case "isCorrect":
+				return ec.fieldContext_QuestionOption_isCorrect(ctx, field)
+			case "feedback":
+				return ec.fieldContext_QuestionOption_feedback(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type QuestionOption", field.Name)
 		},
 	}
 	return fc, nil
@@ -8293,6 +9317,47 @@ func (ec *executionContext) unmarshalInputAddFlashcardInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputContentTagInput(ctx context.Context, obj any) (model.ContentTagInput, error) {
+	var it model.ContentTagInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"tagId", "kind", "objectId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "tagId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tagId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TagID = data
+		case "kind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			data, err := ec.unmarshalNContentTagKind2contentᚑservicesᚋgraphᚋmodelᚐContentTagKind(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kind = data
+		case "objectId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("objectId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ObjectID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateFlashcardSetInput(ctx context.Context, obj any) (model.CreateFlashcardSetInput, error) {
 	var it model.CreateFlashcardSetInput
 	asMap := map[string]any{}
@@ -8472,6 +9537,54 @@ func (ec *executionContext) unmarshalInputCreateLevelInput(ctx context.Context, 
 				return it, err
 			}
 			it.Name = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateQuestionOptionInput(ctx context.Context, obj any) (model.CreateQuestionOptionInput, error) {
+	var it model.CreateQuestionOptionInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"ord", "label", "isCorrect", "feedback"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "ord":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ord"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Ord = data
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "isCorrect":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isCorrect"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsCorrect = data
+		case "feedback":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("feedback"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Feedback = data
 		}
 	}
 
@@ -8817,6 +9930,54 @@ func (ec *executionContext) unmarshalInputUpdateLevelInput(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateQuestionOptionInput(ctx context.Context, obj any) (model.UpdateQuestionOptionInput, error) {
+	var it model.UpdateQuestionOptionInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"ord", "label", "isCorrect", "feedback"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "ord":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ord"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Ord = data
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "isCorrect":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isCorrect"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsCorrect = data
+		case "feedback":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("feedback"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Feedback = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateTagInput(ctx context.Context, obj any) (model.UpdateTagInput, error) {
 	var it model.UpdateTagInput
 	asMap := map[string]any{}
@@ -8948,6 +10109,57 @@ func (ec *executionContext) unmarshalInputUploadMediaInput(ctx context.Context, 
 
 // region    **************************** object.gotpl ****************************
 
+var contentTagImplementors = []string{"ContentTag"}
+
+func (ec *executionContext) _ContentTag(ctx context.Context, sel ast.SelectionSet, obj *model.ContentTag) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, contentTagImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ContentTag")
+		case "tagId":
+			out.Values[i] = ec._ContentTag_tagId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "kind":
+			out.Values[i] = ec._ContentTag_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "objectId":
+			out.Values[i] = ec._ContentTag_objectId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tag":
+			out.Values[i] = ec._ContentTag_tag(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var flashcardImplementors = []string{"Flashcard"}
 
 func (ec *executionContext) _Flashcard(ctx context.Context, sel ast.SelectionSet, obj *model.Flashcard) graphql.Marshaler {
@@ -9052,6 +10264,42 @@ func (ec *executionContext) _FlashcardSet(ctx context.Context, sel ast.Selection
 			}
 		case "createdBy":
 			out.Values[i] = ec._FlashcardSet_createdBy(ctx, field, obj)
+		case "tags":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._FlashcardSet_tags(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "cards":
 			field := field
 
@@ -9280,6 +10528,42 @@ func (ec *executionContext) _Lesson(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "publishedAt":
 			out.Values[i] = ec._Lesson_publishedAt(ctx, field, obj)
+		case "tags":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Lesson_tags(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "sections":
 			out.Values[i] = ec._Lesson_sections(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -9716,6 +11000,41 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "addQuestionOption":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_addQuestionOption(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateQuestionOption":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateQuestionOption(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteQuestionOption":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteQuestionOption(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "addContentTag":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_addContentTag(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "removeContentTag":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_removeContentTag(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10139,6 +11458,67 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
+var questionOptionImplementors = []string{"QuestionOption"}
+
+func (ec *executionContext) _QuestionOption(ctx context.Context, sel ast.SelectionSet, obj *model.QuestionOption) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, questionOptionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("QuestionOption")
+		case "id":
+			out.Values[i] = ec._QuestionOption_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "questionId":
+			out.Values[i] = ec._QuestionOption_questionId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ord":
+			out.Values[i] = ec._QuestionOption_ord(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._QuestionOption_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isCorrect":
+			out.Values[i] = ec._QuestionOption_isCorrect(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "feedback":
+			out.Values[i] = ec._QuestionOption_feedback(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var quizImplementors = []string{"Quiz"}
 
 func (ec *executionContext) _Quiz(ctx context.Context, sel ast.SelectionSet, obj *model.Quiz) graphql.Marshaler {
@@ -10176,6 +11556,42 @@ func (ec *executionContext) _Quiz(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "tags":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Quiz_tags(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "questions":
 			field := field
 
@@ -10293,40 +11709,76 @@ func (ec *executionContext) _QuizQuestion(ctx context.Context, sel ast.Selection
 		case "id":
 			out.Values[i] = ec._QuizQuestion_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "quizId":
 			out.Values[i] = ec._QuizQuestion_quizId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "ord":
 			out.Values[i] = ec._QuizQuestion_ord(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "type":
 			out.Values[i] = ec._QuizQuestion_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "prompt":
 			out.Values[i] = ec._QuizQuestion_prompt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "promptMedia":
 			out.Values[i] = ec._QuizQuestion_promptMedia(ctx, field, obj)
 		case "points":
 			out.Values[i] = ec._QuizQuestion_points(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "metadata":
 			out.Values[i] = ec._QuizQuestion_metadata(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "options":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._QuizQuestion_options(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10809,6 +12261,35 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNContentTag2contentᚑservicesᚋgraphᚋmodelᚐContentTag(ctx context.Context, sel ast.SelectionSet, v model.ContentTag) graphql.Marshaler {
+	return ec._ContentTag(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNContentTag2ᚖcontentᚑservicesᚋgraphᚋmodelᚐContentTag(ctx context.Context, sel ast.SelectionSet, v *model.ContentTag) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ContentTag(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNContentTagInput2contentᚑservicesᚋgraphᚋmodelᚐContentTagInput(ctx context.Context, v any) (model.ContentTagInput, error) {
+	res, err := ec.unmarshalInputContentTagInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNContentTagKind2contentᚑservicesᚋgraphᚋmodelᚐContentTagKind(ctx context.Context, v any) (model.ContentTagKind, error) {
+	var res model.ContentTagKind
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNContentTagKind2contentᚑservicesᚋgraphᚋmodelᚐContentTagKind(ctx context.Context, sel ast.SelectionSet, v model.ContentTagKind) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNCreateFlashcardSetInput2contentᚑservicesᚋgraphᚋmodelᚐCreateFlashcardSetInput(ctx context.Context, v any) (model.CreateFlashcardSetInput, error) {
 	res, err := ec.unmarshalInputCreateFlashcardSetInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -10826,6 +12307,11 @@ func (ec *executionContext) unmarshalNCreateLessonSectionInput2contentᚑservice
 
 func (ec *executionContext) unmarshalNCreateLevelInput2contentᚑservicesᚋgraphᚋmodelᚐCreateLevelInput(ctx context.Context, v any) (model.CreateLevelInput, error) {
 	res, err := ec.unmarshalInputCreateLevelInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateQuestionOptionInput2contentᚑservicesᚋgraphᚋmodelᚐCreateQuestionOptionInput(ctx context.Context, v any) (model.CreateQuestionOptionInput, error) {
+	res, err := ec.unmarshalInputCreateQuestionOptionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -11351,6 +12837,64 @@ func (ec *executionContext) marshalNMediaKind2contentᚑservicesᚋgraphᚋmodel
 	return v
 }
 
+func (ec *executionContext) marshalNQuestionOption2contentᚑservicesᚋgraphᚋmodelᚐQuestionOption(ctx context.Context, sel ast.SelectionSet, v model.QuestionOption) graphql.Marshaler {
+	return ec._QuestionOption(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNQuestionOption2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐQuestionOptionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.QuestionOption) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNQuestionOption2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuestionOption(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNQuestionOption2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuestionOption(ctx context.Context, sel ast.SelectionSet, v *model.QuestionOption) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._QuestionOption(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNQuiz2contentᚑservicesᚋgraphᚋmodelᚐQuiz(ctx context.Context, sel ast.SelectionSet, v model.Quiz) graphql.Marshaler {
 	return ec._Quiz(ctx, sel, &v)
 }
@@ -11634,6 +13178,11 @@ func (ec *executionContext) unmarshalNUpdateLessonSectionInput2contentᚑservice
 
 func (ec *executionContext) unmarshalNUpdateLevelInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateLevelInput(ctx context.Context, v any) (model.UpdateLevelInput, error) {
 	res, err := ec.unmarshalInputUpdateLevelInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateQuestionOptionInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateQuestionOptionInput(ctx context.Context, v any) (model.UpdateQuestionOptionInput, error) {
+	res, err := ec.unmarshalInputUpdateQuestionOptionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

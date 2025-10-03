@@ -60,6 +60,12 @@ type Mutation {
 
   createQuiz(input: CreateQuizInput!): Quiz!
   addQuizQuestion(quizId: ID!, input: CreateQuizQuestionInput!): QuizQuestion!
+  addQuestionOption(questionId: ID!, input: CreateQuestionOptionInput!): QuestionOption!
+  updateQuestionOption(id: ID!, input: UpdateQuestionOptionInput!): QuestionOption!
+  deleteQuestionOption(id: ID!): Boolean!
+
+  addContentTag(input: ContentTagInput!): ContentTag!
+  removeContentTag(input: ContentTagInput!): Boolean!
 
 }
 
@@ -152,6 +158,7 @@ type Lesson {
   createdAt: Time!
   updatedAt: Time!
   publishedAt: Time
+  tags: [Tag!]!
   sections: [LessonSection!]!
 }
 
@@ -172,6 +179,7 @@ type Quiz {
   totalPoints: Int!
   timeLimitS: Int
   createdAt: Time!
+  tags: [Tag!]!
   questions: [QuizQuestion!]!
 }
 
@@ -184,6 +192,7 @@ type QuizQuestion {
   promptMedia: ID
   points: Int!
   metadata: JSON!
+  options: [QuestionOption!]!
 }
 
 type QuizListResult {
@@ -204,6 +213,20 @@ input CreateQuizQuestionInput {
   promptMedia: ID
   points: Int = 1
   metadata: JSON
+}
+
+input CreateQuestionOptionInput {
+  ord: Int!
+  label: String!
+  isCorrect: Boolean!
+  feedback: String
+}
+
+input UpdateQuestionOptionInput {
+  ord: Int
+  label: String
+  isCorrect: Boolean
+  feedback: String
 }
 input UpdateLessonInput {
   title: String
@@ -256,6 +279,34 @@ scalar Upload
 scalar JSON
 scalar Map
 
+type QuestionOption {
+  id: ID!
+  questionId: ID!
+  ord: Int!
+  label: String!
+  isCorrect: Boolean!
+  feedback: String
+}
+
+enum ContentTagKind {
+  LESSON
+  QUIZ
+  FLASHCARD_SET
+}
+
+input ContentTagInput {
+  tagId: ID!
+  kind: ContentTagKind!
+  objectId: ID!
+}
+
+type ContentTag {
+  tagId: ID!
+  kind: ContentTagKind!
+  objectId: ID!
+  tag: Tag
+}
+
 type FlashcardSet {
   id: ID!
   title: String!
@@ -264,6 +315,7 @@ type FlashcardSet {
   levelId: ID
   createdAt: Time!
   createdBy: ID
+  tags: [Tag!]!
   cards: [Flashcard!]!
 }
 

@@ -84,3 +84,91 @@ func (r *mutationResolver) AddQuizQuestion(ctx context.Context, quizID string, i
 
 	return mapQuizQuestion(created), nil
 }
+
+// AddQuestionOption is the resolver for the addQuestionOption field.
+func (r *mutationResolver) AddQuestionOption(ctx context.Context, questionID string, input model.CreateQuestionOptionInput) (*model.QuestionOption, error) {
+	quizService := r.Resolver.QuizService
+	if quizService == nil {
+		return nil, gqlerror.Errorf("quiz service not configured")
+	}
+
+	qID, err := uuid.Parse(questionID)
+	if err != nil {
+		return nil, gqlerror.Errorf("invalid question ID: %v", err)
+	}
+
+	option := &models.QuestionOption{
+		QuestionID: qID,
+		Ord:        input.Ord,
+		Label:      input.Label,
+		IsCorrect:  input.IsCorrect,
+	}
+
+	if input.Feedback != nil {
+		option.Feedback = *input.Feedback
+	}
+
+	created, err := quizService.AddOption(ctx, qID, option)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapQuestionOption(created), nil
+}
+
+// UpdateQuestionOption is the resolver for the updateQuestionOption field.
+func (r *mutationResolver) UpdateQuestionOption(ctx context.Context, id string, input model.UpdateQuestionOptionInput) (*model.QuestionOption, error) {
+	quizService := r.Resolver.QuizService
+	if quizService == nil {
+		return nil, gqlerror.Errorf("quiz service not configured")
+	}
+
+	optionID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, gqlerror.Errorf("invalid option ID: %v", err)
+	}
+
+	updates := &models.QuestionOption{}
+
+	if input.Ord != nil {
+		updates.Ord = *input.Ord
+	}
+
+	if input.Label != nil {
+		updates.Label = *input.Label
+	}
+
+	if input.IsCorrect != nil {
+		updates.IsCorrect = *input.IsCorrect
+	}
+
+	if input.Feedback != nil {
+		updates.Feedback = *input.Feedback
+	}
+
+	updated, err := quizService.UpdateOption(ctx, optionID, updates)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapQuestionOption(updated), nil
+}
+
+// DeleteQuestionOption is the resolver for the deleteQuestionOption field.
+func (r *mutationResolver) DeleteQuestionOption(ctx context.Context, id string) (bool, error) {
+	quizService := r.Resolver.QuizService
+	if quizService == nil {
+		return false, gqlerror.Errorf("quiz service not configured")
+	}
+
+	optionID, err := uuid.Parse(id)
+	if err != nil {
+		return false, gqlerror.Errorf("invalid option ID: %v", err)
+	}
+
+	if err := quizService.DeleteOption(ctx, optionID); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}

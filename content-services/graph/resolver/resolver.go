@@ -1,6 +1,7 @@
 package resolver
 
 import (
+	"content-services/internal/repository"
 	"content-services/internal/service"
 	"content-services/internal/taxonomy"
 
@@ -15,4 +16,5 @@ type Resolver struct {
 	LessonService service.LessonService
 	QuizService   service.QuizService
 	Flashcards    service.FlashcardService
+	TagRepo       repository.TagRepository
 }

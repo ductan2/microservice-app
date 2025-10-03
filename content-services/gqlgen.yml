@@ -31,15 +31,23 @@ models:
         resolver: true
       level:
         resolver: true
+      tags:
+        resolver: true
   Quiz:
     fields:
       questions:
+        resolver: true
+      tags:
         resolver: true
   FlashcardSet:
     fields:
       cards:
         resolver: true
-      sections:
+      tags:
+        resolver: true
+  QuizQuestion:
+    fields:
+      options:
         resolver: true
   Map:
     model:

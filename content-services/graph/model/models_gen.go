@@ -21,6 +21,19 @@ type AddFlashcardInput struct {
 	Hints        []string `json:"hints,omitempty"`
 }
 
+type ContentTag struct {
+	TagID    string         `json:"tagId"`
+	Kind     ContentTagKind `json:"kind"`
+	ObjectID string         `json:"objectId"`
+	Tag      *Tag           `json:"tag,omitempty"`
+}
+
+type ContentTagInput struct {
+	TagID    string         `json:"tagId"`
+	Kind     ContentTagKind `json:"kind"`
+	ObjectID string         `json:"objectId"`
+}
+
 type CreateFlashcardSetInput struct {
 	Title       string  `json:"title"`
 	Description *string `json:"description,omitempty"`
@@ -46,6 +59,13 @@ type CreateLessonSectionInput struct {
 type CreateLevelInput struct {
 	Code string `json:"code"`
 	Name string `json:"name"`
+}
+
+type CreateQuestionOptionInput struct {
+	Ord       int     `json:"ord"`
+	Label     string  `json:"label"`
+	IsCorrect bool    `json:"isCorrect"`
+	Feedback  *string `json:"feedback,omitempty"`
 }
 
 type CreateQuizInput struct {
@@ -93,6 +113,7 @@ type FlashcardSet struct {
 	LevelID     *string      `json:"levelId,omitempty"`
 	CreatedAt   time.Time    `json:"createdAt"`
 	CreatedBy   *string      `json:"createdBy,omitempty"`
+	Tags        []*Tag       `json:"tags"`
 	Cards       []*Flashcard `json:"cards"`
 }
 
@@ -116,6 +137,7 @@ type Lesson struct {
 	CreatedAt   time.Time        `json:"createdAt"`
 	UpdatedAt   time.Time        `json:"updatedAt"`
 	PublishedAt *time.Time       `json:"publishedAt,omitempty"`
+	Tags        []*Tag           `json:"tags"`
 	Sections    []*LessonSection `json:"sections"`
 }
 
@@ -165,6 +187,15 @@ type Mutation struct {
 type Query struct {
 }
 
+type QuestionOption struct {
+	ID         string  `json:"id"`
+	QuestionID string  `json:"questionId"`
+	Ord        int     `json:"ord"`
+	Label      string  `json:"label"`
+	IsCorrect  bool    `json:"isCorrect"`
+	Feedback   *string `json:"feedback,omitempty"`
+}
+
 type Quiz struct {
 	ID          string          `json:"id"`
 	LessonID    *string         `json:"lessonId,omitempty"`
@@ -173,6 +204,7 @@ type Quiz struct {
 	TotalPoints int             `json:"totalPoints"`
 	TimeLimitS  *int            `json:"timeLimitS,omitempty"`
 	CreatedAt   time.Time       `json:"createdAt"`
+	Tags        []*Tag          `json:"tags"`
 	Questions   []*QuizQuestion `json:"questions"`
 }
 
@@ -182,14 +214,15 @@ type QuizListResult struct {
 }
 
 type QuizQuestion struct {
-	ID          string         `json:"id"`
-	QuizID      string         `json:"quizId"`
-	Ord         int            `json:"ord"`
-	Type        string         `json:"type"`
-	Prompt      string         `json:"prompt"`
-	PromptMedia *string        `json:"promptMedia,omitempty"`
-	Points      int            `json:"points"`
-	Metadata    map[string]any `json:"metadata"`
+	ID          string            `json:"id"`
+	QuizID      string            `json:"quizId"`
+	Ord         int               `json:"ord"`
+	Type        string            `json:"type"`
+	Prompt      string            `json:"prompt"`
+	PromptMedia *string           `json:"promptMedia,omitempty"`
+	Points      int               `json:"points"`
+	Metadata    map[string]any    `json:"metadata"`
+	Options     []*QuestionOption `json:"options"`
 }
 
 type Tag struct {
@@ -222,6 +255,13 @@ type UpdateLevelInput struct {
 	Name *string `json:"name,omitempty"`
 }
 
+type UpdateQuestionOptionInput struct {
+	Ord       *int    `json:"ord,omitempty"`
+	Label     *string `json:"label,omitempty"`
+	IsCorrect *bool   `json:"isCorrect,omitempty"`
+	Feedback  *string `json:"feedback,omitempty"`
+}
+
 type UpdateTagInput struct {
 	Slug *string `json:"slug,omitempty"`
 	Name *string `json:"name,omitempty"`
@@ -238,6 +278,63 @@ type UploadMediaInput struct {
 	MimeType   string         `json:"mimeType"`
 	Filename   *string        `json:"filename,omitempty"`
 	UploadedBy *string        `json:"uploadedBy,omitempty"`
+}
+
+type ContentTagKind string
+
+const (
+	ContentTagKindLesson       ContentTagKind = "LESSON"
+	ContentTagKindQuiz         ContentTagKind = "QUIZ"
+	ContentTagKindFlashcardSet ContentTagKind = "FLASHCARD_SET"
+)
+
+var AllContentTagKind = []ContentTagKind{
+	ContentTagKindLesson,
+	ContentTagKindQuiz,
+	ContentTagKindFlashcardSet,
+}
+
+func (e ContentTagKind) IsValid() bool {
+	switch e {
+	case ContentTagKindLesson, ContentTagKindQuiz, ContentTagKindFlashcardSet:
+		return true
+	}
+	return false
+}
+
+func (e ContentTagKind) String() string {
+	return string(e)
+}
+
+func (e *ContentTagKind) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ContentTagKind(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ContentTagKind", str)
+	}
+	return nil
+}
+
+func (e ContentTagKind) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ContentTagKind) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ContentTagKind) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 type LessonSectionType string
