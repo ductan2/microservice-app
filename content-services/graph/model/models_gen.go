@@ -12,6 +12,23 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
+type AddFlashcardInput struct {
+	SetID        string   `json:"setId"`
+	FrontText    string   `json:"frontText"`
+	BackText     string   `json:"backText"`
+	FrontMediaID *string  `json:"frontMediaId,omitempty"`
+	BackMediaID  *string  `json:"backMediaId,omitempty"`
+	Hints        []string `json:"hints,omitempty"`
+}
+
+type CreateFlashcardSetInput struct {
+	Title       string  `json:"title"`
+	Description *string `json:"description,omitempty"`
+	TopicID     *string `json:"topicId,omitempty"`
+	LevelID     *string `json:"levelId,omitempty"`
+	CreatedBy   *string `json:"createdBy,omitempty"`
+}
+
 type CreateLessonInput struct {
 	Code        *string `json:"code,omitempty"`
 	Title       string  `json:"title"`
@@ -34,6 +51,36 @@ type CreateTagInput struct {
 type CreateTopicInput struct {
 	Slug string `json:"slug"`
 	Name string `json:"name"`
+}
+
+type Flashcard struct {
+	ID           string    `json:"id"`
+	SetID        string    `json:"setId"`
+	FrontText    string    `json:"frontText"`
+	BackText     string    `json:"backText"`
+	FrontMediaID *string   `json:"frontMediaId,omitempty"`
+	BackMediaID  *string   `json:"backMediaId,omitempty"`
+	Ord          int       `json:"ord"`
+	Hints        []string  `json:"hints,omitempty"`
+	CreatedAt    time.Time `json:"createdAt"`
+}
+
+type FlashcardSet struct {
+	ID          string       `json:"id"`
+	Title       string       `json:"title"`
+	Description *string      `json:"description,omitempty"`
+	TopicID     *string      `json:"topicId,omitempty"`
+	LevelID     *string      `json:"levelId,omitempty"`
+	CreatedAt   time.Time    `json:"createdAt"`
+	CreatedBy   *string      `json:"createdBy,omitempty"`
+	Cards       []*Flashcard `json:"cards"`
+}
+
+type FlashcardSetList struct {
+	Items      []*FlashcardSet `json:"items"`
+	TotalCount int             `json:"totalCount"`
+	Page       int             `json:"page"`
+	PageSize   int             `json:"pageSize"`
 }
 
 type Lesson struct {

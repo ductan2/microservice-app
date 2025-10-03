@@ -70,26 +70,26 @@ type LessonSection struct {
 
 // FlashcardSet collection of flashcards
 type FlashcardSet struct {
-	ID          uuid.UUID  `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	Title       string     `gorm:"type:text;not null" json:"title"`
-	Description string     `gorm:"type:text" json:"description,omitempty"`
-	TopicID     *uuid.UUID `gorm:"type:uuid" json:"topic_id,omitempty"`
-	LevelID     *uuid.UUID `gorm:"type:uuid" json:"level_id,omitempty"`
-	CreatedAt   time.Time  `gorm:"default:now();not null" json:"created_at"`
-	CreatedBy   *uuid.UUID `gorm:"type:uuid" json:"created_by,omitempty"`
+	ID          uuid.UUID  `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id" bson:"_id"`
+	Title       string     `gorm:"type:text;not null" json:"title" bson:"title"`
+	Description string     `gorm:"type:text" json:"description,omitempty" bson:"description,omitempty"`
+	TopicID     *uuid.UUID `gorm:"type:uuid" json:"topic_id,omitempty" bson:"topic_id,omitempty"`
+	LevelID     *uuid.UUID `gorm:"type:uuid" json:"level_id,omitempty" bson:"level_id,omitempty"`
+	CreatedAt   time.Time  `gorm:"default:now();not null" json:"created_at" bson:"created_at"`
+	CreatedBy   *uuid.UUID `gorm:"type:uuid" json:"created_by,omitempty" bson:"created_by,omitempty"`
 }
 
 // Flashcard individual flashcard
 type Flashcard struct {
-	ID           uuid.UUID  `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	SetID        uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:flashcards_set_ord;constraint:OnDelete:CASCADE" json:"set_id"`
-	FrontText    string     `gorm:"type:text;not null" json:"front_text"`
-	BackText     string     `gorm:"type:text;not null" json:"back_text"`
-	FrontMediaID *uuid.UUID `gorm:"type:uuid" json:"front_media_id,omitempty"`
-	BackMediaID  *uuid.UUID `gorm:"type:uuid" json:"back_media_id,omitempty"`
-	Ord          int        `gorm:"not null;uniqueIndex:flashcards_set_ord" json:"ord"`
-	Hints        []string   `gorm:"type:text[]" json:"hints,omitempty"`
-	CreatedAt    time.Time  `gorm:"default:now();not null" json:"created_at"`
+	ID           uuid.UUID  `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id" bson:"_id"`
+	SetID        uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:flashcards_set_ord;constraint:OnDelete:CASCADE" json:"set_id" bson:"set_id"`
+	FrontText    string     `gorm:"type:text;not null" json:"front_text" bson:"front_text"`
+	BackText     string     `gorm:"type:text;not null" json:"back_text" bson:"back_text"`
+	FrontMediaID *uuid.UUID `gorm:"type:uuid" json:"front_media_id,omitempty" bson:"front_media_id,omitempty"`
+	BackMediaID  *uuid.UUID `gorm:"type:uuid" json:"back_media_id,omitempty" bson:"back_media_id,omitempty"`
+	Ord          int        `gorm:"not null;uniqueIndex:flashcards_set_ord" json:"ord" bson:"ord"`
+	Hints        []string   `gorm:"type:text[]" json:"hints,omitempty" bson:"hints,omitempty"`
+	CreatedAt    time.Time  `gorm:"default:now();not null" json:"created_at" bson:"created_at"`
 }
 
 // Quiz assessment with questions

@@ -39,6 +39,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	FlashcardSet() FlashcardSetResolver
 	Lesson() LessonResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
@@ -48,6 +49,36 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Flashcard struct {
+		BackMediaID  func(childComplexity int) int
+		BackText     func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		FrontMediaID func(childComplexity int) int
+		FrontText    func(childComplexity int) int
+		Hints        func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Ord          func(childComplexity int) int
+		SetID        func(childComplexity int) int
+	}
+
+	FlashcardSet struct {
+		Cards       func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		CreatedBy   func(childComplexity int) int
+		Description func(childComplexity int) int
+		ID          func(childComplexity int) int
+		LevelID     func(childComplexity int) int
+		Title       func(childComplexity int) int
+		TopicID     func(childComplexity int) int
+	}
+
+	FlashcardSetList struct {
+		Items      func(childComplexity int) int
+		Page       func(childComplexity int) int
+		PageSize   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
 	Lesson struct {
 		Code        func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
@@ -83,32 +114,36 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateLesson func(childComplexity int, input model.CreateLessonInput) int
-		CreateLevel  func(childComplexity int, input model.CreateLevelInput) int
-		CreateTag    func(childComplexity int, input model.CreateTagInput) int
-		CreateTopic  func(childComplexity int, input model.CreateTopicInput) int
-		DeleteLevel  func(childComplexity int, id string) int
-		DeleteMedia  func(childComplexity int, id string) int
-		DeleteTag    func(childComplexity int, id string) int
-		DeleteTopic  func(childComplexity int, id string) int
-		UpdateLevel  func(childComplexity int, id string, input model.UpdateLevelInput) int
-		UpdateTag    func(childComplexity int, id string, input model.UpdateTagInput) int
-		UpdateTopic  func(childComplexity int, id string, input model.UpdateTopicInput) int
-		UploadMedia  func(childComplexity int, input model.UploadMediaInput) int
+		AddFlashcard       func(childComplexity int, input model.AddFlashcardInput) int
+		CreateFlashcardSet func(childComplexity int, input model.CreateFlashcardSetInput) int
+		CreateLesson       func(childComplexity int, input model.CreateLessonInput) int
+		CreateLevel        func(childComplexity int, input model.CreateLevelInput) int
+		CreateTag          func(childComplexity int, input model.CreateTagInput) int
+		CreateTopic        func(childComplexity int, input model.CreateTopicInput) int
+		DeleteLevel        func(childComplexity int, id string) int
+		DeleteMedia        func(childComplexity int, id string) int
+		DeleteTag          func(childComplexity int, id string) int
+		DeleteTopic        func(childComplexity int, id string) int
+		UpdateLevel        func(childComplexity int, id string, input model.UpdateLevelInput) int
+		UpdateTag          func(childComplexity int, id string, input model.UpdateTagInput) int
+		UpdateTopic        func(childComplexity int, id string, input model.UpdateTopicInput) int
+		UploadMedia        func(childComplexity int, input model.UploadMediaInput) int
 	}
 
 	Query struct {
-		Health       func(childComplexity int) int
-		Lesson       func(childComplexity int, id string) int
-		LessonByCode func(childComplexity int, code string) int
-		Level        func(childComplexity int, id *string, code *string) int
-		Levels       func(childComplexity int) int
-		MediaAsset   func(childComplexity int, id string) int
-		MediaAssets  func(childComplexity int, ids []string) int
-		Tag          func(childComplexity int, id *string, slug *string) int
-		Tags         func(childComplexity int) int
-		Topic        func(childComplexity int, id *string, slug *string) int
-		Topics       func(childComplexity int) int
+		FlashcardSet  func(childComplexity int, id string) int
+		FlashcardSets func(childComplexity int, topicID *string, levelID *string, page *int, pageSize *int) int
+		Health        func(childComplexity int) int
+		Lesson        func(childComplexity int, id string) int
+		LessonByCode  func(childComplexity int, code string) int
+		Level         func(childComplexity int, id *string, code *string) int
+		Levels        func(childComplexity int) int
+		MediaAsset    func(childComplexity int, id string) int
+		MediaAssets   func(childComplexity int, ids []string) int
+		Tag           func(childComplexity int, id *string, slug *string) int
+		Tags          func(childComplexity int) int
+		Topic         func(childComplexity int, id *string, slug *string) int
+		Topics        func(childComplexity int) int
 	}
 
 	Tag struct {
@@ -125,6 +160,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type FlashcardSetResolver interface {
+	Cards(ctx context.Context, obj *model.FlashcardSet) ([]*model.Flashcard, error)
+}
 type LessonResolver interface {
 	Topic(ctx context.Context, obj *model.Lesson) (*model.Topic, error)
 	Level(ctx context.Context, obj *model.Lesson) (*model.Level, error)
@@ -142,6 +180,8 @@ type MutationResolver interface {
 	UploadMedia(ctx context.Context, input model.UploadMediaInput) (*model.MediaAsset, error)
 	DeleteMedia(ctx context.Context, id string) (bool, error)
 	CreateLesson(ctx context.Context, input model.CreateLessonInput) (*model.Lesson, error)
+	CreateFlashcardSet(ctx context.Context, input model.CreateFlashcardSetInput) (*model.FlashcardSet, error)
+	AddFlashcard(ctx context.Context, input model.AddFlashcardInput) (*model.Flashcard, error)
 }
 type QueryResolver interface {
 	Health(ctx context.Context) (string, error)
@@ -155,6 +195,8 @@ type QueryResolver interface {
 	MediaAssets(ctx context.Context, ids []string) ([]*model.MediaAsset, error)
 	Lesson(ctx context.Context, id string) (*model.Lesson, error)
 	LessonByCode(ctx context.Context, code string) (*model.Lesson, error)
+	FlashcardSet(ctx context.Context, id string) (*model.FlashcardSet, error)
+	FlashcardSets(ctx context.Context, topicID *string, levelID *string, page *int, pageSize *int) (*model.FlashcardSetList, error)
 }
 
 type executableSchema struct {
@@ -175,6 +217,135 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Flashcard.backMediaId":
+		if e.complexity.Flashcard.BackMediaID == nil {
+			break
+		}
+
+		return e.complexity.Flashcard.BackMediaID(childComplexity), true
+	case "Flashcard.backText":
+		if e.complexity.Flashcard.BackText == nil {
+			break
+		}
+
+		return e.complexity.Flashcard.BackText(childComplexity), true
+	case "Flashcard.createdAt":
+		if e.complexity.Flashcard.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Flashcard.CreatedAt(childComplexity), true
+	case "Flashcard.frontMediaId":
+		if e.complexity.Flashcard.FrontMediaID == nil {
+			break
+		}
+
+		return e.complexity.Flashcard.FrontMediaID(childComplexity), true
+	case "Flashcard.frontText":
+		if e.complexity.Flashcard.FrontText == nil {
+			break
+		}
+
+		return e.complexity.Flashcard.FrontText(childComplexity), true
+	case "Flashcard.hints":
+		if e.complexity.Flashcard.Hints == nil {
+			break
+		}
+
+		return e.complexity.Flashcard.Hints(childComplexity), true
+	case "Flashcard.id":
+		if e.complexity.Flashcard.ID == nil {
+			break
+		}
+
+		return e.complexity.Flashcard.ID(childComplexity), true
+	case "Flashcard.ord":
+		if e.complexity.Flashcard.Ord == nil {
+			break
+		}
+
+		return e.complexity.Flashcard.Ord(childComplexity), true
+	case "Flashcard.setId":
+		if e.complexity.Flashcard.SetID == nil {
+			break
+		}
+
+		return e.complexity.Flashcard.SetID(childComplexity), true
+
+	case "FlashcardSet.cards":
+		if e.complexity.FlashcardSet.Cards == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSet.Cards(childComplexity), true
+	case "FlashcardSet.createdAt":
+		if e.complexity.FlashcardSet.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSet.CreatedAt(childComplexity), true
+	case "FlashcardSet.createdBy":
+		if e.complexity.FlashcardSet.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSet.CreatedBy(childComplexity), true
+	case "FlashcardSet.description":
+		if e.complexity.FlashcardSet.Description == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSet.Description(childComplexity), true
+	case "FlashcardSet.id":
+		if e.complexity.FlashcardSet.ID == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSet.ID(childComplexity), true
+	case "FlashcardSet.levelId":
+		if e.complexity.FlashcardSet.LevelID == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSet.LevelID(childComplexity), true
+	case "FlashcardSet.title":
+		if e.complexity.FlashcardSet.Title == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSet.Title(childComplexity), true
+	case "FlashcardSet.topicId":
+		if e.complexity.FlashcardSet.TopicID == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSet.TopicID(childComplexity), true
+
+	case "FlashcardSetList.items":
+		if e.complexity.FlashcardSetList.Items == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSetList.Items(childComplexity), true
+	case "FlashcardSetList.page":
+		if e.complexity.FlashcardSetList.Page == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSetList.Page(childComplexity), true
+	case "FlashcardSetList.pageSize":
+		if e.complexity.FlashcardSetList.PageSize == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSetList.PageSize(childComplexity), true
+	case "FlashcardSetList.totalCount":
+		if e.complexity.FlashcardSetList.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSetList.TotalCount(childComplexity), true
 
 	case "Lesson.code":
 		if e.complexity.Lesson.Code == nil {
@@ -329,6 +500,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.MediaAsset.UploadedBy(childComplexity), true
 
+	case "Mutation.addFlashcard":
+		if e.complexity.Mutation.AddFlashcard == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addFlashcard_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddFlashcard(childComplexity, args["input"].(model.AddFlashcardInput)), true
+	case "Mutation.createFlashcardSet":
+		if e.complexity.Mutation.CreateFlashcardSet == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createFlashcardSet_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateFlashcardSet(childComplexity, args["input"].(model.CreateFlashcardSetInput)), true
 	case "Mutation.createLesson":
 		if e.complexity.Mutation.CreateLesson == nil {
 			break
@@ -462,6 +655,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.UploadMedia(childComplexity, args["input"].(model.UploadMediaInput)), true
 
+	case "Query.flashcardSet":
+		if e.complexity.Query.FlashcardSet == nil {
+			break
+		}
+
+		args, err := ec.field_Query_flashcardSet_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.FlashcardSet(childComplexity, args["id"].(string)), true
+	case "Query.flashcardSets":
+		if e.complexity.Query.FlashcardSets == nil {
+			break
+		}
+
+		args, err := ec.field_Query_flashcardSets_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.FlashcardSets(childComplexity, args["topicId"].(*string), args["levelId"].(*string), args["page"].(*int), args["pageSize"].(*int)), true
 	case "Query.health":
 		if e.complexity.Query.Health == nil {
 			break
@@ -616,6 +831,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAddFlashcardInput,
+		ec.unmarshalInputCreateFlashcardSetInput,
 		ec.unmarshalInputCreateLessonInput,
 		ec.unmarshalInputCreateLevelInput,
 		ec.unmarshalInputCreateTagInput,
@@ -743,6 +960,9 @@ type Query {
 
   lesson(id: ID!): Lesson
   lessonByCode(code: String!): Lesson
+
+  flashcardSet(id: ID!): FlashcardSet
+  flashcardSets(topicId: ID, levelId: ID, page: Int, pageSize: Int): FlashcardSetList!
 }
 
 type Mutation {
@@ -762,6 +982,9 @@ type Mutation {
   deleteMedia(id: ID!): Boolean!
 
   createLesson(input: CreateLessonInput!): Lesson!
+
+  createFlashcardSet(input: CreateFlashcardSetInput!): FlashcardSet!
+  addFlashcard(input: AddFlashcardInput!): Flashcard!
 
 }
 
@@ -868,6 +1091,53 @@ input CreateLessonInput {
 scalar Time
 scalar Upload
 
+type FlashcardSet {
+  id: ID!
+  title: String!
+  description: String
+  topicId: ID
+  levelId: ID
+  createdAt: Time!
+  createdBy: ID
+  cards: [Flashcard!]!
+}
+
+type Flashcard {
+  id: ID!
+  setId: ID!
+  frontText: String!
+  backText: String!
+  frontMediaId: ID
+  backMediaId: ID
+  ord: Int!
+  hints: [String!]
+  createdAt: Time!
+}
+
+type FlashcardSetList {
+  items: [FlashcardSet!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+input CreateFlashcardSetInput {
+  title: String!
+  description: String
+  topicId: ID
+  levelId: ID
+  createdBy: ID
+}
+
+input AddFlashcardInput {
+  setId: ID!
+  frontText: String!
+  backText: String!
+  frontMediaId: ID
+  backMediaId: ID
+  hints: [String!]
+}
+
 
 `, BuiltIn: false},
 }
@@ -876,6 +1146,28 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_addFlashcard_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNAddFlashcardInput2contentᚑservicesᚋgraphᚋmodelᚐAddFlashcardInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createFlashcardSet_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateFlashcardSetInput2contentᚑservicesᚋgraphᚋmodelᚐCreateFlashcardSetInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createLesson_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -1035,6 +1327,43 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_flashcardSet_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_flashcardSets_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "topicId", ec.unmarshalOID2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["topicId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "levelId", ec.unmarshalOID2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["levelId"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["page"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["pageSize"] = arg3
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_lessonByCode_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1178,6 +1507,653 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _Flashcard_id(ctx context.Context, field graphql.CollectedField, obj *model.Flashcard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Flashcard_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Flashcard_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Flashcard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Flashcard_setId(ctx context.Context, field graphql.CollectedField, obj *model.Flashcard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Flashcard_setId,
+		func(ctx context.Context) (any, error) {
+			return obj.SetID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Flashcard_setId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Flashcard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Flashcard_frontText(ctx context.Context, field graphql.CollectedField, obj *model.Flashcard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Flashcard_frontText,
+		func(ctx context.Context) (any, error) {
+			return obj.FrontText, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Flashcard_frontText(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Flashcard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Flashcard_backText(ctx context.Context, field graphql.CollectedField, obj *model.Flashcard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Flashcard_backText,
+		func(ctx context.Context) (any, error) {
+			return obj.BackText, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Flashcard_backText(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Flashcard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Flashcard_frontMediaId(ctx context.Context, field graphql.CollectedField, obj *model.Flashcard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Flashcard_frontMediaId,
+		func(ctx context.Context) (any, error) {
+			return obj.FrontMediaID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Flashcard_frontMediaId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Flashcard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Flashcard_backMediaId(ctx context.Context, field graphql.CollectedField, obj *model.Flashcard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Flashcard_backMediaId,
+		func(ctx context.Context) (any, error) {
+			return obj.BackMediaID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Flashcard_backMediaId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Flashcard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Flashcard_ord(ctx context.Context, field graphql.CollectedField, obj *model.Flashcard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Flashcard_ord,
+		func(ctx context.Context) (any, error) {
+			return obj.Ord, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Flashcard_ord(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Flashcard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Flashcard_hints(ctx context.Context, field graphql.CollectedField, obj *model.Flashcard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Flashcard_hints,
+		func(ctx context.Context) (any, error) {
+			return obj.Hints, nil
+		},
+		nil,
+		ec.marshalOString2ᚕstringᚄ,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Flashcard_hints(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Flashcard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Flashcard_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Flashcard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Flashcard_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Flashcard_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Flashcard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardSet_id(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSet_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSet_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardSet_title(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSet_title,
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSet_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardSet_description(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSet_description,
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSet_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardSet_topicId(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSet_topicId,
+		func(ctx context.Context) (any, error) {
+			return obj.TopicID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSet_topicId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardSet_levelId(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSet_levelId,
+		func(ctx context.Context) (any, error) {
+			return obj.LevelID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSet_levelId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardSet_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSet_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSet_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardSet_createdBy(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSet_createdBy,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedBy, nil
+		},
+		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSet_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardSet_cards(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSet_cards,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.FlashcardSet().Cards(ctx, obj)
+		},
+		nil,
+		ec.marshalNFlashcard2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSet_cards(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSet",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Flashcard_id(ctx, field)
+			case "setId":
+				return ec.fieldContext_Flashcard_setId(ctx, field)
+			case "frontText":
+				return ec.fieldContext_Flashcard_frontText(ctx, field)
+			case "backText":
+				return ec.fieldContext_Flashcard_backText(ctx, field)
+			case "frontMediaId":
+				return ec.fieldContext_Flashcard_frontMediaId(ctx, field)
+			case "backMediaId":
+				return ec.fieldContext_Flashcard_backMediaId(ctx, field)
+			case "ord":
+				return ec.fieldContext_Flashcard_ord(ctx, field)
+			case "hints":
+				return ec.fieldContext_Flashcard_hints(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Flashcard_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Flashcard", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardSetList_items(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSetList) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSetList_items,
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		ec.marshalNFlashcardSet2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSetᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSetList_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSetList",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_FlashcardSet_id(ctx, field)
+			case "title":
+				return ec.fieldContext_FlashcardSet_title(ctx, field)
+			case "description":
+				return ec.fieldContext_FlashcardSet_description(ctx, field)
+			case "topicId":
+				return ec.fieldContext_FlashcardSet_topicId(ctx, field)
+			case "levelId":
+				return ec.fieldContext_FlashcardSet_levelId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_FlashcardSet_createdAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_FlashcardSet_createdBy(ctx, field)
+			case "cards":
+				return ec.fieldContext_FlashcardSet_cards(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type FlashcardSet", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardSetList_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSetList) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSetList_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSetList_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSetList",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardSetList_page(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSetList) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSetList_page,
+		func(ctx context.Context) (any, error) {
+			return obj.Page, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSetList_page(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSetList",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardSetList_pageSize(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSetList) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSetList_pageSize,
+		func(ctx context.Context) (any, error) {
+			return obj.PageSize, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSetList_pageSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSetList",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Lesson_id(ctx context.Context, field graphql.CollectedField, obj *model.Lesson) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -2514,6 +3490,126 @@ func (ec *executionContext) fieldContext_Mutation_createLesson(ctx context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createFlashcardSet(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createFlashcardSet,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreateFlashcardSet(ctx, fc.Args["input"].(model.CreateFlashcardSetInput))
+		},
+		nil,
+		ec.marshalNFlashcardSet2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSet,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createFlashcardSet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_FlashcardSet_id(ctx, field)
+			case "title":
+				return ec.fieldContext_FlashcardSet_title(ctx, field)
+			case "description":
+				return ec.fieldContext_FlashcardSet_description(ctx, field)
+			case "topicId":
+				return ec.fieldContext_FlashcardSet_topicId(ctx, field)
+			case "levelId":
+				return ec.fieldContext_FlashcardSet_levelId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_FlashcardSet_createdAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_FlashcardSet_createdBy(ctx, field)
+			case "cards":
+				return ec.fieldContext_FlashcardSet_cards(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type FlashcardSet", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createFlashcardSet_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_addFlashcard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_addFlashcard,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().AddFlashcard(ctx, fc.Args["input"].(model.AddFlashcardInput))
+		},
+		nil,
+		ec.marshalNFlashcard2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcard,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_addFlashcard(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Flashcard_id(ctx, field)
+			case "setId":
+				return ec.fieldContext_Flashcard_setId(ctx, field)
+			case "frontText":
+				return ec.fieldContext_Flashcard_frontText(ctx, field)
+			case "backText":
+				return ec.fieldContext_Flashcard_backText(ctx, field)
+			case "frontMediaId":
+				return ec.fieldContext_Flashcard_frontMediaId(ctx, field)
+			case "backMediaId":
+				return ec.fieldContext_Flashcard_backMediaId(ctx, field)
+			case "ord":
+				return ec.fieldContext_Flashcard_ord(ctx, field)
+			case "hints":
+				return ec.fieldContext_Flashcard_hints(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Flashcard_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Flashcard", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addFlashcard_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_health(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3059,6 +4155,116 @@ func (ec *executionContext) fieldContext_Query_lessonByCode(ctx context.Context,
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_lessonByCode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_flashcardSet(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_flashcardSet,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().FlashcardSet(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalOFlashcardSet2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSet,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_flashcardSet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_FlashcardSet_id(ctx, field)
+			case "title":
+				return ec.fieldContext_FlashcardSet_title(ctx, field)
+			case "description":
+				return ec.fieldContext_FlashcardSet_description(ctx, field)
+			case "topicId":
+				return ec.fieldContext_FlashcardSet_topicId(ctx, field)
+			case "levelId":
+				return ec.fieldContext_FlashcardSet_levelId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_FlashcardSet_createdAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_FlashcardSet_createdBy(ctx, field)
+			case "cards":
+				return ec.fieldContext_FlashcardSet_cards(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type FlashcardSet", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_flashcardSet_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_flashcardSets(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_flashcardSets,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().FlashcardSets(ctx, fc.Args["topicId"].(*string), fc.Args["levelId"].(*string), fc.Args["page"].(*int), fc.Args["pageSize"].(*int))
+		},
+		nil,
+		ec.marshalNFlashcardSetList2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSetList,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_flashcardSets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "items":
+				return ec.fieldContext_FlashcardSetList_items(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_FlashcardSetList_totalCount(ctx, field)
+			case "page":
+				return ec.fieldContext_FlashcardSetList_page(ctx, field)
+			case "pageSize":
+				return ec.fieldContext_FlashcardSetList_pageSize(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type FlashcardSetList", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_flashcardSets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4822,6 +6028,123 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAddFlashcardInput(ctx context.Context, obj any) (model.AddFlashcardInput, error) {
+	var it model.AddFlashcardInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"setId", "frontText", "backText", "frontMediaId", "backMediaId", "hints"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "setId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("setId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SetID = data
+		case "frontText":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("frontText"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FrontText = data
+		case "backText":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backText"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BackText = data
+		case "frontMediaId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("frontMediaId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FrontMediaID = data
+		case "backMediaId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backMediaId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BackMediaID = data
+		case "hints":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hints"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Hints = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateFlashcardSetInput(ctx context.Context, obj any) (model.CreateFlashcardSetInput, error) {
+	var it model.CreateFlashcardSetInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"title", "description", "topicId", "levelId", "createdBy"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "topicId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("topicId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TopicID = data
+		case "levelId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("levelId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LevelID = data
+		case "createdBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdBy"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedBy = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateLessonInput(ctx context.Context, obj any) (model.CreateLessonInput, error) {
 	var it model.CreateLessonInput
 	asMap := map[string]any{}
@@ -5150,6 +6473,223 @@ func (ec *executionContext) unmarshalInputUploadMediaInput(ctx context.Context, 
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var flashcardImplementors = []string{"Flashcard"}
+
+func (ec *executionContext) _Flashcard(ctx context.Context, sel ast.SelectionSet, obj *model.Flashcard) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, flashcardImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Flashcard")
+		case "id":
+			out.Values[i] = ec._Flashcard_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setId":
+			out.Values[i] = ec._Flashcard_setId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "frontText":
+			out.Values[i] = ec._Flashcard_frontText(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "backText":
+			out.Values[i] = ec._Flashcard_backText(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "frontMediaId":
+			out.Values[i] = ec._Flashcard_frontMediaId(ctx, field, obj)
+		case "backMediaId":
+			out.Values[i] = ec._Flashcard_backMediaId(ctx, field, obj)
+		case "ord":
+			out.Values[i] = ec._Flashcard_ord(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hints":
+			out.Values[i] = ec._Flashcard_hints(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._Flashcard_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var flashcardSetImplementors = []string{"FlashcardSet"}
+
+func (ec *executionContext) _FlashcardSet(ctx context.Context, sel ast.SelectionSet, obj *model.FlashcardSet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, flashcardSetImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FlashcardSet")
+		case "id":
+			out.Values[i] = ec._FlashcardSet_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "title":
+			out.Values[i] = ec._FlashcardSet_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "description":
+			out.Values[i] = ec._FlashcardSet_description(ctx, field, obj)
+		case "topicId":
+			out.Values[i] = ec._FlashcardSet_topicId(ctx, field, obj)
+		case "levelId":
+			out.Values[i] = ec._FlashcardSet_levelId(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._FlashcardSet_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdBy":
+			out.Values[i] = ec._FlashcardSet_createdBy(ctx, field, obj)
+		case "cards":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._FlashcardSet_cards(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var flashcardSetListImplementors = []string{"FlashcardSetList"}
+
+func (ec *executionContext) _FlashcardSetList(ctx context.Context, sel ast.SelectionSet, obj *model.FlashcardSetList) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, flashcardSetListImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FlashcardSetList")
+		case "items":
+			out.Values[i] = ec._FlashcardSetList_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._FlashcardSetList_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "page":
+			out.Values[i] = ec._FlashcardSetList_page(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageSize":
+			out.Values[i] = ec._FlashcardSetList_pageSize(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var lessonImplementors = []string{"Lesson"}
 
@@ -5519,6 +7059,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createFlashcardSet":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createFlashcardSet(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "addFlashcard":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_addFlashcard(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5776,6 +7330,47 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_lessonByCode(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "flashcardSet":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_flashcardSet(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "flashcardSets":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_flashcardSets(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -6254,6 +7849,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) unmarshalNAddFlashcardInput2contentᚑservicesᚋgraphᚋmodelᚐAddFlashcardInput(ctx context.Context, v any) (model.AddFlashcardInput, error) {
+	res, err := ec.unmarshalInputAddFlashcardInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6268,6 +7868,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNCreateFlashcardSetInput2contentᚑservicesᚋgraphᚋmodelᚐCreateFlashcardSetInput(ctx context.Context, v any) (model.CreateFlashcardSetInput, error) {
+	res, err := ec.unmarshalInputCreateFlashcardSetInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNCreateLessonInput2contentᚑservicesᚋgraphᚋmodelᚐCreateLessonInput(ctx context.Context, v any) (model.CreateLessonInput, error) {
@@ -6288,6 +7893,136 @@ func (ec *executionContext) unmarshalNCreateTagInput2contentᚑservicesᚋgraph�
 func (ec *executionContext) unmarshalNCreateTopicInput2contentᚑservicesᚋgraphᚋmodelᚐCreateTopicInput(ctx context.Context, v any) (model.CreateTopicInput, error) {
 	res, err := ec.unmarshalInputCreateTopicInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFlashcard2contentᚑservicesᚋgraphᚋmodelᚐFlashcard(ctx context.Context, sel ast.SelectionSet, v model.Flashcard) graphql.Marshaler {
+	return ec._Flashcard(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNFlashcard2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Flashcard) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNFlashcard2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcard(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNFlashcard2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcard(ctx context.Context, sel ast.SelectionSet, v *model.Flashcard) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Flashcard(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNFlashcardSet2contentᚑservicesᚋgraphᚋmodelᚐFlashcardSet(ctx context.Context, sel ast.SelectionSet, v model.FlashcardSet) graphql.Marshaler {
+	return ec._FlashcardSet(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNFlashcardSet2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSetᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.FlashcardSet) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNFlashcardSet2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSet(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNFlashcardSet2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSet(ctx context.Context, sel ast.SelectionSet, v *model.FlashcardSet) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._FlashcardSet(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNFlashcardSetList2contentᚑservicesᚋgraphᚋmodelᚐFlashcardSetList(ctx context.Context, sel ast.SelectionSet, v model.FlashcardSetList) graphql.Marshaler {
+	return ec._FlashcardSetList(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNFlashcardSetList2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSetList(ctx context.Context, sel ast.SelectionSet, v *model.FlashcardSetList) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._FlashcardSetList(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v any) (string, error) {
@@ -6952,6 +8687,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) marshalOFlashcardSet2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSet(ctx context.Context, sel ast.SelectionSet, v *model.FlashcardSet) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._FlashcardSet(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v any) (*string, error) {
 	if v == nil {
 		return nil, nil
@@ -7007,6 +8749,42 @@ func (ec *executionContext) marshalOMediaAsset2ᚖcontentᚑservicesᚋgraphᚋm
 		return graphql.Null
 	}
 	return ec._MediaAsset(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {

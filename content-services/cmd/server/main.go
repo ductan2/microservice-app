@@ -48,9 +48,12 @@ func main() {
 	mediaRepo := repository.NewMediaRepository(database)
 	lessonRepo := repository.NewLessonRepository(database)
 	sectionRepo := repository.NewLessonSectionRepository(database)
+	flashcardSetRepo := repository.NewFlashcardSetRepository(database)
+	flashcardRepo := repository.NewFlashcardRepository(database)
 	// Note: outboxRepo would need a separate database connection for transactional outbox pattern
 	// For now, passing nil - this should be properly implemented later
 	var outboxRepo repository.OutboxRepository = nil
+	var tagRepo repository.TagRepository = nil
 
 	s3Client, err := storage.NewS3Client(context.Background(), storage.S3Config{
 		Endpoint:        config.GetS3Endpoint(),
@@ -66,8 +69,9 @@ func main() {
 	}
 	mediaService := service.NewMediaService(mediaRepo, s3Client, config.GetS3PresignTTL())
 	lessonService := service.NewLessonService(lessonRepo, sectionRepo, outboxRepo)
+	flashcardService := service.NewFlashcardService(flashcardSetRepo, flashcardRepo, tagRepo)
 
-	resolver := &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore, Media: mediaService, LessonService: lessonService}
+	resolver := &gqlresolver.Resolver{DB: database, Taxonomy: taxonomyStore, Media: mediaService, LessonService: lessonService, Flashcards: flashcardService}
 	gqlSrv := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	graphqlHandler := handler.NewDefaultServer(gqlSrv)
 
