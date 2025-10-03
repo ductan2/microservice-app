@@ -118,6 +118,19 @@ func mapLessonError(err error) error {
 	}
 }
 
+// mapFlashcardError converts flashcard repository errors to GraphQL-friendly errors.
+func mapFlashcardError(err error) error {
+	if err == nil {
+		return nil
+	}
+	switch {
+	case errors.Is(err, repository.ErrFlashcardSetNotFound):
+		return gqlerror.Errorf("flashcard set not found")
+	case errors.Is(err, repository.ErrFlashcardNotFound):
+		return gqlerror.Errorf("flashcard not found")
+	default:
+		return err
+    
 // mapLessonSectionError maps lesson section errors to GraphQL errors.
 func mapLessonSectionError(err error) error {
 	if err == nil {
@@ -320,6 +333,81 @@ func (r *Resolver) mapMediaAsset(ctx context.Context, media *models.MediaAsset) 
 		UploadedBy:  uploadedBy,
 		DownloadURL: downloadURL,
 	}, nil
+}
+
+// mapFlashcardSet converts models.FlashcardSet to model.FlashcardSet.
+func mapFlashcardSet(set *models.FlashcardSet) *model.FlashcardSet {
+	if set == nil {
+		return nil
+	}
+	var (
+		topicID   *string
+		levelID   *string
+		createdBy *string
+	)
+	if set.TopicID != nil {
+		id := set.TopicID.String()
+		topicID = &id
+	}
+	if set.LevelID != nil {
+		id := set.LevelID.String()
+		levelID = &id
+	}
+	if set.CreatedBy != nil {
+		id := set.CreatedBy.String()
+		createdBy = &id
+	}
+	return &model.FlashcardSet{
+		ID:          set.ID.String(),
+		Title:       set.Title,
+		Description: toStringPtr(set.Description),
+		TopicID:     topicID,
+		LevelID:     levelID,
+		CreatedAt:   set.CreatedAt,
+		CreatedBy:   createdBy,
+	}
+}
+
+// mapFlashcard converts models.Flashcard to model.Flashcard.
+func mapFlashcard(card *models.Flashcard) *model.Flashcard {
+	if card == nil {
+		return nil
+	}
+	var (
+		frontMediaID *string
+		backMediaID  *string
+	)
+	if card.FrontMediaID != nil {
+		id := card.FrontMediaID.String()
+		frontMediaID = &id
+	}
+	if card.BackMediaID != nil {
+		id := card.BackMediaID.String()
+		backMediaID = &id
+	}
+	modelHints := make([]string, len(card.Hints))
+	copy(modelHints, card.Hints)
+
+	return &model.Flashcard{
+		ID:           card.ID.String(),
+		SetID:        card.SetID.String(),
+		FrontText:    card.FrontText,
+		BackText:     card.BackText,
+		FrontMediaID: frontMediaID,
+		BackMediaID:  backMediaID,
+		Ord:          card.Ord,
+		Hints:        modelHints,
+		CreatedAt:    card.CreatedAt,
+	}
+}
+
+// mapFlashcards converts slice of models.Flashcard to GraphQL models.
+func mapFlashcards(cards []models.Flashcard) []*model.Flashcard {
+	result := make([]*model.Flashcard, 0, len(cards))
+	for i := range cards {
+		result = append(result, mapFlashcard(&cards[i]))
+	}
+	return result
 }
 
 // mapMediaKind converts string to model.MediaKind enum

@@ -20,6 +20,9 @@ type Query {
 
   lesson(id: ID!): Lesson
   lessonByCode(code: String!): Lesson
+
+  flashcardSet(id: ID!): FlashcardSet
+  flashcardSets(topicId: ID, levelId: ID, page: Int, pageSize: Int): FlashcardSetList!
   lessons(filter: LessonFilterInput, page: Int, pageSize: Int): LessonCollection!
 
   lessonSections(lessonId: ID!): [LessonSection!]!
@@ -49,6 +52,9 @@ type Mutation {
   createLessonSection(lessonId: ID!, input: CreateLessonSectionInput!): LessonSection!
   updateLessonSection(id: ID!, input: UpdateLessonSectionInput!): LessonSection!
   deleteLessonSection(id: ID!): Boolean!
+
+  createFlashcardSet(input: CreateFlashcardSetInput!): FlashcardSet!
+  addFlashcard(input: AddFlashcardInput!): Flashcard!
 
 }
 
@@ -202,5 +208,52 @@ input UpdateLessonSectionInput {
 scalar Time
 scalar Upload
 scalar Map
+
+type FlashcardSet {
+  id: ID!
+  title: String!
+  description: String
+  topicId: ID
+  levelId: ID
+  createdAt: Time!
+  createdBy: ID
+  cards: [Flashcard!]!
+}
+
+type Flashcard {
+  id: ID!
+  setId: ID!
+  frontText: String!
+  backText: String!
+  frontMediaId: ID
+  backMediaId: ID
+  ord: Int!
+  hints: [String!]
+  createdAt: Time!
+}
+
+type FlashcardSetList {
+  items: [FlashcardSet!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+input CreateFlashcardSetInput {
+  title: String!
+  description: String
+  topicId: ID
+  levelId: ID
+  createdBy: ID
+}
+
+input AddFlashcardInput {
+  setId: ID!
+  frontText: String!
+  backText: String!
+  frontMediaId: ID
+  backMediaId: ID
+  hints: [String!]
+}
 
 

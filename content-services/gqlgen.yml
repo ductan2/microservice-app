@@ -28,6 +28,10 @@ models:
         resolver: true
       level:
         resolver: true
+  FlashcardSet:
+    fields:
+      cards:
+        resolver: true
       sections:
         resolver: true
   Map:

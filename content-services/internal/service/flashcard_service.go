@@ -4,6 +4,8 @@ import (
 	"content-services/internal/models"
 	"content-services/internal/repository"
 	"context"
+	"errors"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -43,51 +45,139 @@ func NewFlashcardService(
 }
 
 func (s *flashcardService) CreateSet(ctx context.Context, set *models.FlashcardSet, tagIDs []uuid.UUID) (*models.FlashcardSet, error) {
-	// TODO: implement
-	return nil, nil
+	if set == nil {
+		return nil, errors.New("flashcard set is nil")
+	}
+	if set.Title == "" {
+		return nil, errors.New("flashcard set title is required")
+	}
+	if set.ID == uuid.Nil {
+		set.ID = uuid.New()
+	}
+	if set.CreatedAt.IsZero() {
+		set.CreatedAt = time.Now().UTC()
+	}
+	if err := s.setRepo.Create(ctx, set); err != nil {
+		return nil, err
+	}
+	if len(tagIDs) > 0 && s.tagRepo != nil {
+		for _, tagID := range tagIDs {
+			if err := s.tagRepo.AddTagToContent(ctx, tagID, "flashcard_set", set.ID); err != nil {
+				return nil, err
+			}
+		}
+	}
+	return set, nil
 }
 
 func (s *flashcardService) GetSetByID(ctx context.Context, id uuid.UUID) (*models.FlashcardSet, error) {
-	// TODO: implement
-	return nil, nil
+	return s.setRepo.GetByID(ctx, id)
 }
 
 func (s *flashcardService) ListSets(ctx context.Context, topicID, levelID *uuid.UUID, page, pageSize int) ([]models.FlashcardSet, int64, error) {
-	// TODO: implement
-	return nil, 0, nil
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	offset := (page - 1) * pageSize
+	return s.setRepo.List(ctx, topicID, levelID, pageSize, offset)
 }
 
 func (s *flashcardService) UpdateSet(ctx context.Context, id uuid.UUID, updates *models.FlashcardSet) (*models.FlashcardSet, error) {
-	// TODO: implement
-	return nil, nil
+	current, err := s.setRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if updates.Title != "" {
+		current.Title = updates.Title
+	}
+	current.Description = updates.Description
+	current.TopicID = updates.TopicID
+	current.LevelID = updates.LevelID
+	current.CreatedBy = updates.CreatedBy
+	if err := s.setRepo.Update(ctx, current); err != nil {
+		return nil, err
+	}
+	return current, nil
 }
 
 func (s *flashcardService) DeleteSet(ctx context.Context, id uuid.UUID) error {
-	// TODO: implement
+	if err := s.setRepo.Delete(ctx, id); err != nil {
+		return err
+	}
+	if s.tagRepo != nil {
+		tags, err := s.tagRepo.GetContentTags(ctx, "flashcard_set", id)
+		if err != nil {
+			return err
+		}
+		for _, tag := range tags {
+			if err := s.tagRepo.RemoveTagFromContent(ctx, tag.ID, "flashcard_set", id); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
 func (s *flashcardService) AddCard(ctx context.Context, setID uuid.UUID, card *models.Flashcard) (*models.Flashcard, error) {
-	// TODO: implement
-	return nil, nil
+	if card == nil {
+		return nil, errors.New("flashcard is nil")
+	}
+	card.SetID = setID
+	if card.ID == uuid.Nil {
+		card.ID = uuid.New()
+	}
+	if card.CreatedAt.IsZero() {
+		card.CreatedAt = time.Now().UTC()
+	}
+	if err := s.cardRepo.Create(ctx, card); err != nil {
+		return nil, err
+	}
+	return card, nil
 }
 
 func (s *flashcardService) UpdateCard(ctx context.Context, id uuid.UUID, updates *models.Flashcard) (*models.Flashcard, error) {
-	// TODO: implement
-	return nil, nil
+	current, err := s.cardRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if updates.FrontText != "" {
+		current.FrontText = updates.FrontText
+	}
+	if updates.BackText != "" {
+		current.BackText = updates.BackText
+	}
+	if updates.FrontMediaID != nil || current.FrontMediaID != nil {
+		current.FrontMediaID = updates.FrontMediaID
+	}
+	if updates.BackMediaID != nil || current.BackMediaID != nil {
+		current.BackMediaID = updates.BackMediaID
+	}
+	if updates.Ord != 0 {
+		current.Ord = updates.Ord
+	}
+	if updates.Hints != nil {
+		current.Hints = updates.Hints
+	}
+	if err := s.cardRepo.Update(ctx, current); err != nil {
+		return nil, err
+	}
+	return current, nil
 }
 
 func (s *flashcardService) ReorderCards(ctx context.Context, setID uuid.UUID, cardIDs []uuid.UUID) ([]models.Flashcard, error) {
-	// TODO: implement
-	return nil, nil
+	if err := s.cardRepo.Reorder(ctx, setID, cardIDs); err != nil {
+		return nil, err
+	}
+	return s.cardRepo.GetBySetID(ctx, setID)
 }
 
 func (s *flashcardService) DeleteCard(ctx context.Context, id uuid.UUID) error {
-	// TODO: implement
-	return nil
+	return s.cardRepo.Delete(ctx, id)
 }
 
 func (s *flashcardService) GetSetCards(ctx context.Context, setID uuid.UUID) ([]models.Flashcard, error) {
-	// TODO: implement
-	return nil, nil
+	return s.cardRepo.GetBySetID(ctx, setID)
 }
