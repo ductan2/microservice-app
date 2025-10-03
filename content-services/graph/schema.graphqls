@@ -20,6 +20,9 @@ type Query {
 
   lesson(id: ID!): Lesson
   lessonByCode(code: String!): Lesson
+  lessons(filter: LessonFilterInput, page: Int, pageSize: Int): LessonCollection!
+
+  lessonSections(lessonId: ID!): [LessonSection!]!
 }
 
 type Mutation {
@@ -39,6 +42,13 @@ type Mutation {
   deleteMedia(id: ID!): Boolean!
 
   createLesson(input: CreateLessonInput!): Lesson!
+  updateLesson(id: ID!, input: UpdateLessonInput!): Lesson!
+  publishLesson(id: ID!): Lesson!
+  unpublishLesson(id: ID!): Lesson!
+
+  createLessonSection(lessonId: ID!, input: CreateLessonSectionInput!): LessonSection!
+  updateLessonSection(id: ID!, input: UpdateLessonSectionInput!): LessonSection!
+  deleteLessonSection(id: ID!): Boolean!
 
 }
 
@@ -131,6 +141,7 @@ type Lesson {
   createdAt: Time!
   updatedAt: Time!
   publishedAt: Time
+  sections: [LessonSection!]!
 }
 
 input CreateLessonInput {
@@ -142,7 +153,54 @@ input CreateLessonInput {
   createdBy: ID
 }
 
+input UpdateLessonInput {
+  title: String
+  description: String
+  topicId: ID
+  levelId: ID
+}
+
+input LessonFilterInput {
+  topicId: ID
+  levelId: ID
+  isPublished: Boolean
+  search: String
+}
+
+type LessonCollection {
+  items: [Lesson!]!
+  totalCount: Int!
+}
+
+type LessonSection {
+  id: ID!
+  lessonId: ID!
+  ord: Int!
+  type: LessonSectionType!
+  body: Map!
+  createdAt: Time!
+}
+
+enum LessonSectionType {
+  TEXT
+  DIALOG
+  AUDIO
+  IMAGE
+  EXERCISE
+}
+
+input CreateLessonSectionInput {
+  type: LessonSectionType!
+  body: Map!
+}
+
+input UpdateLessonSectionInput {
+  type: LessonSectionType
+  body: Map
+}
+
 scalar Time
 scalar Upload
+scalar Map
 
 

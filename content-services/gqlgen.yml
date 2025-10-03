@@ -28,3 +28,8 @@ models:
         resolver: true
       level:
         resolver: true
+      sections:
+        resolver: true
+  Map:
+    model:
+      - github.com/99designs/gqlgen/graphql.Map
