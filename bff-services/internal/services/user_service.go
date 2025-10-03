@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -16,6 +17,21 @@ import (
 type UserService interface {
 	Register(ctx context.Context, payload dto.RegisterRequest) (*HTTPResponse, error)
 	Login(ctx context.Context, payload dto.LoginRequest, userAgent, clientIP string) (*HTTPResponse, error)
+	Logout(ctx context.Context, token string) (*HTTPResponse, error)
+	VerifyEmail(ctx context.Context, token string) (*HTTPResponse, error)
+	GetProfile(ctx context.Context, token string) (*HTTPResponse, error)
+	UpdateProfile(ctx context.Context, token string, payload dto.UpdateProfileRequest) (*HTTPResponse, error)
+	CheckAuth(ctx context.Context, token string) (*HTTPResponse, error)
+	RequestPasswordReset(ctx context.Context, payload dto.PasswordResetRequest) (*HTTPResponse, error)
+	ConfirmPasswordReset(ctx context.Context, payload dto.PasswordResetConfirmRequest) (*HTTPResponse, error)
+	ChangePassword(ctx context.Context, token string, payload dto.ChangePasswordRequest) (*HTTPResponse, error)
+	SetupMFA(ctx context.Context, token string, payload dto.MFASetupRequest) (*HTTPResponse, error)
+	VerifyMFA(ctx context.Context, token string, payload dto.MFAVerifyRequest) (*HTTPResponse, error)
+	DisableMFA(ctx context.Context, token string, payload dto.MFADisableRequest) (*HTTPResponse, error)
+	GetMFAMethods(ctx context.Context, token string) (*HTTPResponse, error)
+	GetSessions(ctx context.Context, token string) (*HTTPResponse, error)
+	DeleteSession(ctx context.Context, token, sessionID string) (*HTTPResponse, error)
+	RevokeAllSessions(ctx context.Context, token string) (*HTTPResponse, error)
 }
 
 type UserServiceClient struct {
@@ -25,14 +41,8 @@ type UserServiceClient struct {
 
 type HTTPResponse struct {
 	StatusCode int
-	Body       Envelope
-}
-
-type Envelope struct {
-	Status  string          `json:"status"`
-	Message string          `json:"message,omitempty"`
-	Data    json.RawMessage `json:"data,omitempty"`
-	Error   json.RawMessage `json:"error,omitempty"`
+	Body       []byte
+	Headers    http.Header
 }
 
 func NewUserServiceClient(baseURL string, httpClient *http.Client) *UserServiceClient {
@@ -47,7 +57,7 @@ func NewUserServiceClient(baseURL string, httpClient *http.Client) *UserServiceC
 }
 
 func (c *UserServiceClient) Register(ctx context.Context, payload dto.RegisterRequest) (*HTTPResponse, error) {
-	return c.doPost(ctx, "/api/v1/register", payload, nil)
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/register", payload, nil)
 }
 
 func (c *UserServiceClient) Login(ctx context.Context, payload dto.LoginRequest, userAgent, clientIP string) (*HTTPResponse, error) {
@@ -58,26 +68,101 @@ func (c *UserServiceClient) Login(ctx context.Context, payload dto.LoginRequest,
 	if clientIP != "" {
 		headers.Set("X-Forwarded-For", clientIP)
 	}
-	return c.doPost(ctx, "/api/v1/login", payload, headers)
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/login", payload, headers)
 }
 
-func (c *UserServiceClient) doPost(ctx context.Context, path string, payload interface{}, headers http.Header) (*HTTPResponse, error) {
+func (c *UserServiceClient) Logout(ctx context.Context, token string) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/logout", nil, authHeader(token))
+}
+
+func (c *UserServiceClient) VerifyEmail(ctx context.Context, token string) (*HTTPResponse, error) {
+	if token == "" {
+		return nil, fmt.Errorf("verification token is required")
+	}
+
+	path := "/api/v1/verify-email?token=" + url.QueryEscape(token)
+	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
+}
+
+func (c *UserServiceClient) GetProfile(ctx context.Context, token string) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodGet, "/api/v1/profile", nil, authHeader(token))
+}
+
+func (c *UserServiceClient) UpdateProfile(ctx context.Context, token string, payload dto.UpdateProfileRequest) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPut, "/api/v1/profile", payload, authHeader(token))
+}
+
+func (c *UserServiceClient) CheckAuth(ctx context.Context, token string) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodGet, "/api/v1/profile/check-auth", nil, authHeader(token))
+}
+
+func (c *UserServiceClient) RequestPasswordReset(ctx context.Context, payload dto.PasswordResetRequest) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/password/reset/request", payload, nil)
+}
+
+func (c *UserServiceClient) ConfirmPasswordReset(ctx context.Context, payload dto.PasswordResetConfirmRequest) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/password/reset/confirm", payload, nil)
+}
+
+func (c *UserServiceClient) ChangePassword(ctx context.Context, token string, payload dto.ChangePasswordRequest) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/password/change", payload, authHeader(token))
+}
+
+func (c *UserServiceClient) SetupMFA(ctx context.Context, token string, payload dto.MFASetupRequest) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/mfa/setup", payload, authHeader(token))
+}
+
+func (c *UserServiceClient) VerifyMFA(ctx context.Context, token string, payload dto.MFAVerifyRequest) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/mfa/verify", payload, authHeader(token))
+}
+
+func (c *UserServiceClient) DisableMFA(ctx context.Context, token string, payload dto.MFADisableRequest) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/mfa/disable", payload, authHeader(token))
+}
+
+func (c *UserServiceClient) GetMFAMethods(ctx context.Context, token string) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodGet, "/api/v1/mfa/methods", nil, authHeader(token))
+}
+
+func (c *UserServiceClient) GetSessions(ctx context.Context, token string) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodGet, "/api/v1/sessions", nil, authHeader(token))
+}
+
+func (c *UserServiceClient) DeleteSession(ctx context.Context, token, sessionID string) (*HTTPResponse, error) {
+	if sessionID == "" {
+		return nil, fmt.Errorf("session id is required")
+	}
+	path := "/api/v1/sessions/" + sessionID
+	return c.doRequest(ctx, http.MethodDelete, path, nil, authHeader(token))
+}
+
+func (c *UserServiceClient) RevokeAllSessions(ctx context.Context, token string) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/sessions/revoke-all", nil, authHeader(token))
+}
+
+func (c *UserServiceClient) doRequest(ctx context.Context, method, path string, payload interface{}, headers http.Header) (*HTTPResponse, error) {
 	if c.baseURL == "" {
 		return nil, fmt.Errorf("user service base URL is not configured")
 	}
 
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return nil, fmt.Errorf("marshal payload: %w", err)
-	}
-
 	endpoint := c.baseURL + path
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
+	var bodyReader io.Reader
+	if payload != nil {
+		body, err := json.Marshal(payload)
+		if err != nil {
+			return nil, fmt.Errorf("marshal payload: %w", err)
+		}
+		bodyReader = bytes.NewReader(body)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, endpoint, bodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
-	req.Header.Set("Content-Type", "application/json")
+	if payload != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 
 	for key, values := range headers {
 		for _, value := range values {
@@ -96,19 +181,22 @@ func (c *UserServiceClient) doPost(ctx context.Context, path string, payload int
 		return nil, fmt.Errorf("read response: %w", err)
 	}
 
-	var envelope Envelope
-	if len(respBody) > 0 {
-		if err := json.Unmarshal(respBody, &envelope); err != nil {
-			return nil, fmt.Errorf("decode response: %w", err)
-		}
-	}
-
 	return &HTTPResponse{
 		StatusCode: resp.StatusCode,
-		Body:       envelope,
+		Body:       respBody,
+		Headers:    resp.Header.Clone(),
 	}, nil
 }
 
 func (r HTTPResponse) IsBodyEmpty() bool {
-	return r.Body.Status == "" && r.Body.Message == "" && len(r.Body.Data) == 0 && len(r.Body.Error) == 0
+	return len(bytes.TrimSpace(r.Body)) == 0
+}
+
+func authHeader(token string) http.Header {
+	if token == "" {
+		return nil
+	}
+	header := http.Header{}
+	header.Set("Authorization", "Bearer "+token)
+	return header
 }
