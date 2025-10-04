@@ -128,6 +128,9 @@ type MediaAsset {
   storageKey: String!
   kind: MediaKind!
   mimeType: String!
+  folderId: ID
+  originalName: String!
+  thumbnailURL: String
   bytes: Int!
   durationMs: Int
   sha256: String!
@@ -142,6 +145,7 @@ input UploadMediaInput {
   mimeType: String!
   filename: String
   uploadedBy: ID
+  folderId: ID
 }
 
 

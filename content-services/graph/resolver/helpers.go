@@ -308,6 +308,18 @@ func (r *Resolver) mapMediaAsset(ctx context.Context, media *models.MediaAsset) 
 		uploadedBy = &id
 	}
 
+	var folderID *string
+	if media.FolderID != nil {
+		id := media.FolderID.String()
+		folderID = &id
+	}
+
+	var thumbnailURL *string
+	if media.ThumbnailURL != "" {
+		url := media.ThumbnailURL
+		thumbnailURL = &url
+	}
+
 	duration := toIntPtr(media.DurationMs)
 
 	if media.ID == uuid.Nil {
@@ -324,16 +336,19 @@ func (r *Resolver) mapMediaAsset(ctx context.Context, media *models.MediaAsset) 
 	}
 
 	return &model.MediaAsset{
-		ID:          media.ID.String(),
-		StorageKey:  media.StorageKey,
-		Kind:        mapMediaKind(media.Kind),
-		MimeType:    media.MimeType,
-		Bytes:       media.Bytes,
-		DurationMs:  duration,
-		Sha256:      media.SHA256,
-		CreatedAt:   media.CreatedAt,
-		UploadedBy:  uploadedBy,
-		DownloadURL: downloadURL,
+		ID:           media.ID.String(),
+		StorageKey:   media.StorageKey,
+		Kind:         mapMediaKind(media.Kind),
+		MimeType:     media.MimeType,
+		FolderID:     folderID,
+		OriginalName: media.OriginalName,
+		ThumbnailURL: thumbnailURL,
+		Bytes:        media.Bytes,
+		DurationMs:   duration,
+		Sha256:       media.SHA256,
+		CreatedAt:    media.CreatedAt,
+		UploadedBy:   uploadedBy,
+		DownloadURL:  downloadURL,
 	}, nil
 }
 

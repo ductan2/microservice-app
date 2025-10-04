@@ -43,7 +43,16 @@ func (r *mutationResolver) UploadMedia(ctx context.Context, input model.UploadMe
 		userID = parsed
 	}
 
-	media, err := r.Media.UploadMedia(ctx, upload.File, filename, input.MimeType, kind, userID)
+	var folderID *uuid.UUID
+	if input.FolderID != nil && *input.FolderID != "" {
+		parsed, err := uuid.Parse(*input.FolderID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid folderId: %v", err)
+		}
+		folderID = &parsed
+	}
+
+	media, err := r.Media.UploadMedia(ctx, upload.File, filename, input.MimeType, kind, userID, folderID)
 	if err != nil {
 		return nil, err
 	}
