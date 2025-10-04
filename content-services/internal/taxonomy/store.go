@@ -3,6 +3,7 @@ package taxonomy
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -223,9 +224,18 @@ func (s *Store) GetTopicBySlug(ctx context.Context, slug string) (*Topic, error)
 }
 
 // ListTopics returns all topics sorted by creation date (newest first).
-func (s *Store) ListTopics(ctx context.Context) ([]Topic, error) {
+func (s *Store) ListTopics(ctx context.Context, search string) ([]Topic, error) {
+	filter := bson.D{}
+	if strings.TrimSpace(search) != "" {
+		regex := bson.D{{Key: "$regex", Value: search}, {Key: "$options", Value: "i"}}
+		filter = append(filter, bson.E{Key: "$or", Value: bson.A{
+			bson.D{{Key: "slug", Value: regex}},
+			bson.D{{Key: "name", Value: regex}},
+		}})
+	}
+
 	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
-	cursor, err := s.topics.Find(ctx, bson.D{}, opts)
+	cursor, err := s.topics.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -331,9 +341,18 @@ func (s *Store) GetLevelByCode(ctx context.Context, code string) (*Level, error)
 }
 
 // ListLevels returns all levels sorted alphabetically by code.
-func (s *Store) ListLevels(ctx context.Context) ([]Level, error) {
+func (s *Store) ListLevels(ctx context.Context, search string) ([]Level, error) {
+	filter := bson.D{}
+	if strings.TrimSpace(search) != "" {
+		regex := bson.D{{Key: "$regex", Value: search}, {Key: "$options", Value: "i"}}
+		filter = append(filter, bson.E{Key: "$or", Value: bson.A{
+			bson.D{{Key: "code", Value: regex}},
+			bson.D{{Key: "name", Value: regex}},
+		}})
+	}
+
 	opts := options.Find().SetSort(bson.D{{Key: "code", Value: 1}})
-	cursor, err := s.levels.Find(ctx, bson.D{}, opts)
+	cursor, err := s.levels.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -439,9 +458,18 @@ func (s *Store) GetTagBySlug(ctx context.Context, slug string) (*Tag, error) {
 }
 
 // ListTags returns all tags sorted alphabetically by name.
-func (s *Store) ListTags(ctx context.Context) ([]Tag, error) {
+func (s *Store) ListTags(ctx context.Context, search string) ([]Tag, error) {
+	filter := bson.D{}
+	if strings.TrimSpace(search) != "" {
+		regex := bson.D{{Key: "$regex", Value: search}, {Key: "$options", Value: "i"}}
+		filter = append(filter, bson.E{Key: "$or", Value: bson.A{
+			bson.D{{Key: "slug", Value: regex}},
+			bson.D{{Key: "name", Value: regex}},
+		}})
+	}
+
 	opts := options.Find().SetSort(bson.D{{Key: "name", Value: 1}})
-	cursor, err := s.tags.Find(ctx, bson.D{}, opts)
+	cursor, err := s.tags.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}

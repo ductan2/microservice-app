@@ -30,32 +30,16 @@ func (r *queryResolver) FlashcardSet(ctx context.Context, id string) (*model.Fla
 }
 
 // FlashcardSets is the resolver for the flashcardSets field.
-func (r *queryResolver) FlashcardSets(ctx context.Context, topicID *string, levelID *string, page *int, pageSize *int) (*model.FlashcardSetList, error) {
+func (r *queryResolver) FlashcardSets(ctx context.Context, filter *model.FlashcardSetFilterInput, page *int, pageSize *int, orderBy *model.FlashcardSetOrderInput) (*model.FlashcardSetList, error) {
 	if r.Flashcards == nil {
 		return nil, gqlerror.Errorf("flashcard service not configured")
 	}
 
-	var (
-		topicUUID *uuid.UUID
-		levelUUID *uuid.UUID
-		err       error
-	)
-	if topicID != nil && *topicID != "" {
-		var parsed uuid.UUID
-		parsed, err = uuid.Parse(*topicID)
-		if err != nil {
-			return nil, gqlerror.Errorf("invalid topicId")
-		}
-		topicUUID = &parsed
+	setFilter, err := buildFlashcardSetFilter(filter)
+	if err != nil {
+		return nil, err
 	}
-	if levelID != nil && *levelID != "" {
-		var parsed uuid.UUID
-		parsed, err = uuid.Parse(*levelID)
-		if err != nil {
-			return nil, gqlerror.Errorf("invalid levelId")
-		}
-		levelUUID = &parsed
-	}
+	setSort := buildFlashcardSetOrder(orderBy)
 
 	p := 1
 	if page != nil && *page > 0 {
@@ -66,7 +50,7 @@ func (r *queryResolver) FlashcardSets(ctx context.Context, topicID *string, leve
 		ps = *pageSize
 	}
 
-	sets, total, err := r.Flashcards.ListSets(ctx, topicUUID, levelUUID, p, ps)
+	sets, total, err := r.Flashcards.ListSets(ctx, setFilter, setSort, p, ps)
 	if err != nil {
 		return nil, mapFlashcardError(err)
 	}
@@ -78,6 +62,42 @@ func (r *queryResolver) FlashcardSets(ctx context.Context, topicID *string, leve
 
 	return &model.FlashcardSetList{
 		Items:      items,
+		TotalCount: int(total),
+		Page:       p,
+		PageSize:   ps,
+	}, nil
+}
+
+// Flashcards is the resolver for the flashcards field.
+func (r *queryResolver) Flashcards(ctx context.Context, setID string, filter *model.FlashcardFilterInput, page *int, pageSize *int, orderBy *model.FlashcardOrderInput) (*model.FlashcardCollection, error) {
+	if r.Flashcards == nil {
+		return nil, gqlerror.Errorf("flashcard service not configured")
+	}
+
+	id, err := uuid.Parse(setID)
+	if err != nil {
+		return nil, gqlerror.Errorf("invalid setId")
+	}
+
+	cardFilter := buildFlashcardFilter(filter)
+	cardSort := buildFlashcardOrder(orderBy)
+
+	p := 1
+	if page != nil && *page > 0 {
+		p = *page
+	}
+	ps := 20
+	if pageSize != nil && *pageSize > 0 {
+		ps = *pageSize
+	}
+
+	cards, total, err := r.Flashcards.ListSetCards(ctx, id, cardFilter, cardSort, p, ps)
+	if err != nil {
+		return nil, mapFlashcardError(err)
+	}
+
+	return &model.FlashcardCollection{
+		Items:      mapFlashcards(cards),
 		TotalCount: int(total),
 		Page:       p,
 		PageSize:   ps,

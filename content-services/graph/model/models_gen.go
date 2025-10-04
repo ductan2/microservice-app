@@ -105,6 +105,22 @@ type Flashcard struct {
 	CreatedAt    time.Time `json:"createdAt"`
 }
 
+type FlashcardCollection struct {
+	Items      []*Flashcard `json:"items"`
+	TotalCount int          `json:"totalCount"`
+	Page       int          `json:"page"`
+	PageSize   int          `json:"pageSize"`
+}
+
+type FlashcardFilterInput struct {
+	HasMedia *bool `json:"hasMedia,omitempty"`
+}
+
+type FlashcardOrderInput struct {
+	Field     FlashcardOrderField `json:"field"`
+	Direction OrderDirection      `json:"direction"`
+}
+
 type FlashcardSet struct {
 	ID          string       `json:"id"`
 	Title       string       `json:"title"`
@@ -117,11 +133,23 @@ type FlashcardSet struct {
 	Cards       []*Flashcard `json:"cards"`
 }
 
+type FlashcardSetFilterInput struct {
+	TopicID   *string `json:"topicId,omitempty"`
+	LevelID   *string `json:"levelId,omitempty"`
+	CreatedBy *string `json:"createdBy,omitempty"`
+	Search    *string `json:"search,omitempty"`
+}
+
 type FlashcardSetList struct {
 	Items      []*FlashcardSet `json:"items"`
 	TotalCount int             `json:"totalCount"`
 	Page       int             `json:"page"`
 	PageSize   int             `json:"pageSize"`
+}
+
+type FlashcardSetOrderInput struct {
+	Field     FlashcardSetOrderField `json:"field"`
+	Direction OrderDirection         `json:"direction"`
 }
 
 type Lesson struct {
@@ -144,6 +172,8 @@ type Lesson struct {
 type LessonCollection struct {
 	Items      []*Lesson `json:"items"`
 	TotalCount int       `json:"totalCount"`
+	Page       int       `json:"page"`
+	PageSize   int       `json:"pageSize"`
 }
 
 type LessonFilterInput struct {
@@ -151,6 +181,12 @@ type LessonFilterInput struct {
 	LevelID     *string `json:"levelId,omitempty"`
 	IsPublished *bool   `json:"isPublished,omitempty"`
 	Search      *string `json:"search,omitempty"`
+	CreatedBy   *string `json:"createdBy,omitempty"`
+}
+
+type LessonOrderInput struct {
+	Field     LessonOrderField `json:"field"`
+	Direction OrderDirection   `json:"direction"`
 }
 
 type LessonSection struct {
@@ -160,6 +196,22 @@ type LessonSection struct {
 	Type      LessonSectionType `json:"type"`
 	Body      map[string]any    `json:"body"`
 	CreatedAt time.Time         `json:"createdAt"`
+}
+
+type LessonSectionCollection struct {
+	Items      []*LessonSection `json:"items"`
+	TotalCount int              `json:"totalCount"`
+	Page       int              `json:"page"`
+	PageSize   int              `json:"pageSize"`
+}
+
+type LessonSectionFilterInput struct {
+	Type *LessonSectionType `json:"type,omitempty"`
+}
+
+type LessonSectionOrderInput struct {
+	Field     LessonSectionOrderField `json:"field"`
+	Direction OrderDirection          `json:"direction"`
 }
 
 type Level struct {
@@ -182,6 +234,26 @@ type MediaAsset struct {
 	CreatedAt    time.Time `json:"createdAt"`
 	UploadedBy   *string   `json:"uploadedBy,omitempty"`
 	DownloadURL  string    `json:"downloadURL"`
+}
+
+type MediaAssetCollection struct {
+	Items      []*MediaAsset `json:"items"`
+	TotalCount int           `json:"totalCount"`
+	Page       int           `json:"page"`
+	PageSize   int           `json:"pageSize"`
+}
+
+type MediaAssetFilterInput struct {
+	FolderID   *string    `json:"folderId,omitempty"`
+	Kind       *MediaKind `json:"kind,omitempty"`
+	UploadedBy *string    `json:"uploadedBy,omitempty"`
+	Sha256     *string    `json:"sha256,omitempty"`
+	Search     *string    `json:"search,omitempty"`
+}
+
+type MediaAssetOrderInput struct {
+	Field     MediaAssetOrderField `json:"field"`
+	Direction OrderDirection       `json:"direction"`
 }
 
 type Mutation struct {
@@ -211,9 +283,16 @@ type Quiz struct {
 	Questions   []*QuizQuestion `json:"questions"`
 }
 
-type QuizListResult struct {
+type QuizCollection struct {
 	Items      []*Quiz `json:"items"`
 	TotalCount int     `json:"totalCount"`
+	Page       int     `json:"page"`
+	PageSize   int     `json:"pageSize"`
+}
+
+type QuizOrderInput struct {
+	Field     QuizOrderField `json:"field"`
+	Direction OrderDirection `json:"direction"`
 }
 
 type QuizQuestion struct {
@@ -226,6 +305,22 @@ type QuizQuestion struct {
 	Points      int               `json:"points"`
 	Metadata    map[string]any    `json:"metadata"`
 	Options     []*QuestionOption `json:"options"`
+}
+
+type QuizQuestionCollection struct {
+	Items      []*QuizQuestion `json:"items"`
+	TotalCount int             `json:"totalCount"`
+	Page       int             `json:"page"`
+	PageSize   int             `json:"pageSize"`
+}
+
+type QuizQuestionFilterInput struct {
+	Type *string `json:"type,omitempty"`
+}
+
+type QuizQuestionOrderInput struct {
+	Field     QuizQuestionOrderField `json:"field"`
+	Direction OrderDirection         `json:"direction"`
 }
 
 type Tag struct {
@@ -341,6 +436,228 @@ func (e ContentTagKind) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+type FlashcardOrderField string
+
+const (
+	FlashcardOrderFieldOrd       FlashcardOrderField = "ORD"
+	FlashcardOrderFieldCreatedAt FlashcardOrderField = "CREATED_AT"
+)
+
+var AllFlashcardOrderField = []FlashcardOrderField{
+	FlashcardOrderFieldOrd,
+	FlashcardOrderFieldCreatedAt,
+}
+
+func (e FlashcardOrderField) IsValid() bool {
+	switch e {
+	case FlashcardOrderFieldOrd, FlashcardOrderFieldCreatedAt:
+		return true
+	}
+	return false
+}
+
+func (e FlashcardOrderField) String() string {
+	return string(e)
+}
+
+func (e *FlashcardOrderField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FlashcardOrderField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FlashcardOrderField", str)
+	}
+	return nil
+}
+
+func (e FlashcardOrderField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FlashcardOrderField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FlashcardOrderField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type FlashcardSetOrderField string
+
+const (
+	FlashcardSetOrderFieldCreatedAt FlashcardSetOrderField = "CREATED_AT"
+	FlashcardSetOrderFieldCardCount FlashcardSetOrderField = "CARD_COUNT"
+)
+
+var AllFlashcardSetOrderField = []FlashcardSetOrderField{
+	FlashcardSetOrderFieldCreatedAt,
+	FlashcardSetOrderFieldCardCount,
+}
+
+func (e FlashcardSetOrderField) IsValid() bool {
+	switch e {
+	case FlashcardSetOrderFieldCreatedAt, FlashcardSetOrderFieldCardCount:
+		return true
+	}
+	return false
+}
+
+func (e FlashcardSetOrderField) String() string {
+	return string(e)
+}
+
+func (e *FlashcardSetOrderField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FlashcardSetOrderField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FlashcardSetOrderField", str)
+	}
+	return nil
+}
+
+func (e FlashcardSetOrderField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FlashcardSetOrderField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FlashcardSetOrderField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type LessonOrderField string
+
+const (
+	LessonOrderFieldCreatedAt   LessonOrderField = "CREATED_AT"
+	LessonOrderFieldPublishedAt LessonOrderField = "PUBLISHED_AT"
+	LessonOrderFieldVersion     LessonOrderField = "VERSION"
+)
+
+var AllLessonOrderField = []LessonOrderField{
+	LessonOrderFieldCreatedAt,
+	LessonOrderFieldPublishedAt,
+	LessonOrderFieldVersion,
+}
+
+func (e LessonOrderField) IsValid() bool {
+	switch e {
+	case LessonOrderFieldCreatedAt, LessonOrderFieldPublishedAt, LessonOrderFieldVersion:
+		return true
+	}
+	return false
+}
+
+func (e LessonOrderField) String() string {
+	return string(e)
+}
+
+func (e *LessonOrderField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = LessonOrderField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid LessonOrderField", str)
+	}
+	return nil
+}
+
+func (e LessonOrderField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *LessonOrderField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e LessonOrderField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type LessonSectionOrderField string
+
+const (
+	LessonSectionOrderFieldOrd       LessonSectionOrderField = "ORD"
+	LessonSectionOrderFieldCreatedAt LessonSectionOrderField = "CREATED_AT"
+)
+
+var AllLessonSectionOrderField = []LessonSectionOrderField{
+	LessonSectionOrderFieldOrd,
+	LessonSectionOrderFieldCreatedAt,
+}
+
+func (e LessonSectionOrderField) IsValid() bool {
+	switch e {
+	case LessonSectionOrderFieldOrd, LessonSectionOrderFieldCreatedAt:
+		return true
+	}
+	return false
+}
+
+func (e LessonSectionOrderField) String() string {
+	return string(e)
+}
+
+func (e *LessonSectionOrderField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = LessonSectionOrderField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid LessonSectionOrderField", str)
+	}
+	return nil
+}
+
+func (e LessonSectionOrderField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *LessonSectionOrderField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e LessonSectionOrderField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type LessonSectionType string
 
 const (
@@ -402,6 +719,61 @@ func (e LessonSectionType) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+type MediaAssetOrderField string
+
+const (
+	MediaAssetOrderFieldCreatedAt MediaAssetOrderField = "CREATED_AT"
+	MediaAssetOrderFieldBytes     MediaAssetOrderField = "BYTES"
+)
+
+var AllMediaAssetOrderField = []MediaAssetOrderField{
+	MediaAssetOrderFieldCreatedAt,
+	MediaAssetOrderFieldBytes,
+}
+
+func (e MediaAssetOrderField) IsValid() bool {
+	switch e {
+	case MediaAssetOrderFieldCreatedAt, MediaAssetOrderFieldBytes:
+		return true
+	}
+	return false
+}
+
+func (e MediaAssetOrderField) String() string {
+	return string(e)
+}
+
+func (e *MediaAssetOrderField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = MediaAssetOrderField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid MediaAssetOrderField", str)
+	}
+	return nil
+}
+
+func (e MediaAssetOrderField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *MediaAssetOrderField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e MediaAssetOrderField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type MediaKind string
 
 const (
@@ -452,6 +824,171 @@ func (e *MediaKind) UnmarshalJSON(b []byte) error {
 }
 
 func (e MediaKind) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type OrderDirection string
+
+const (
+	OrderDirectionAsc  OrderDirection = "ASC"
+	OrderDirectionDesc OrderDirection = "DESC"
+)
+
+var AllOrderDirection = []OrderDirection{
+	OrderDirectionAsc,
+	OrderDirectionDesc,
+}
+
+func (e OrderDirection) IsValid() bool {
+	switch e {
+	case OrderDirectionAsc, OrderDirectionDesc:
+		return true
+	}
+	return false
+}
+
+func (e OrderDirection) String() string {
+	return string(e)
+}
+
+func (e *OrderDirection) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = OrderDirection(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OrderDirection", str)
+	}
+	return nil
+}
+
+func (e OrderDirection) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *OrderDirection) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e OrderDirection) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type QuizOrderField string
+
+const (
+	QuizOrderFieldCreatedAt   QuizOrderField = "CREATED_AT"
+	QuizOrderFieldTotalPoints QuizOrderField = "TOTAL_POINTS"
+)
+
+var AllQuizOrderField = []QuizOrderField{
+	QuizOrderFieldCreatedAt,
+	QuizOrderFieldTotalPoints,
+}
+
+func (e QuizOrderField) IsValid() bool {
+	switch e {
+	case QuizOrderFieldCreatedAt, QuizOrderFieldTotalPoints:
+		return true
+	}
+	return false
+}
+
+func (e QuizOrderField) String() string {
+	return string(e)
+}
+
+func (e *QuizOrderField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = QuizOrderField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid QuizOrderField", str)
+	}
+	return nil
+}
+
+func (e QuizOrderField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *QuizOrderField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e QuizOrderField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type QuizQuestionOrderField string
+
+const (
+	QuizQuestionOrderFieldOrd    QuizQuestionOrderField = "ORD"
+	QuizQuestionOrderFieldPoints QuizQuestionOrderField = "POINTS"
+)
+
+var AllQuizQuestionOrderField = []QuizQuestionOrderField{
+	QuizQuestionOrderFieldOrd,
+	QuizQuestionOrderFieldPoints,
+}
+
+func (e QuizQuestionOrderField) IsValid() bool {
+	switch e {
+	case QuizQuestionOrderFieldOrd, QuizQuestionOrderFieldPoints:
+		return true
+	}
+	return false
+}
+
+func (e QuizQuestionOrderField) String() string {
+	return string(e)
+}
+
+func (e *QuizQuestionOrderField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = QuizQuestionOrderField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid QuizQuestionOrderField", str)
+	}
+	return nil
+}
+
+func (e QuizQuestionOrderField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *QuizQuestionOrderField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e QuizQuestionOrderField) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

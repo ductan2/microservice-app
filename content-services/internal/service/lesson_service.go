@@ -13,7 +13,7 @@ type LessonService interface {
 	CreateLesson(ctx context.Context, lesson *models.Lesson, tagIDs []uuid.UUID) (*models.Lesson, error)
 	GetLessonByID(ctx context.Context, id uuid.UUID) (*models.Lesson, error)
 	GetLessonByCode(ctx context.Context, code string) (*models.Lesson, error)
-	ListLessons(ctx context.Context, filter *repository.LessonFilter, page, pageSize int) ([]models.Lesson, int64, error)
+	ListLessons(ctx context.Context, filter *repository.LessonFilter, sort *repository.SortOption, page, pageSize int) ([]models.Lesson, int64, error)
 	UpdateLesson(ctx context.Context, id uuid.UUID, updates *models.Lesson) (*models.Lesson, error)
 	PublishLesson(ctx context.Context, id uuid.UUID) (*models.Lesson, error)
 	UnpublishLesson(ctx context.Context, id uuid.UUID) (*models.Lesson, error)
@@ -24,7 +24,7 @@ type LessonService interface {
 	UpdateSection(ctx context.Context, id uuid.UUID, updates *models.LessonSection) (*models.LessonSection, error)
 	ReorderSections(ctx context.Context, lessonID uuid.UUID, sectionIDs []uuid.UUID) ([]models.LessonSection, error)
 	DeleteSection(ctx context.Context, id uuid.UUID) error
-	GetLessonSections(ctx context.Context, lessonID uuid.UUID) ([]models.LessonSection, error)
+	ListLessonSections(ctx context.Context, lessonID uuid.UUID, filter *repository.LessonSectionFilter, sort *repository.SortOption, page, pageSize int) ([]models.LessonSection, int64, error)
 }
 
 type lessonService struct {
@@ -84,7 +84,7 @@ func (s *lessonService) GetLessonByCode(ctx context.Context, code string) (*mode
 	return s.lessonRepo.GetByCode(ctx, code)
 }
 
-func (s *lessonService) ListLessons(ctx context.Context, filter *repository.LessonFilter, page, pageSize int) ([]models.Lesson, int64, error) {
+func (s *lessonService) ListLessons(ctx context.Context, filter *repository.LessonFilter, sort *repository.SortOption, page, pageSize int) ([]models.Lesson, int64, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -93,7 +93,7 @@ func (s *lessonService) ListLessons(ctx context.Context, filter *repository.Less
 	}
 
 	offset := (page - 1) * pageSize
-	return s.lessonRepo.List(ctx, filter, pageSize, offset)
+	return s.lessonRepo.List(ctx, filter, sort, pageSize, offset)
 }
 
 func (s *lessonService) UpdateLesson(ctx context.Context, id uuid.UUID, updates *models.Lesson) (*models.Lesson, error) {
@@ -270,6 +270,20 @@ func (s *lessonService) DeleteSection(ctx context.Context, id uuid.UUID) error {
 	return s.sectionRepo.Delete(ctx, id)
 }
 
-func (s *lessonService) GetLessonSections(ctx context.Context, lessonID uuid.UUID) ([]models.LessonSection, error) {
-	return s.sectionRepo.GetByLessonID(ctx, lessonID)
+func (s *lessonService) ListLessonSections(ctx context.Context, lessonID uuid.UUID, filter *repository.LessonSectionFilter, sort *repository.SortOption, page, pageSize int) ([]models.LessonSection, int64, error) {
+	if page < 1 {
+		page = 1
+	}
+	limit := pageSize
+	if pageSize < 1 {
+		limit = 0
+	} else if pageSize > 100 {
+		limit = 100
+	}
+
+	offset := 0
+	if limit > 0 {
+		offset = (page - 1) * limit
+	}
+	return s.sectionRepo.ListByLessonID(ctx, lessonID, filter, sort, limit, offset)
 }

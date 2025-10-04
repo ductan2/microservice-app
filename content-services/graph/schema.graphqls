@@ -7,27 +7,30 @@ type Query {
   health: String!
 
   topic(id: ID, slug: String): Topic
-  topics: [Topic!]!
+  topics(search: String): [Topic!]!
 
   level(id: ID, code: String): Level
-  levels: [Level!]!
+  levels(search: String): [Level!]!
 
   tag(id: ID, slug: String): Tag
-  tags: [Tag!]!
+  tags(search: String): [Tag!]!
 
   mediaAsset(id: ID!): MediaAsset
   mediaAssets(ids: [ID!]!): [MediaAsset!]!
+  mediaAssetCollection(filter: MediaAssetFilterInput, page: Int, pageSize: Int, orderBy: MediaAssetOrderInput): MediaAssetCollection!
 
   lesson(id: ID!): Lesson
   lessonByCode(code: String!): Lesson
 
   quiz(id: ID!): Quiz
-  quizzes(lessonId: ID, page: Int = 1, pageSize: Int = 20): QuizListResult!
+  quizzes(lessonId: ID, search: String, page: Int = 1, pageSize: Int = 20, orderBy: QuizOrderInput): QuizCollection!
+  quizQuestions(quizId: ID!, filter: QuizQuestionFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: QuizQuestionOrderInput): QuizQuestionCollection!
   flashcardSet(id: ID!): FlashcardSet
-  flashcardSets(topicId: ID, levelId: ID, page: Int, pageSize: Int): FlashcardSetList!
-  lessons(filter: LessonFilterInput, page: Int, pageSize: Int): LessonCollection!
+  flashcardSets(filter: FlashcardSetFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: FlashcardSetOrderInput): FlashcardSetList!
+  flashcards(setId: ID!, filter: FlashcardFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: FlashcardOrderInput): FlashcardCollection!
+  lessons(filter: LessonFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: LessonOrderInput): LessonCollection!
 
-  lessonSections(lessonId: ID!): [LessonSection!]!
+  lessonSections(lessonId: ID!, filter: LessonSectionFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: LessonSectionOrderInput): LessonSectionCollection!
 }
 
 type Mutation {
@@ -139,6 +142,31 @@ type MediaAsset {
   downloadURL: String!
 }
 
+input MediaAssetFilterInput {
+  folderId: ID
+  kind: MediaKind
+  uploadedBy: ID
+  sha256: String
+  search: String
+}
+
+enum MediaAssetOrderField {
+  CREATED_AT
+  BYTES
+}
+
+input MediaAssetOrderInput {
+  field: MediaAssetOrderField! = CREATED_AT
+  direction: OrderDirection! = DESC
+}
+
+type MediaAssetCollection {
+  items: [MediaAsset!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
 input UploadMediaInput {
   file: Upload!
   kind: MediaKind!
@@ -199,9 +227,42 @@ type QuizQuestion {
   options: [QuestionOption!]!
 }
 
-type QuizListResult {
+enum QuizOrderField {
+  CREATED_AT
+  TOTAL_POINTS
+}
+
+input QuizOrderInput {
+  field: QuizOrderField! = CREATED_AT
+  direction: OrderDirection! = DESC
+}
+
+type QuizCollection {
   items: [Quiz!]!
   totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+input QuizQuestionFilterInput {
+  type: String
+}
+
+enum QuizQuestionOrderField {
+  ORD
+  POINTS
+}
+
+input QuizQuestionOrderInput {
+  field: QuizQuestionOrderField! = ORD
+  direction: OrderDirection! = ASC
+}
+
+type QuizQuestionCollection {
+  items: [QuizQuestion!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
 }
 
 input CreateQuizInput {
@@ -244,11 +305,25 @@ input LessonFilterInput {
   levelId: ID
   isPublished: Boolean
   search: String
+  createdBy: ID
+}
+
+enum LessonOrderField {
+  CREATED_AT
+  PUBLISHED_AT
+  VERSION
+}
+
+input LessonOrderInput {
+  field: LessonOrderField! = CREATED_AT
+  direction: OrderDirection! = DESC
 }
 
 type LessonCollection {
   items: [Lesson!]!
   totalCount: Int!
+  page: Int!
+  pageSize: Int!
 }
 
 type LessonSection {
@@ -258,6 +333,27 @@ type LessonSection {
   type: LessonSectionType!
   body: Map!
   createdAt: Time!
+}
+
+input LessonSectionFilterInput {
+  type: LessonSectionType
+}
+
+enum LessonSectionOrderField {
+  ORD
+  CREATED_AT
+}
+
+input LessonSectionOrderInput {
+  field: LessonSectionOrderField! = ORD
+  direction: OrderDirection! = ASC
+}
+
+type LessonSectionCollection {
+  items: [LessonSection!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
 }
 
 enum LessonSectionType {
@@ -282,6 +378,11 @@ scalar Time
 scalar Upload
 scalar JSON
 scalar Map
+
+enum OrderDirection {
+  ASC
+  DESC
+}
 
 type QuestionOption {
   id: ID!
@@ -335,8 +436,46 @@ type Flashcard {
   createdAt: Time!
 }
 
+input FlashcardSetFilterInput {
+  topicId: ID
+  levelId: ID
+  createdBy: ID
+  search: String
+}
+
+enum FlashcardSetOrderField {
+  CREATED_AT
+  CARD_COUNT
+}
+
+input FlashcardSetOrderInput {
+  field: FlashcardSetOrderField! = CREATED_AT
+  direction: OrderDirection! = DESC
+}
+
 type FlashcardSetList {
   items: [FlashcardSet!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+input FlashcardFilterInput {
+  hasMedia: Boolean
+}
+
+enum FlashcardOrderField {
+  ORD
+  CREATED_AT
+}
+
+input FlashcardOrderInput {
+  field: FlashcardOrderField! = ORD
+  direction: OrderDirection! = ASC
+}
+
+type FlashcardCollection {
+  items: [Flashcard!]!
   totalCount: Int!
   page: Int!
   pageSize: Int!

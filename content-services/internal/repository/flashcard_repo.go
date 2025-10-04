@@ -22,7 +22,7 @@ var (
 type FlashcardSetRepository interface {
 	Create(ctx context.Context, set *models.FlashcardSet) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.FlashcardSet, error)
-	List(ctx context.Context, topicID, levelID *uuid.UUID, limit, offset int) ([]models.FlashcardSet, int64, error)
+	List(ctx context.Context, filter *FlashcardSetFilter, sort *SortOption, limit, offset int) ([]models.FlashcardSet, int64, error)
 	Update(ctx context.Context, set *models.FlashcardSet) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
@@ -30,10 +30,21 @@ type FlashcardSetRepository interface {
 type FlashcardRepository interface {
 	Create(ctx context.Context, card *models.Flashcard) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.Flashcard, error)
-	GetBySetID(ctx context.Context, setID uuid.UUID) ([]models.Flashcard, error)
+	ListBySetID(ctx context.Context, setID uuid.UUID, filter *FlashcardFilter, sort *SortOption, limit, offset int) ([]models.Flashcard, int64, error)
 	Update(ctx context.Context, card *models.Flashcard) error
 	Reorder(ctx context.Context, setID uuid.UUID, cardIDs []uuid.UUID) error
 	Delete(ctx context.Context, id uuid.UUID) error
+}
+
+type FlashcardSetFilter struct {
+	TopicID   *uuid.UUID
+	LevelID   *uuid.UUID
+	CreatedBy *uuid.UUID
+	Search    string
+}
+
+type FlashcardFilter struct {
+	HasMedia *bool
 }
 
 type flashcardSetRepository struct {
@@ -75,24 +86,80 @@ func (r *flashcardSetRepository) GetByID(ctx context.Context, id uuid.UUID) (*mo
 	return &set, nil
 }
 
-func (r *flashcardSetRepository) List(ctx context.Context, topicID, levelID *uuid.UUID, limit, offset int) ([]models.FlashcardSet, int64, error) {
-	filter := bson.M{}
-	if topicID != nil {
-		filter["topic_id"] = *topicID
-	}
-	if levelID != nil {
-		filter["level_id"] = *levelID
+func (r *flashcardSetRepository) List(ctx context.Context, filter *FlashcardSetFilter, sort *SortOption, limit, offset int) ([]models.FlashcardSet, int64, error) {
+	match := bson.D{}
+	if filter != nil {
+		if filter.TopicID != nil {
+			match = append(match, bson.E{Key: "topic_id", Value: *filter.TopicID})
+		}
+		if filter.LevelID != nil {
+			match = append(match, bson.E{Key: "level_id", Value: *filter.LevelID})
+		}
+		if filter.CreatedBy != nil {
+			match = append(match, bson.E{Key: "created_by", Value: *filter.CreatedBy})
+		}
+		if filter.Search != "" {
+			regex := bson.D{{Key: "$regex", Value: filter.Search}, {Key: "$options", Value: "i"}}
+			match = append(match, bson.E{Key: "$or", Value: bson.A{
+				bson.D{{Key: "title", Value: regex}},
+				bson.D{{Key: "description", Value: regex}},
+			}})
+		}
 	}
 
-	findOpts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+	totalFilter := bson.D{}
+	if len(match) > 0 {
+		totalFilter = append(totalFilter, match...)
+	}
+
+	total, err := r.collection.CountDocuments(ctx, totalFilter)
+	if err != nil {
+		return nil, 0, err
+	}
+	if total == 0 {
+		return []models.FlashcardSet{}, 0, nil
+	}
+
+	pipeline := mongo.Pipeline{}
+	if len(match) > 0 {
+		pipeline = append(pipeline, bson.D{{Key: "$match", Value: match}})
+	}
+
+	lookupStage := bson.D{{Key: "$lookup", Value: bson.D{
+		{Key: "from", Value: "flashcards"},
+		{Key: "let", Value: bson.D{{Key: "setId", Value: "$_id"}}},
+		{Key: "pipeline", Value: bson.A{
+			bson.D{{Key: "$match", Value: bson.D{{Key: "$expr", Value: bson.D{{Key: "$eq", Value: bson.A{"$set_id", "$$setId"}}}}}}},
+			bson.D{{Key: "$count", Value: "count"}},
+		}},
+		{Key: "as", Value: "card_counts"},
+	}}}
+	addFieldsStage := bson.D{{Key: "$addFields", Value: bson.D{{Key: "card_count", Value: bson.D{
+		{Key: "$ifNull", Value: bson.A{
+			bson.D{{Key: "$arrayElemAt", Value: bson.A{"$card_counts.count", 0}}},
+			0,
+		}},
+	}}}}}
+	projectStage := bson.D{{Key: "$project", Value: bson.D{{Key: "card_counts", Value: 0}}}}
+
+	pipeline = append(pipeline, lookupStage, addFieldsStage, projectStage)
+
+	sortField, sortDir := "created_at", SortDescending
+	if sort != nil {
+		sortField, sortDir = sort.apply(sortField, sortDir)
+	}
+	if sortField != "created_at" && sortField != "card_count" {
+		sortField = "created_at"
+	}
+	pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: sortField, Value: int(sortDir)}}}})
 	if offset > 0 {
-		findOpts.SetSkip(int64(offset))
+		pipeline = append(pipeline, bson.D{{Key: "$skip", Value: int64(offset)}})
 	}
 	if limit > 0 {
-		findOpts.SetLimit(int64(limit))
+		pipeline = append(pipeline, bson.D{{Key: "$limit", Value: int64(limit)}})
 	}
 
-	cursor, err := r.collection.Find(ctx, filter, findOpts)
+	cursor, err := r.collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -110,9 +177,8 @@ func (r *flashcardSetRepository) List(ctx context.Context, topicID, levelID *uui
 		return nil, 0, err
 	}
 
-	total, err := r.collection.CountDocuments(ctx, filter)
-	if err != nil {
-		return nil, 0, err
+	if sets == nil {
+		sets = []models.FlashcardSet{}
 	}
 
 	return sets, total, nil
@@ -186,10 +252,39 @@ func (r *flashcardRepository) GetByID(ctx context.Context, id uuid.UUID) (*model
 	return &card, nil
 }
 
-func (r *flashcardRepository) GetBySetID(ctx context.Context, setID uuid.UUID) ([]models.Flashcard, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{"set_id": setID}, options.Find().SetSort(bson.D{{Key: "ord", Value: 1}}))
+func (r *flashcardRepository) ListBySetID(ctx context.Context, setID uuid.UUID, filter *FlashcardFilter, sort *SortOption, limit, offset int) ([]models.Flashcard, int64, error) {
+	filterDoc := bson.M{"set_id": setID}
+	if filter != nil && filter.HasMedia != nil {
+		hasMedia := *filter.HasMedia
+		if hasMedia {
+			filterDoc["$or"] = []bson.M{
+				{"front_media_id": bson.M{"$exists": true}},
+				{"back_media_id": bson.M{"$exists": true}},
+			}
+		} else {
+			filterDoc["$and"] = []bson.M{
+				{"$or": []bson.M{{"front_media_id": bson.M{"$exists": false}}, {"front_media_id": nil}}},
+				{"$or": []bson.M{{"back_media_id": bson.M{"$exists": false}}, {"back_media_id": nil}}},
+			}
+		}
+	}
+
+	opts := options.Find()
+	sortField, sortDir := "ord", SortAscending
+	if sort != nil {
+		sortField, sortDir = sort.apply(sortField, sortDir)
+	}
+	opts.SetSort(bson.D{{Key: sortField, Value: int(sortDir)}})
+	if offset > 0 {
+		opts.SetSkip(int64(offset))
+	}
+	if limit > 0 {
+		opts.SetLimit(int64(limit))
+	}
+
+	cursor, err := r.collection.Find(ctx, filterDoc, opts)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer cursor.Close(ctx)
 
@@ -197,14 +292,24 @@ func (r *flashcardRepository) GetBySetID(ctx context.Context, setID uuid.UUID) (
 	for cursor.Next(ctx) {
 		var card models.Flashcard
 		if err := cursor.Decode(&card); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		cards = append(cards, card)
 	}
 	if err := cursor.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return cards, nil
+
+	total, err := r.collection.CountDocuments(ctx, filterDoc)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if cards == nil {
+		cards = []models.Flashcard{}
+	}
+
+	return cards, total, nil
 }
 
 func (r *flashcardRepository) Update(ctx context.Context, card *models.Flashcard) error {

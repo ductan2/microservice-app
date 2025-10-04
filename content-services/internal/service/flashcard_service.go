@@ -14,7 +14,7 @@ type FlashcardService interface {
 	// Sets
 	CreateSet(ctx context.Context, set *models.FlashcardSet, tagIDs []uuid.UUID) (*models.FlashcardSet, error)
 	GetSetByID(ctx context.Context, id uuid.UUID) (*models.FlashcardSet, error)
-	ListSets(ctx context.Context, topicID, levelID *uuid.UUID, page, pageSize int) ([]models.FlashcardSet, int64, error)
+	ListSets(ctx context.Context, filter *repository.FlashcardSetFilter, sort *repository.SortOption, page, pageSize int) ([]models.FlashcardSet, int64, error)
 	UpdateSet(ctx context.Context, id uuid.UUID, updates *models.FlashcardSet) (*models.FlashcardSet, error)
 	DeleteSet(ctx context.Context, id uuid.UUID) error
 
@@ -24,6 +24,7 @@ type FlashcardService interface {
 	ReorderCards(ctx context.Context, setID uuid.UUID, cardIDs []uuid.UUID) ([]models.Flashcard, error)
 	DeleteCard(ctx context.Context, id uuid.UUID) error
 	GetSetCards(ctx context.Context, setID uuid.UUID) ([]models.Flashcard, error)
+	ListSetCards(ctx context.Context, setID uuid.UUID, filter *repository.FlashcardFilter, sort *repository.SortOption, page, pageSize int) ([]models.Flashcard, int64, error)
 }
 
 type flashcardService struct {
@@ -74,7 +75,7 @@ func (s *flashcardService) GetSetByID(ctx context.Context, id uuid.UUID) (*model
 	return s.setRepo.GetByID(ctx, id)
 }
 
-func (s *flashcardService) ListSets(ctx context.Context, topicID, levelID *uuid.UUID, page, pageSize int) ([]models.FlashcardSet, int64, error) {
+func (s *flashcardService) ListSets(ctx context.Context, filter *repository.FlashcardSetFilter, sort *repository.SortOption, page, pageSize int) ([]models.FlashcardSet, int64, error) {
 	if page <= 0 {
 		page = 1
 	}
@@ -82,7 +83,7 @@ func (s *flashcardService) ListSets(ctx context.Context, topicID, levelID *uuid.
 		pageSize = 20
 	}
 	offset := (page - 1) * pageSize
-	return s.setRepo.List(ctx, topicID, levelID, pageSize, offset)
+	return s.setRepo.List(ctx, filter, sort, pageSize, offset)
 }
 
 func (s *flashcardService) UpdateSet(ctx context.Context, id uuid.UUID, updates *models.FlashcardSet) (*models.FlashcardSet, error) {
@@ -171,7 +172,8 @@ func (s *flashcardService) ReorderCards(ctx context.Context, setID uuid.UUID, ca
 	if err := s.cardRepo.Reorder(ctx, setID, cardIDs); err != nil {
 		return nil, err
 	}
-	return s.cardRepo.GetBySetID(ctx, setID)
+	cards, _, err := s.cardRepo.ListBySetID(ctx, setID, nil, &repository.SortOption{Field: "ord", Direction: repository.SortAscending}, 0, 0)
+	return cards, err
 }
 
 func (s *flashcardService) DeleteCard(ctx context.Context, id uuid.UUID) error {
@@ -179,5 +181,18 @@ func (s *flashcardService) DeleteCard(ctx context.Context, id uuid.UUID) error {
 }
 
 func (s *flashcardService) GetSetCards(ctx context.Context, setID uuid.UUID) ([]models.Flashcard, error) {
-	return s.cardRepo.GetBySetID(ctx, setID)
+	cards, _, err := s.cardRepo.ListBySetID(ctx, setID, nil, &repository.SortOption{Field: "ord", Direction: repository.SortAscending}, 0, 0)
+	return cards, err
+}
+
+func (s *flashcardService) ListSetCards(ctx context.Context, setID uuid.UUID, filter *repository.FlashcardFilter, sort *repository.SortOption, page, pageSize int) ([]models.Flashcard, int64, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 200 {
+		pageSize = 20
+	}
+
+	offset := (page - 1) * pageSize
+	return s.cardRepo.ListBySetID(ctx, setID, filter, sort, pageSize, offset)
 }

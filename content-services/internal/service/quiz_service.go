@@ -15,7 +15,7 @@ type QuizService interface {
 	// Quiz
 	CreateQuiz(ctx context.Context, quiz *models.Quiz, tagIDs []uuid.UUID) (*models.Quiz, error)
 	GetQuizByID(ctx context.Context, id uuid.UUID) (*models.Quiz, error)
-	ListQuizzes(ctx context.Context, lessonID *uuid.UUID, page, pageSize int) ([]models.Quiz, int64, error)
+	ListQuizzes(ctx context.Context, filter *repository.QuizFilter, sort *repository.SortOption, page, pageSize int) ([]models.Quiz, int64, error)
 	UpdateQuiz(ctx context.Context, id uuid.UUID, updates *models.Quiz) (*models.Quiz, error)
 	DeleteQuiz(ctx context.Context, id uuid.UUID) error
 
@@ -25,6 +25,7 @@ type QuizService interface {
 	ReorderQuestions(ctx context.Context, quizID uuid.UUID, questionIDs []uuid.UUID) ([]models.QuizQuestion, error)
 	DeleteQuestion(ctx context.Context, id uuid.UUID) error
 	GetQuizQuestions(ctx context.Context, quizID uuid.UUID) ([]models.QuizQuestion, error)
+	ListQuizQuestions(ctx context.Context, quizID uuid.UUID, filter *repository.QuizQuestionFilter, sort *repository.SortOption, page, pageSize int) ([]models.QuizQuestion, int64, error)
 
 	// Options
 	AddOption(ctx context.Context, questionID uuid.UUID, option *models.QuestionOption) (*models.QuestionOption, error)
@@ -84,7 +85,7 @@ func (s *quizService) GetQuizByID(ctx context.Context, id uuid.UUID) (*models.Qu
 	return s.quizRepo.GetByID(ctx, id)
 }
 
-func (s *quizService) ListQuizzes(ctx context.Context, lessonID *uuid.UUID, page, pageSize int) ([]models.Quiz, int64, error) {
+func (s *quizService) ListQuizzes(ctx context.Context, filter *repository.QuizFilter, sort *repository.SortOption, page, pageSize int) ([]models.Quiz, int64, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -93,7 +94,7 @@ func (s *quizService) ListQuizzes(ctx context.Context, lessonID *uuid.UUID, page
 	}
 
 	offset := (page - 1) * pageSize
-	return s.quizRepo.List(ctx, lessonID, pageSize, offset)
+	return s.quizRepo.List(ctx, filter, sort, pageSize, offset)
 }
 
 func (s *quizService) UpdateQuiz(ctx context.Context, id uuid.UUID, updates *models.Quiz) (*models.Quiz, error) {
@@ -210,8 +211,8 @@ func (s *quizService) ReorderQuestions(ctx context.Context, quizID uuid.UUID, qu
 	if err := s.questionRepo.Reorder(ctx, quizID, questionIDs); err != nil {
 		return nil, err
 	}
-
-	return s.questionRepo.GetByQuizID(ctx, quizID)
+	questions, _, err := s.questionRepo.ListByQuizID(ctx, quizID, nil, &repository.SortOption{Field: "ord", Direction: repository.SortAscending}, 0, 0)
+	return questions, err
 }
 
 func (s *quizService) DeleteQuestion(ctx context.Context, id uuid.UUID) error {
@@ -240,7 +241,20 @@ func (s *quizService) DeleteQuestion(ctx context.Context, id uuid.UUID) error {
 }
 
 func (s *quizService) GetQuizQuestions(ctx context.Context, quizID uuid.UUID) ([]models.QuizQuestion, error) {
-	return s.questionRepo.GetByQuizID(ctx, quizID)
+	questions, _, err := s.questionRepo.ListByQuizID(ctx, quizID, nil, &repository.SortOption{Field: "ord", Direction: repository.SortAscending}, 0, 0)
+	return questions, err
+}
+
+func (s *quizService) ListQuizQuestions(ctx context.Context, quizID uuid.UUID, filter *repository.QuizQuestionFilter, sort *repository.SortOption, page, pageSize int) ([]models.QuizQuestion, int64, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 200 {
+		pageSize = 20
+	}
+
+	offset := (page - 1) * pageSize
+	return s.questionRepo.ListByQuizID(ctx, quizID, filter, sort, pageSize, offset)
 }
 
 func (s *quizService) AddOption(ctx context.Context, questionID uuid.UUID, option *models.QuestionOption) (*models.QuestionOption, error) {

@@ -21,7 +21,16 @@ type MediaRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*models.MediaAsset, error)
 	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]models.MediaAsset, error)
 	GetBySHA256(ctx context.Context, sha256 string) (*models.MediaAsset, error)
+	List(ctx context.Context, filter *MediaFilter, sort *SortOption, limit, offset int) ([]models.MediaAsset, int64, error)
 	Delete(ctx context.Context, id uuid.UUID) error
+}
+
+type MediaFilter struct {
+	FolderID   *uuid.UUID
+	Kind       string
+	UploadedBy *uuid.UUID
+	SHA256     string
+	Search     string
 }
 
 type mediaRepository struct {
@@ -94,6 +103,72 @@ func (r *mediaRepository) GetBySHA256(ctx context.Context, sha256 string) (*mode
 		return nil, err
 	}
 	return &media, nil
+}
+
+func (r *mediaRepository) List(ctx context.Context, filter *MediaFilter, sort *SortOption, limit, offset int) ([]models.MediaAsset, int64, error) {
+	filterDoc := bson.M{}
+	if filter != nil {
+		if filter.FolderID != nil {
+			filterDoc["folder_id"] = *filter.FolderID
+		}
+		if filter.Kind != "" {
+			filterDoc["kind"] = filter.Kind
+		}
+		if filter.UploadedBy != nil {
+			filterDoc["uploaded_by"] = *filter.UploadedBy
+		}
+		if filter.SHA256 != "" {
+			filterDoc["sha256"] = filter.SHA256
+		}
+		if filter.Search != "" {
+			filterDoc["original_name"] = bson.M{"$regex": filter.Search, "$options": "i"}
+		}
+	}
+
+	opts := options.Find()
+	sortField, sortDir := "created_at", SortDescending
+	if sort != nil {
+		sortField, sortDir = sort.apply(sortField, sortDir)
+	}
+	if sortField != "created_at" && sortField != "bytes" {
+		sortField = "created_at"
+	}
+	opts.SetSort(bson.D{{Key: sortField, Value: int(sortDir)}})
+	if limit > 0 {
+		opts.SetLimit(int64(limit))
+	}
+	if offset > 0 {
+		opts.SetSkip(int64(offset))
+	}
+
+	cursor, err := r.collection.Find(ctx, filterDoc, opts)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	var assets []models.MediaAsset
+	for cursor.Next(ctx) {
+		var asset models.MediaAsset
+		if err := cursor.Decode(&asset); err != nil {
+			return nil, 0, err
+		}
+		assets = append(assets, asset)
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	total, err := r.collection.CountDocuments(ctx, filterDoc)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if assets == nil {
+		assets = []models.MediaAsset{}
+	}
+
+	return assets, total, nil
 }
 
 func (r *mediaRepository) Delete(ctx context.Context, id uuid.UUID) error {
