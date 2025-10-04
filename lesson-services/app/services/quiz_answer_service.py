@@ -1,84 +1,144 @@
-from sqlalchemy.orm import Session
-from typing import List, Optional, Dict
-from uuid import UUID
 from datetime import datetime
+from typing import List, Optional, Tuple
+from uuid import UUID
 
-# from app.models.progress_models import QuizAnswer, QuizAttempt
-# from app.schemas.quiz_schema import QuizAnswerCreate, QuizAnswerUpdate
+from sqlalchemy.orm import Session
+
+from app.models.progress_models import QuizAnswer, QuizAttempt
+from app.schemas.progress_schema import (
+    QuizAnswerCreate,
+    QuizAnswerSummary,
+    QuizAnswerUpdate,
+)
+
 
 class QuizAnswerService:
     def __init__(self, db: Session):
         self.db = db
-    
-    # get_attempt_answers(attempt_id: UUID) -> List[QuizAnswer]
-    # Logic: Get all answers for quiz attempt
-    # - Query quiz_answers by attempt_id
-    # - Order by answered_at ASC
-    # - Return list of answer records
-    
-    # create_answer(attempt_id: UUID, question_id: UUID, selected_ids: List[UUID], text_answer: Optional[str]) -> QuizAnswer
-    # Logic: Save individual quiz answer
-    # - Verify quiz attempt exists and not yet submitted
-    # - Fetch correct answer from content service or cache
-    # - Validate selected_ids or text_answer against correct answer
-    # - Calculate is_correct (boolean)
-    # - Calculate points_earned based on correctness
-    # - Generate UUID for answer id
-    # - Set answered_at = current timestamp
-    # - Insert quiz_answer record
-    # - Commit transaction
-    # - Return created answer with feedback
-    
-    # get_answer(answer_id: UUID) -> Optional[QuizAnswer]
-    # Logic: Get specific answer by ID
-    # - Query quiz_answers by answer_id
-    # - Return answer object or None
-    
-    # update_answer(answer_id: UUID, selected_ids: List[UUID], text_answer: Optional[str]) -> Optional[QuizAnswer]
-    # Logic: Update answer before final submission
-    # - Find quiz_answer by answer_id
-    # - Get associated attempt and verify not submitted
-    # - Update selected_ids or text_answer
-    # - Re-validate against correct answer
-    # - Recalculate is_correct and points_earned
-    # - Update answered_at to current timestamp
-    # - Commit changes
-    # - Return updated answer
-    
-    # delete_answer(answer_id: UUID) -> bool
-    # Logic: Delete answer before submission
-    # - Find quiz_answer
-    # - Verify associated attempt not yet submitted
-    # - Delete record
-    # - Commit transaction
-    # - Return True if successful
-    
-    # get_answer_summary(attempt_id: UUID) -> Dict
-    # Logic: Calculate answer summary statistics
-    # - Query all answers for attempt_id
-    # - Count total answers
-    # - Count correct answers (is_correct = True)
-    # - Calculate accuracy = correct / total * 100
-    # - Sum points_earned for total points
-    # - Return summary dictionary
-    
-    # validate_answer(question_id: UUID, selected_ids: List[UUID], text_answer: Optional[str]) -> tuple[bool, int]
-    # Logic: Validate answer against correct answer
-    # - Fetch question and correct answer from content service
-    # - For multiple choice: compare selected_ids with correct option IDs
-    # - For text answer: compare text_answer with correct text (case-insensitive)
-    # - Determine is_correct (boolean)
-    # - Calculate points based on question weight and correctness
-    # - Return (is_correct, points_earned) tuple
-    
-    # bulk_create_answers(attempt_id: UUID, answers: List[Dict]) -> List[QuizAnswer]
-    # Logic: Create multiple answers at once (batch submission)
-    # - Verify attempt exists and not submitted
-    # - For each answer in list:
-    #   - Validate answer
-    #   - Calculate is_correct and points
-    #   - Create QuizAnswer object
-    # - Bulk insert all answers
-    # - Commit transaction
-    # - Return list of created answers
+
+    def _get_attempt(self, attempt_id: UUID) -> Optional[QuizAttempt]:
+        return (
+            self.db.query(QuizAttempt)
+            .filter(QuizAttempt.id == attempt_id)
+            .one_or_none()
+        )
+
+    def _ensure_attempt_open(self, attempt_id: UUID) -> QuizAttempt:
+        attempt = self._get_attempt(attempt_id)
+        if not attempt:
+            raise ValueError("Quiz attempt not found")
+        if attempt.submitted_at is not None:
+            raise ValueError("Quiz attempt has already been submitted")
+        return attempt
+
+    def get_attempt_answers(self, attempt_id: UUID) -> List[QuizAnswer]:
+        return (
+            self.db.query(QuizAnswer)
+            .filter(QuizAnswer.attempt_id == attempt_id)
+            .order_by(QuizAnswer.answered_at.asc())
+            .all()
+        )
+
+    def create_answer(self, payload: QuizAnswerCreate) -> QuizAnswer:
+        self._ensure_attempt_open(payload.attempt_id)
+
+        answer = QuizAnswer(**payload.model_dump())
+        answer.answered_at = datetime.utcnow()
+
+        self.db.add(answer)
+        self.db.commit()
+        self.db.refresh(answer)
+        return answer
+
+    def get_answer(self, answer_id: UUID) -> Optional[QuizAnswer]:
+        return (
+            self.db.query(QuizAnswer)
+            .filter(QuizAnswer.id == answer_id)
+            .one_or_none()
+        )
+
+    def update_answer(
+        self, answer_id: UUID, update: QuizAnswerUpdate
+    ) -> Optional[QuizAnswer]:
+        answer = self.get_answer(answer_id)
+        if not answer:
+            return None
+
+        self._ensure_attempt_open(answer.attempt_id)
+
+        for field, value in update.model_dump(exclude_unset=True).items():
+            setattr(answer, field, value)
+
+        answer.answered_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(answer)
+        return answer
+
+    def delete_answer(self, answer_id: UUID) -> bool:
+        answer = self.get_answer(answer_id)
+        if not answer:
+            return False
+
+        self._ensure_attempt_open(answer.attempt_id)
+
+        self.db.delete(answer)
+        self.db.commit()
+        return True
+
+    def get_answer_summary(self, attempt_id: UUID) -> QuizAnswerSummary:
+        answers = self.get_attempt_answers(attempt_id)
+        total = len(answers)
+        correct = len([a for a in answers if a.is_correct])
+        points = sum(a.points_earned for a in answers)
+        accuracy = (correct / total * 100) if total else 0.0
+
+        return QuizAnswerSummary(
+            total_answers=total,
+            correct_answers=correct,
+            accuracy=round(accuracy, 2),
+            points_earned=points,
+        )
+
+    def validate_answer(
+        self,
+        question_id: UUID,
+        selected_ids: List[UUID],
+        text_answer: Optional[str],
+    ) -> Tuple[bool, int]:
+        """Placeholder validation logic.
+
+        In a production environment this method would query the content service to
+        verify the supplied answer. For now we simply treat the presence of any
+        selection or text as a submitted answer and defer correctness scoring to
+        external systems.
+        """
+
+        is_correct = False
+        points = 0
+        if selected_ids or (text_answer and text_answer.strip()):
+            # Mark the answer as attempted; awarding points requires external data.
+            is_correct = False
+            points = 0
+        return is_correct, points
+
+    def bulk_create_answers(
+        self, attempt_id: UUID, answers: List[QuizAnswerCreate]
+    ) -> List[QuizAnswer]:
+        self._ensure_attempt_open(attempt_id)
+
+        created_answers: List[QuizAnswer] = []
+        for answer_data in answers:
+            payload = answer_data.model_dump()
+            payload["attempt_id"] = attempt_id
+            answer = QuizAnswer(**payload)
+            answer.answered_at = datetime.utcnow()
+            self.db.add(answer)
+            created_answers.append(answer)
+
+        if created_answers:
+            self.db.commit()
+            for answer in created_answers:
+                self.db.refresh(answer)
+
+        return created_answers
 

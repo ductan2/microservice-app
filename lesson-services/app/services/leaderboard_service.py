@@ -1,125 +1,315 @@
-from sqlalchemy.orm import Session
-from typing import List, Optional, Dict
+from datetime import date, datetime, timedelta
+from typing import Dict, List, Optional
 from uuid import UUID
-from datetime import datetime, date, timedelta
 
-# from app.models.progress_models import LeaderboardSnapshot, UserPoints
-# from app.schemas.leaderboard_schema import LeaderboardSnapshotCreate
+from sqlalchemy import desc, func
+from sqlalchemy.orm import Session
+
+from app.models.progress_models import LeaderboardSnapshot, UserPoints
+from app.schemas.progress_schema import (
+    LeaderboardEntry,
+    LeaderboardPeriod,
+    LeaderboardResponse,
+    LeaderboardSnapshotCreate,
+)
+
 
 class LeaderboardService:
     def __init__(self, db: Session):
         self.db = db
-    
-    # get_current_weekly_leaderboard(limit: int = 100) -> List[LeaderboardSnapshot]
-    # Logic: Get current week's leaderboard from snapshots
-    # - Calculate current week key (ISO week format: "2025-W14")
-    # - Query leaderboard_snapshots WHERE period='weekly' AND period_key=current_week
-    # - Order by rank ASC
-    # - Apply limit
-    # - Return list of snapshot records
-    
-    # get_current_monthly_leaderboard(limit: int = 100) -> List[LeaderboardSnapshot]
-    # Logic: Get current month's leaderboard from snapshots
-    # - Calculate current month key (format: "2025-03")
-    # - Query leaderboard_snapshots WHERE period='monthly' AND period_key=current_month
-    # - Order by rank ASC
-    # - Apply limit
-    # - Return list of snapshots
-    
-    # get_weekly_history(weeks_back: int = 4) -> Dict[str, List[LeaderboardSnapshot]]
-    # Logic: Get historical weekly leaderboards
-    # - Calculate week keys for last N weeks
-    # - Query snapshots for those week keys
-    # - Group results by period_key
-    # - Return dict: {week_key: [snapshots ordered by rank]}
-    
-    # get_monthly_history(months_back: int = 6) -> Dict[str, List[LeaderboardSnapshot]]
-    # Logic: Get historical monthly leaderboards
-    # - Calculate month keys for last N months
-    # - Query snapshots for those month keys
-    # - Group by period_key
-    # - Return dict: {month_key: [snapshots]}
-    
-    # create_weekly_snapshot() -> int
-    # Logic: Create snapshot of current week's leaderboard
-    # - Calculate current week key (ISO week: "2025-W14")
-    # - Query user_points, order by weekly DESC, limit 100
-    # - Get current timestamp
-    # - For each user (enumerate for rank):
-    #   - Create LeaderboardSnapshot object:
-    #     - period = 'weekly'
-    #     - period_key = current week key
-    #     - rank = position (1-based index)
-    #     - user_id = user's id
-    #     - points = user's weekly points
-    #     - taken_at = current timestamp
-    # - Bulk insert all snapshot records
-    # - Commit transaction
-    # - Return count of snapshots created
-    
-    # create_monthly_snapshot() -> int
-    # Logic: Create snapshot of current month's leaderboard
-    # - Calculate current month key (format: "2025-03")
-    # - Query user_points, order by monthly DESC, limit 100
-    # - Same process as weekly but use monthly points
-    # - Create LeaderboardSnapshot objects with period='monthly'
-    # - Bulk insert and commit
-    # - Return count of snapshots created
-    
-    # get_user_leaderboard_history(user_id: UUID) -> Dict[str, List[LeaderboardSnapshot]]
-    # Logic: Get all leaderboard appearances for user
-    # - Query leaderboard_snapshots WHERE user_id=user_id
-    # - Order by taken_at DESC
-    # - Group by period ('weekly' vs 'monthly')
-    # - Return dict: {
-    #     'weekly': [snapshots],
-    #     'monthly': [snapshots]
-    #   }
-    
-    # get_leaderboard_by_week(week_key: str) -> List[LeaderboardSnapshot]
-    # Logic: Get historical leaderboard for specific week
-    # - week_key format: "2025-W14"
-    # - Query leaderboard_snapshots WHERE period='weekly' AND period_key=week_key
-    # - Group by user_id, take latest snapshot (max taken_at)
-    # - Order by rank ASC
-    # - Return list of snapshots for that week
-    
-    # get_leaderboard_by_month(month_key: str) -> List[LeaderboardSnapshot]
-    # Logic: Get historical leaderboard for specific month
-    # - month_key format: "2025-03"
-    # - Query leaderboard_snapshots WHERE period='monthly' AND period_key=month_key
-    # - Group by user_id, take latest snapshot
-    # - Order by rank ASC
-    # - Return list of snapshots for that month
-    
-    # calculate_week_key(date_value: date) -> str
-    # Logic: Calculate ISO week key from date
-    # - Get ISO year and ISO week number from date
-    # - Format as "YYYY-WWW" (e.g., "2025-W14")
-    # - Return week key string
-    
-    # calculate_month_key(date_value: date) -> str
-    # Logic: Calculate month key from date
-    # - Get year and month from date
-    # - Format as "YYYY-MM" (e.g., "2025-03")
-    # - Return month key string
-    
-    # get_user_current_ranks(user_id: UUID) -> Dict[str, Optional[int]]
-    # Logic: Get user's current rank in weekly and monthly leaderboards
-    # - Get current week/month keys
-    # - Query snapshots for user in current periods
-    # - Extract rank values
-    # - Return dict: {
-    #     'weekly_rank': rank or None,
-    #     'monthly_rank': rank or None
-    #   }
-    
-    # cleanup_old_snapshots(keep_weeks: int = 52, keep_months: int = 24) -> int
-    # Logic: Delete old snapshot data to save space
-    # - Calculate cutoff dates for weeks and months
-    # - Delete weekly snapshots older than keep_weeks
-    # - Delete monthly snapshots older than keep_months
-    # - Commit transaction
-    # - Return count of deleted records
-    # - Run periodically to manage database size
+
+    # ------------------------------------------------------------------
+    # Helper methods
+    # ------------------------------------------------------------------
+    def _calculate_week_key(self, value: date) -> str:
+        iso_year, iso_week, _ = value.isocalendar()
+        return f"{iso_year}-W{iso_week:02d}"
+
+    def _calculate_month_key(self, value: date) -> str:
+        return value.strftime("%Y-%m")
+
+    def _build_response(
+        self,
+        period: LeaderboardPeriod,
+        period_key: str,
+        rows: List[LeaderboardSnapshot],
+    ) -> Optional[LeaderboardResponse]:
+        if not rows:
+            return None
+
+        entries = [
+            LeaderboardEntry(rank=row.rank, user_id=row.user_id, points=row.points)
+            for row in rows
+        ]
+        taken_at = max(row.taken_at for row in rows)
+
+        return LeaderboardResponse(
+            period=period,
+            period_key=period_key,
+            entries=entries,
+            taken_at=taken_at,
+        )
+
+    def _get_leaderboard(
+        self,
+        period: LeaderboardPeriod,
+        period_key: str,
+        limit: Optional[int] = None,
+        offset: int = 0,
+    ) -> Optional[LeaderboardResponse]:
+        query = (
+            self.db.query(LeaderboardSnapshot)
+            .filter(
+                LeaderboardSnapshot.period == period.value,
+                LeaderboardSnapshot.period_key == period_key,
+            )
+            .order_by(LeaderboardSnapshot.rank.asc())
+        )
+
+        if offset:
+            query = query.offset(offset)
+        if limit:
+            query = query.limit(limit)
+
+        rows = query.all()
+        return self._build_response(period, period_key, rows)
+
+    def _get_period_history(
+        self,
+        period: LeaderboardPeriod,
+        limit: int,
+        offset: int,
+    ) -> List[LeaderboardResponse]:
+        period_max = func.max(LeaderboardSnapshot.taken_at)
+        rows = (
+            self.db.query(
+                LeaderboardSnapshot.period_key,
+                period_max.label("taken_at"),
+            )
+            .filter(LeaderboardSnapshot.period == period.value)
+            .group_by(LeaderboardSnapshot.period_key)
+            .order_by(period_max.desc())
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+
+        responses: List[LeaderboardResponse] = []
+        for row in rows:
+            response = self._get_leaderboard(period, row.period_key)
+            if response:
+                responses.append(response)
+        return responses
+
+    # ------------------------------------------------------------------
+    # Public API methods
+    # ------------------------------------------------------------------
+    def get_current_weekly_leaderboard(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> Optional[LeaderboardResponse]:
+        current_key = self._calculate_week_key(datetime.utcnow().date())
+        return self._get_leaderboard(LeaderboardPeriod.WEEKLY, current_key, limit, offset)
+
+    def get_current_monthly_leaderboard(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> Optional[LeaderboardResponse]:
+        current_key = self._calculate_month_key(datetime.utcnow().date())
+        return self._get_leaderboard(LeaderboardPeriod.MONTHLY, current_key, limit, offset)
+
+    def get_weekly_history(
+        self,
+        limit: int = 4,
+        offset: int = 0,
+    ) -> List[LeaderboardResponse]:
+        return self._get_period_history(LeaderboardPeriod.WEEKLY, limit, offset)
+
+    def get_monthly_history(
+        self,
+        limit: int = 6,
+        offset: int = 0,
+    ) -> List[LeaderboardResponse]:
+        return self._get_period_history(LeaderboardPeriod.MONTHLY, limit, offset)
+
+    def create_snapshot(
+        self,
+        period: LeaderboardPeriod,
+        payload: LeaderboardSnapshotCreate,
+    ) -> int:
+        taken_at = payload.taken_at or datetime.utcnow()
+        entries = [
+            LeaderboardSnapshot(
+                period=period.value,
+                period_key=payload.period_key,
+                rank=entry.rank,
+                user_id=entry.user_id,
+                points=entry.points,
+                taken_at=taken_at,
+            )
+            for entry in payload.entries
+        ]
+
+        if not entries:
+            return 0
+
+        self.db.add_all(entries)
+        self.db.commit()
+        return len(entries)
+
+    def get_user_leaderboard_history(
+        self, user_id: UUID
+    ) -> Dict[str, List[LeaderboardResponse]]:
+        period_max = func.max(LeaderboardSnapshot.taken_at)
+        rows = (
+            self.db.query(
+                LeaderboardSnapshot.period,
+                LeaderboardSnapshot.period_key,
+                period_max.label("taken_at"),
+            )
+            .filter(LeaderboardSnapshot.user_id == user_id)
+            .group_by(LeaderboardSnapshot.period, LeaderboardSnapshot.period_key)
+            .order_by(period_max.desc())
+            .all()
+        )
+
+        history_map = {
+            LeaderboardPeriod.WEEKLY.value: [],
+            LeaderboardPeriod.MONTHLY.value: [],
+        }
+
+        for row in rows:
+            period_enum = LeaderboardPeriod(row.period)
+            response = self._get_leaderboard(period_enum, row.period_key)
+            if response:
+                history_map[row.period].append(response)
+
+        return {
+            "weekly": history_map[LeaderboardPeriod.WEEKLY.value],
+            "monthly": history_map[LeaderboardPeriod.MONTHLY.value],
+        }
+
+    def get_leaderboard_by_week(
+        self, week_key: str, limit: Optional[int] = None, offset: int = 0
+    ) -> Optional[LeaderboardResponse]:
+        return self._get_leaderboard(
+            LeaderboardPeriod.WEEKLY, week_key, limit=limit, offset=offset
+        )
+
+    def get_leaderboard_by_month(
+        self, month_key: str, limit: Optional[int] = None, offset: int = 0
+    ) -> Optional[LeaderboardResponse]:
+        return self._get_leaderboard(
+            LeaderboardPeriod.MONTHLY, month_key, limit=limit, offset=offset
+        )
+
+    def get_user_current_ranks(self, user_id: UUID) -> Dict[str, Optional[int]]:
+        today = datetime.utcnow().date()
+        week_key = self._calculate_week_key(today)
+        month_key = self._calculate_month_key(today)
+
+        weekly = (
+            self.db.query(LeaderboardSnapshot)
+            .filter(
+                LeaderboardSnapshot.period == LeaderboardPeriod.WEEKLY.value,
+                LeaderboardSnapshot.period_key == week_key,
+                LeaderboardSnapshot.user_id == user_id,
+            )
+            .order_by(desc(LeaderboardSnapshot.taken_at))
+            .first()
+        )
+
+        monthly = (
+            self.db.query(LeaderboardSnapshot)
+            .filter(
+                LeaderboardSnapshot.period == LeaderboardPeriod.MONTHLY.value,
+                LeaderboardSnapshot.period_key == month_key,
+                LeaderboardSnapshot.user_id == user_id,
+            )
+            .order_by(desc(LeaderboardSnapshot.taken_at))
+            .first()
+        )
+
+        return {
+            "weekly_rank": weekly.rank if weekly else None,
+            "monthly_rank": monthly.rank if monthly else None,
+        }
+
+    def cleanup_old_snapshots(
+        self, keep_weeks: int = 52, keep_months: int = 24
+    ) -> int:
+        if keep_weeks < 0 or keep_months < 0:
+            raise ValueError("Retention periods must be non-negative")
+
+        cutoff_week = datetime.utcnow() - timedelta(weeks=keep_weeks)
+        cutoff_month = datetime.utcnow() - timedelta(days=keep_months * 30)
+
+        weekly_deleted = (
+            self.db.query(LeaderboardSnapshot)
+            .filter(
+                LeaderboardSnapshot.period == LeaderboardPeriod.WEEKLY.value,
+                LeaderboardSnapshot.taken_at < cutoff_week,
+            )
+            .delete(synchronize_session=False)
+        )
+
+        monthly_deleted = (
+            self.db.query(LeaderboardSnapshot)
+            .filter(
+                LeaderboardSnapshot.period == LeaderboardPeriod.MONTHLY.value,
+                LeaderboardSnapshot.taken_at < cutoff_month,
+            )
+            .delete(synchronize_session=False)
+        )
+
+        self.db.commit()
+        return (weekly_deleted or 0) + (monthly_deleted or 0)
+
+    def create_snapshot_from_points(
+        self,
+        period: LeaderboardPeriod,
+        limit: int = 100,
+    ) -> int:
+        """Generate leaderboard snapshot using the user_points table."""
+
+        taken_at = datetime.utcnow()
+        period_key = (
+            self._calculate_week_key(taken_at.date())
+            if period == LeaderboardPeriod.WEEKLY
+            else self._calculate_month_key(taken_at.date())
+        )
+
+        order_column = (
+            UserPoints.weekly
+            if period == LeaderboardPeriod.WEEKLY
+            else UserPoints.monthly
+        )
+
+        points_rows = (
+            self.db.query(UserPoints.user_id, order_column.label("points"))
+            .order_by(order_column.desc())
+            .limit(limit)
+            .all()
+        )
+
+        if not points_rows:
+            return 0
+
+        snapshots = [
+            LeaderboardSnapshot(
+                period=period.value,
+                period_key=period_key,
+                rank=index + 1,
+                user_id=row.user_id,
+                points=row.points,
+                taken_at=taken_at,
+            )
+            for index, row in enumerate(points_rows)
+        ]
+
+        self.db.add_all(snapshots)
+        self.db.commit()
+        return len(snapshots)
 

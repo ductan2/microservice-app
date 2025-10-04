@@ -1,89 +1,131 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List, Optional
-from datetime import datetime
+from typing import Dict, List, Optional
+from uuid import UUID
 
-# Import dependencies
-# from app.database.connection import get_db
-# from app.services.leaderboard_service import LeaderboardService
-# from app.schemas.leaderboard_schema import LeaderboardSnapshotResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
+
+from app.database.connection import get_db
+from app.schemas.progress_schema import (
+    LeaderboardPeriod,
+    LeaderboardResponse,
+    LeaderboardSnapshotCreate,
+)
+from app.services.leaderboard_service import LeaderboardService
+
 
 router = APIRouter(prefix="/api/leaderboards", tags=["Leaderboards"])
 
-# GET /api/leaderboards/weekly/current
-# Logic: Get current week's leaderboard
-# - Calculate current week key (e.g., "2025-W14")
-# - Fetch latest leaderboard_snapshots for period='weekly' and current week
-# - Order by rank ASC
-# - Return ranked list of users with points
 
-# GET /api/leaderboards/monthly/current
-# Logic: Get current month's leaderboard
-# - Calculate current month key (e.g., "2025-03")
-# - Fetch latest snapshots for period='monthly' and current month
-# - Order by rank ASC
-# - Return ranked list
+def _get_service(db: Session) -> LeaderboardService:
+    return LeaderboardService(db)
 
-# GET /api/leaderboards/weekly/history
-# Logic: Get historical weekly leaderboards
-# - Query params: weeks_back (default 4)
-# - Fetch snapshots for last N weeks
-# - Group by period_key
-# - Return historical leaderboard data
 
-# GET /api/leaderboards/monthly/history
-# Logic: Get historical monthly leaderboards
-# - Query params: months_back (default 6)
-# - Fetch snapshots for last N months
-# - Group by period_key
-# - Return historical data
+@router.get("/weekly/current", response_model=LeaderboardResponse)
+def get_current_weekly_leaderboard(
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+) -> LeaderboardResponse:
+    service = _get_service(db)
+    leaderboard = service.get_current_weekly_leaderboard(limit=limit, offset=offset)
+    if not leaderboard:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Leaderboard not found"
+        )
+    return leaderboard
 
-# POST /api/leaderboards/snapshot/weekly
-# Logic: Create weekly leaderboard snapshot (cron job)
-# - Get current week key
-# - Query user_points, order by weekly DESC
-# - Take top 100 users
-# - For each user, create leaderboard_snapshot record:
-#   - period = 'weekly'
-#   - period_key = current week
-#   - rank = their position (1-100)
-#   - user_id, points = weekly points
-#   - taken_at = current timestamp
-# - Bulk insert snapshots
-# - Return count of snapshots created
-# - Called by scheduler every Sunday night
 
-# POST /api/leaderboards/snapshot/monthly
-# Logic: Create monthly leaderboard snapshot (cron job)
-# - Get current month key
-# - Query user_points, order by monthly DESC
-# - Take top 100 users
-# - Create snapshot records for period='monthly'
-# - Same structure as weekly
-# - Bulk insert
-# - Return count
-# - Called by scheduler on last day of month
+@router.get("/monthly/current", response_model=LeaderboardResponse)
+def get_current_monthly_leaderboard(
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+) -> LeaderboardResponse:
+    service = _get_service(db)
+    leaderboard = service.get_current_monthly_leaderboard(limit=limit, offset=offset)
+    if not leaderboard:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Leaderboard not found"
+        )
+    return leaderboard
 
-# GET /api/leaderboards/user/{user_id}/history
-# Logic: Get user's leaderboard history
-# - Fetch all leaderboard_snapshots for user_id
-# - Order by taken_at DESC
-# - Group by period and period_key
-# - Return user's historical ranks and points
 
-# GET /api/leaderboards/week/{week_key}
-# Logic: Get specific week's leaderboard
-# - week_key format: "2025-W14"
-# - Fetch snapshots for period='weekly' and period_key=week_key
-# - Take latest snapshot per user (in case multiple)
-# - Order by rank ASC
-# - Return historical leaderboard for that week
+@router.get("/weekly/history", response_model=List[LeaderboardResponse])
+def get_weekly_history(
+    limit: int = Query(10, ge=1, le=52),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+) -> List[LeaderboardResponse]:
+    service = _get_service(db)
+    return service.get_weekly_history(limit=limit, offset=offset)
 
-# GET /api/leaderboards/month/{month_key}
-# Logic: Get specific month's leaderboard
-# - month_key format: "2025-03"
-# - Fetch snapshots for period='monthly' and period_key=month_key
-# - Take latest snapshot per user
-# - Order by rank ASC
-# - Return historical leaderboard for that month
 
+@router.get("/monthly/history", response_model=List[LeaderboardResponse])
+def get_monthly_history(
+    limit: int = Query(12, ge=1, le=60),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+) -> List[LeaderboardResponse]:
+    service = _get_service(db)
+    return service.get_monthly_history(limit=limit, offset=offset)
+
+
+@router.post("/snapshot/weekly", status_code=status.HTTP_201_CREATED)
+def create_weekly_snapshot(
+    payload: LeaderboardSnapshotCreate,
+    db: Session = Depends(get_db),
+) -> Dict[str, int]:
+    service = _get_service(db)
+    created = service.create_snapshot(LeaderboardPeriod.WEEKLY, payload)
+    return {"created": created}
+
+
+@router.post("/snapshot/monthly", status_code=status.HTTP_201_CREATED)
+def create_monthly_snapshot(
+    payload: LeaderboardSnapshotCreate,
+    db: Session = Depends(get_db),
+) -> Dict[str, int]:
+    service = _get_service(db)
+    created = service.create_snapshot(LeaderboardPeriod.MONTHLY, payload)
+    return {"created": created}
+
+
+@router.get("/user/{user_id}/history", response_model=Dict[str, List[LeaderboardResponse]])
+def get_user_history(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+) -> Dict[str, List[LeaderboardResponse]]:
+    service = _get_service(db)
+    return service.get_user_leaderboard_history(user_id)
+
+
+@router.get("/week/{week_key}", response_model=LeaderboardResponse)
+def get_week_leaderboard(
+    week_key: str,
+    limit: Optional[int] = Query(None, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+) -> LeaderboardResponse:
+    service = _get_service(db)
+    leaderboard = service.get_leaderboard_by_week(week_key, limit=limit, offset=offset)
+    if not leaderboard:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Leaderboard not found"
+        )
+    return leaderboard
+
+
+@router.get("/month/{month_key}", response_model=LeaderboardResponse)
+def get_month_leaderboard(
+    month_key: str,
+    limit: Optional[int] = Query(None, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+) -> LeaderboardResponse:
+    service = _get_service(db)
+    leaderboard = service.get_leaderboard_by_month(month_key, limit=limit, offset=offset)
+    if not leaderboard:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Leaderboard not found"
+        )
+    return leaderboard
