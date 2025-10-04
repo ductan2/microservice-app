@@ -31,6 +31,13 @@ func GetUserServiceURL() string {
 	return "http://localhost:8001"
 }
 
+func GetContentServiceURL() string {
+	if v := os.Getenv("CONTENT_SERVICE_URL"); v != "" {
+		return v
+	}
+	return "http://localhost/api/content"
+}
+
 // GetCORSOrigin returns allowed CORS origin from env CORS_URL; default http://localhost:3000
 func GetCORSOrigin() string {
 	if v := os.Getenv("CORS_URL"); v != "" {
