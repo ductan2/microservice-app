@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime, date
 from uuid import UUID
 from enum import Enum
@@ -139,9 +139,20 @@ class SRCardUpdate(BaseModel):
 class SRCardResponse(SRCardBase):
     id: UUID
     due_at: datetime
-    
+
     class Config:
         from_attributes = True
+
+
+class SRCardStatsResponse(BaseModel):
+    total_cards: int
+    due_cards: int
+    suspended_cards: int
+    new_cards: int
+    learning_cards: int
+    mature_cards: int
+    average_ease_factor: float
+    average_interval: float
 
 class SRReviewBase(BaseModel):
     user_id: UUID
@@ -157,9 +168,28 @@ class SRReviewCreate(SRReviewBase):
 class SRReviewResponse(SRReviewBase):
     id: UUID
     reviewed_at: datetime
-    
+
     class Config:
         from_attributes = True
+
+
+class SRReviewTodayStatsResponse(BaseModel):
+    total_reviews: int
+    average_quality: float
+    quality_distribution: Dict[int, int]
+    retention_rate: float
+
+
+class SRReviewStatsResponse(BaseModel):
+    total_reviews: int
+    average_quality: float
+    quality_distribution: Dict[int, int]
+    retention_rate: float
+    review_streak: int
+    unique_flashcards: int
+    busiest_day: Optional[date]
+    busiest_day_count: int
+    total_time_minutes: int
 
 # Daily Activity Schemas
 class DailyActivityBase(BaseModel):
