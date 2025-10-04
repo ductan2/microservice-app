@@ -19,7 +19,8 @@ from app.services.daily_activity_service import DailyActivityService
 router = APIRouter(prefix="/api/daily-activity", tags=["Daily Activity"])
 
 
-def _get_service(db: Session) -> DailyActivityService:
+def get_daily_activity_service(db: Session = Depends(get_db)) -> DailyActivityService:
+    """Dependency to get DailyActivityService instance."""
     return DailyActivityService(db)
 
 
@@ -35,8 +36,10 @@ def _empty_activity(user_id: UUID, activity_dt: date) -> DailyActivityResponse:
 
 
 @router.get("/user/{user_id}/today", response_model=DailyActivityResponse)
-def get_today_activity(user_id: UUID, db: Session = Depends(get_db)) -> DailyActivityResponse:
-    service = _get_service(db)
+def get_today_activity(
+    user_id: UUID, 
+    service: DailyActivityService = Depends(get_daily_activity_service)
+) -> DailyActivityResponse:
     activity = service.get_today_activity(user_id)
     if activity is None:
         return _empty_activity(user_id, date.today())
@@ -44,12 +47,14 @@ def get_today_activity(user_id: UUID, db: Session = Depends(get_db)) -> DailyAct
 
 
 @router.get(
-    "/user/{user_id}/date/{activity_date}", response_model=DailyActivityResponse
+    "/user/{user_id}/date/{activity_date}", 
+    response_model=DailyActivityResponse
 )
 def get_activity_by_date(
-    user_id: UUID, activity_date: date, db: Session = Depends(get_db)
+    user_id: UUID, 
+    activity_date: date, 
+    service: DailyActivityService = Depends(get_daily_activity_service)
 ) -> DailyActivityResponse:
-    service = _get_service(db)
     activity = service.get_activity_by_date(user_id, activity_date)
     if activity is None:
         return _empty_activity(user_id, activity_date)
@@ -61,7 +66,7 @@ def get_activity_range(
     user_id: UUID,
     date_from: Optional[date] = Query(default=None),
     date_to: Optional[date] = Query(default=None),
-    db: Session = Depends(get_db),
+    service: DailyActivityService = Depends(get_daily_activity_service),
 ) -> List[DailyActivityResponse]:
     end_date = date_to or date.today()
     start_date = date_from or (end_date - timedelta(days=29))
@@ -70,15 +75,15 @@ def get_activity_range(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="date_from must be before or equal to date_to",
         )
-
-    service = _get_service(db)
     activities = service.get_activity_range(user_id, start_date, end_date)
     return [DailyActivityResponse.model_validate(activity) for activity in activities]
 
 
 @router.get("/user/{user_id}/week", response_model=List[DailyActivityResponse])
-def get_week_activity(user_id: UUID, db: Session = Depends(get_db)) -> List[DailyActivityResponse]:
-    service = _get_service(db)
+def get_week_activity(
+    user_id: UUID, 
+    service: DailyActivityService = Depends(get_daily_activity_service)
+) -> List[DailyActivityResponse]:
     activities = service.get_week_activity(user_id)
     return [DailyActivityResponse.model_validate(activity) for activity in activities]
 
@@ -88,13 +93,11 @@ def get_month_activity(
     user_id: UUID,
     year: Optional[int] = Query(default=None),
     month: Optional[int] = Query(default=None, ge=1, le=12),
-    db: Session = Depends(get_db),
+    service: DailyActivityService = Depends(get_daily_activity_service),
 ) -> DailyActivityMonthSummary:
     today = date.today()
     target_year = year or today.year
     target_month = month or today.month
-
-    service = _get_service(db)
     summary = service.get_month_activity(user_id, target_year, target_month)
     return DailyActivityMonthSummary(
         year=summary["year"],
@@ -109,9 +112,9 @@ def get_month_activity(
 
 @router.get("/user/{user_id}/stats/summary", response_model=DailyActivitySummary)
 def get_activity_summary(
-    user_id: UUID, db: Session = Depends(get_db)
+    user_id: UUID, 
+    service: DailyActivityService = Depends(get_daily_activity_service)
 ) -> DailyActivitySummary:
-    service = _get_service(db)
     summary = service.get_activity_summary(user_id)
     return DailyActivitySummary(
         lifetime=DailyTotals(**summary["lifetime"]),
@@ -129,9 +132,9 @@ def get_activity_summary(
 
 @router.post("/increment", response_model=DailyActivityResponse)
 def increment_activity(
-    payload: DailyActivityIncrementRequest, db: Session = Depends(get_db)
+    payload: DailyActivityIncrementRequest, 
+    service: DailyActivityService = Depends(get_daily_activity_service)
 ) -> DailyActivityResponse:
-    service = _get_service(db)
     try:
         activity = service.increment_activity(
             user_id=payload.user_id,

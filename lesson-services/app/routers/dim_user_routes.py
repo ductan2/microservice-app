@@ -16,15 +16,16 @@ from app.services.dim_user_service import DimUserService
 router = APIRouter(prefix="/api/users", tags=["User Preferences"])
 
 
-def _get_service(db: Session) -> DimUserService:
+def get_dim_user_service(db: Session = Depends(get_db)) -> DimUserService:
+    """Dependency to get DimUserService instance."""
     return DimUserService(db)
 
 
 @router.get("/{user_id}", response_model=DimUserResponse)
 def get_user_preferences(
-    user_id: UUID, db: Session = Depends(get_db)
+    user_id: UUID, 
+    service: DimUserService = Depends(get_dim_user_service)
 ) -> DimUserResponse:
-    service = _get_service(db)
     user = service.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -33,9 +34,9 @@ def get_user_preferences(
 
 @router.post("", response_model=DimUserResponse, status_code=status.HTTP_201_CREATED)
 def create_user_preferences(
-    payload: DimUserCreate, db: Session = Depends(get_db)
+    payload: DimUserCreate, 
+    service: DimUserService = Depends(get_dim_user_service)
 ) -> DimUserResponse:
-    service = _get_service(db)
     if service.user_exists(payload.user_id):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -46,9 +47,10 @@ def create_user_preferences(
 
 @router.put("/{user_id}", response_model=DimUserResponse)
 def update_user_preferences(
-    user_id: UUID, payload: DimUserUpdate, db: Session = Depends(get_db)
+    user_id: UUID, 
+    payload: DimUserUpdate, 
+    service: DimUserService = Depends(get_dim_user_service)
 ) -> DimUserResponse:
-    service = _get_service(db)
     user = service.update_user(user_id, payload)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -57,9 +59,10 @@ def update_user_preferences(
 
 @router.patch("/{user_id}/locale", response_model=DimUserResponse)
 def update_user_locale(
-    user_id: UUID, payload: DimUserLocaleUpdate, db: Session = Depends(get_db)
+    user_id: UUID, 
+    payload: DimUserLocaleUpdate, 
+    service: DimUserService = Depends(get_dim_user_service)
 ) -> DimUserResponse:
-    service = _get_service(db)
     user = service.update_locale(user_id, payload.locale)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -67,8 +70,10 @@ def update_user_locale(
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user_preferences(user_id: UUID, db: Session = Depends(get_db)) -> Response:
-    service = _get_service(db)
+def delete_user_preferences(
+    user_id: UUID, 
+    service: DimUserService = Depends(get_dim_user_service)
+) -> Response:
     deleted = service.delete_user(user_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

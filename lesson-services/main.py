@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import lesson_routes, user_routes, health_routes, progress_routes
+from app.routers import lesson_routes, user_routes, health_routes, progress_routes, daily_activity_routes
 
 app = FastAPI(
     title="Lesson Services API",
@@ -17,7 +17,7 @@ app.add_middleware(
 )
 
 app.include_router(health_routes.router, prefix="/api/v1", tags=["health"])
-app.include_router(lesson_routes.router, prefix="/api/v1", tags=["lessons"])
+app.include_router(daily_activity_routes.router, prefix="/api/v1", tags=["daily-activity"])
 
 
 if __name__ == "__main__":
