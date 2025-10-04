@@ -1,73 +1,84 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from uuid import UUID
-from datetime import datetime
 
-# Import dependencies
-# from app.database.connection import get_db
-# from app.services.sr_card_service import SRCardService
-# from app.schemas.sr_schema import SRCardCreate, SRCardResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy.orm import Session
+
+from app.database.connection import get_db
+from app.schemas.progress_schema import SRCardCreate, SRCardResponse, SRCardStatsResponse
+from app.services.sr_card_service import SRCardService
 
 router = APIRouter(prefix="/api/spaced-repetition/cards", tags=["Spaced Repetition Cards"])
 
-# GET /api/spaced-repetition/cards/user/{user_id}
-# Logic: Get all SR cards for user
-# - Optional query params: suspended (true/false), due_only (true)
-# - Fetch all sr_cards for user_id
-# - Apply filters if provided
-# - Return list of cards with SRS data
 
-# GET /api/spaced-repetition/cards/user/{user_id}/due
-# Logic: Get cards due for review today
-# - Fetch cards where due_at <= current_time
-# - Filter out suspended cards
-# - Order by due_at ASC (most overdue first)
-# - Return list of due cards for review session
+def _get_service(db: Session) -> SRCardService:
+    return SRCardService(db)
 
-# POST /api/spaced-repetition/cards
-# Logic: Create new SR card for flashcard
-# - Validate request body (user_id, flashcard_id)
-# - Check if card already exists for this user+flashcard
-# - If exists, return existing card
-# - Initialize new card with default values:
-#   - ease_factor = 2.5
-#   - interval_d = 0
-#   - repetition = 0
-#   - due_at = current_time (due immediately)
-#   - suspended = false
-# - Insert record and return created card
 
-# GET /api/spaced-repetition/cards/{card_id}
-# Logic: Get specific SR card details
-# - Validate card_id
-# - Fetch sr_card record
-# - Return card with SRS parameters
+@router.get("/user/{user_id}", response_model=List[SRCardResponse])
+def get_user_cards(
+    user_id: UUID,
+    suspended: Optional[bool] = Query(None),
+    due_only: bool = Query(False),
+    db: Session = Depends(get_db),
+) -> List[SRCardResponse]:
+    service = _get_service(db)
+    cards = service.get_user_cards(user_id, suspended=suspended, due_only=due_only)
+    return [SRCardResponse.model_validate(card, from_attributes=True) for card in cards]
 
-# PATCH /api/spaced-repetition/cards/{card_id}/suspend
-# Logic: Suspend card from review rotation
-# - Update suspended = true
-# - Card won't appear in due queue
-# - Return updated card
 
-# PATCH /api/spaced-repetition/cards/{card_id}/unsuspend
-# Logic: Reactivate suspended card
-# - Update suspended = false
-# - Card will appear in due queue based on due_at
-# - Return updated card
+@router.get("/user/{user_id}/due", response_model=List[SRCardResponse])
+def get_due_cards(user_id: UUID, db: Session = Depends(get_db)) -> List[SRCardResponse]:
+    service = _get_service(db)
+    cards = service.get_due_cards(user_id)
+    return [SRCardResponse.model_validate(card, from_attributes=True) for card in cards]
 
-# DELETE /api/spaced-repetition/cards/{card_id}
-# Logic: Delete SR card (remove from user's deck)
-# - Delete sr_card record
-# - Related reviews remain for history
-# - Return 204 No Content
 
-# GET /api/spaced-repetition/cards/user/{user_id}/stats
-# Logic: Get SRS statistics for user
-# - Count total cards
-# - Count due cards
-# - Count suspended cards
-# - Calculate average ease_factor
-# - Group cards by interval ranges
-# - Return statistics object
+@router.post("", response_model=SRCardResponse, status_code=status.HTTP_201_CREATED)
+def create_card(payload: SRCardCreate, db: Session = Depends(get_db)) -> SRCardResponse:
+    service = _get_service(db)
+    card = service.create_card(payload)
+    return SRCardResponse.model_validate(card, from_attributes=True)
 
+
+@router.get("/{card_id}", response_model=SRCardResponse)
+def get_card(card_id: UUID, db: Session = Depends(get_db)) -> SRCardResponse:
+    service = _get_service(db)
+    card = service.get_card(card_id)
+    if not card:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="SR card not found")
+    return SRCardResponse.model_validate(card, from_attributes=True)
+
+
+@router.patch("/{card_id}/suspend", response_model=SRCardResponse)
+def suspend_card(card_id: UUID, db: Session = Depends(get_db)) -> SRCardResponse:
+    service = _get_service(db)
+    card = service.suspend_card(card_id)
+    if not card:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="SR card not found")
+    return SRCardResponse.model_validate(card, from_attributes=True)
+
+
+@router.patch("/{card_id}/unsuspend", response_model=SRCardResponse)
+def unsuspend_card(card_id: UUID, db: Session = Depends(get_db)) -> SRCardResponse:
+    service = _get_service(db)
+    card = service.unsuspend_card(card_id)
+    if not card:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="SR card not found")
+    return SRCardResponse.model_validate(card, from_attributes=True)
+
+
+@router.delete("/{card_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_card(card_id: UUID, db: Session = Depends(get_db)) -> Response:
+    service = _get_service(db)
+    deleted = service.delete_card(card_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="SR card not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/user/{user_id}/stats", response_model=SRCardStatsResponse)
+def get_user_card_stats(user_id: UUID, db: Session = Depends(get_db)) -> SRCardStatsResponse:
+    service = _get_service(db)
+    stats = service.get_user_stats(user_id)
+    return SRCardStatsResponse(**stats)
