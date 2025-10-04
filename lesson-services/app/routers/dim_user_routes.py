@@ -1,45 +1,75 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List
 from uuid import UUID
 
-# Import dependencies
-# from app.database.connection import get_db
-# from app.services.dim_user_service import DimUserService
-# from app.schemas.user_schema import DimUserCreate, DimUserUpdate, DimUserResponse
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy.orm import Session
+
+from app.database.connection import get_db
+from app.schemas.dim_user_schema import (
+    DimUserCreate,
+    DimUserLocaleUpdate,
+    DimUserResponse,
+    DimUserUpdate,
+)
+from app.services.dim_user_service import DimUserService
+
 
 router = APIRouter(prefix="/api/users", tags=["User Preferences"])
 
-# GET /api/users/{user_id}
-# Logic: Retrieve user preferences (locale, level_hint) by user_id
-# - Validate user_id format
-# - Call service to fetch user from database
-# - Return 404 if not found
-# - Return user data with locale and level_hint
 
-# POST /api/users
-# Logic: Create or initialize user preferences when first time user
-# - Validate request body (user_id, locale, level_hint optional)
-# - Check if user already exists - if yes, return 409 Conflict
-# - Call service to create new user record
-# - Return created user data with 201 status
+def _get_service(db: Session) -> DimUserService:
+    return DimUserService(db)
 
-# PUT /api/users/{user_id}
-# Logic: Update user preferences (locale, learning level hint)
-# - Validate user_id and request body
-# - Call service to update user preferences
-# - Update updated_at timestamp automatically
-# - Return updated user data
 
-# PATCH /api/users/{user_id}/locale
-# Logic: Partially update only locale preference
-# - Validate locale value (e.g., 'en', 'vi', 'ja')
-# - Call service to update just locale field
-# - Return updated user data
+@router.get("/{user_id}", response_model=DimUserResponse)
+def get_user_preferences(
+    user_id: UUID, db: Session = Depends(get_db)
+) -> DimUserResponse:
+    service = _get_service(db)
+    user = service.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
 
-# DELETE /api/users/{user_id}
-# Logic: Soft delete or remove user preferences
-# - Check if user has any active progress data
-# - If yes, warn or prevent deletion
-# - If no, delete user record
-# - Return 204 No Content on success
+
+@router.post("", response_model=DimUserResponse, status_code=status.HTTP_201_CREATED)
+def create_user_preferences(
+    payload: DimUserCreate, db: Session = Depends(get_db)
+) -> DimUserResponse:
+    service = _get_service(db)
+    if service.user_exists(payload.user_id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User preferences already exist",
+        )
+    return service.create_user(payload)
+
+
+@router.put("/{user_id}", response_model=DimUserResponse)
+def update_user_preferences(
+    user_id: UUID, payload: DimUserUpdate, db: Session = Depends(get_db)
+) -> DimUserResponse:
+    service = _get_service(db)
+    user = service.update_user(user_id, payload)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
+
+
+@router.patch("/{user_id}/locale", response_model=DimUserResponse)
+def update_user_locale(
+    user_id: UUID, payload: DimUserLocaleUpdate, db: Session = Depends(get_db)
+) -> DimUserResponse:
+    service = _get_service(db)
+    user = service.update_locale(user_id, payload.locale)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
+
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user_preferences(user_id: UUID, db: Session = Depends(get_db)) -> Response:
+    service = _get_service(db)
+    deleted = service.delete_user(user_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
