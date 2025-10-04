@@ -1,49 +1,67 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import Optional
-from uuid import UUID
-from datetime import date
+from __future__ import annotations
 
-# Import dependencies
-# from app.database.connection import get_db
-# from app.services.user_streak_service import UserStreakService
-# from app.schemas.streak_schema import UserStreakResponse
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
+from typing import List, Optional
+from uuid import UUID
+
+from app.database.connection import get_db
+from app.schemas.progress_schema import (
+    StreakCheckRequest,
+    StreakLeaderboardEntry,
+    UserStreakResponse,
+    UserStreakStatusResponse,
+)
+from app.services.user_streak_service import UserStreakService
+
 
 router = APIRouter(prefix="/api/streaks", tags=["User Streaks"])
 
-# GET /api/streaks/user/{user_id}
-# Logic: Get current streak information for user
-# - Fetch user_streaks record by user_id
-# - Return current_len, longest_len, last_day
-# - Return empty/zero if no streak record
 
-# POST /api/streaks/user/{user_id}/check
-# Logic: Check and update streak based on today's activity
-# - Get today's date
-# - Fetch user_streak record
-# - Check if user has activity today (from daily_activity)
-# - If activity today and last_day was yesterday: increment current_len
-# - If activity today and last_day was today: no change
-# - If activity today and last_day > 1 day ago: reset current_len to 1
-# - If no activity today and last_day was yesterday: streak broken, reset to 0
-# - Update longest_len if current_len > longest_len
-# - Update last_day to today if activity
-# - Return updated streak
+def get_user_streak_service(db: Session = Depends(get_db)) -> UserStreakService:
+    return UserStreakService(db)
 
-# GET /api/streaks/user/{user_id}/status
-# Logic: Get streak status and risk level
-# - Get user_streak record
-# - Check today's activity
-# - Calculate risk level:
-#   - Safe: activity today
-#   - At risk: no activity today but last_day was yesterday
-#   - Broken: no activity and last_day < yesterday
-# - Return status with current streak and risk level
 
-# GET /api/streaks/leaderboard
-# Logic: Get top users by current streak
-# - Query user_streaks
-# - Order by current_len DESC
-# - Limit to top 50 or query param
-# - Return leaderboard of users with longest current streaks
+@router.get("/user/{user_id}", response_model=UserStreakResponse)
+def get_user_streak(
+    user_id: UUID,
+    service: UserStreakService = Depends(get_user_streak_service),
+) -> UserStreakResponse:
+    return service.get_or_create_streak(user_id)
 
+
+@router.post("/user/{user_id}/check", response_model=UserStreakResponse)
+def check_user_streak(
+    user_id: UUID,
+    payload: Optional[StreakCheckRequest] = None,
+    service: UserStreakService = Depends(get_user_streak_service),
+) -> UserStreakResponse:
+    activity_date = payload.activity_date if payload else None
+    return service.check_and_update_streak(user_id, activity_date=activity_date)
+
+
+@router.get("/user/{user_id}/status", response_model=UserStreakStatusResponse)
+def get_streak_status(
+    user_id: UUID,
+    service: UserStreakService = Depends(get_user_streak_service),
+) -> UserStreakStatusResponse:
+    status_data = service.get_streak_status(user_id)
+    return UserStreakStatusResponse(**status_data)
+
+
+@router.get("/leaderboard", response_model=List[StreakLeaderboardEntry])
+def get_streak_leaderboard(
+    limit: int = Query(default=50, ge=1, le=200),
+    service: UserStreakService = Depends(get_user_streak_service),
+) -> List[StreakLeaderboardEntry]:
+    records = service.get_streak_leaderboard(limit=limit)
+    return [
+        StreakLeaderboardEntry(
+            rank=index,
+            user_id=record.user_id,
+            current_len=record.current_len,
+            longest_len=record.longest_len,
+            last_day=record.last_day,
+        )
+        for index, record in enumerate(records, start=1)
+    ]
