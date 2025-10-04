@@ -29,17 +29,27 @@ type Tag struct {
 	Name string    `gorm:"type:text;not null" json:"name"`
 }
 
+// Folder groups media assets
+type Folder struct {
+	ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id" bson:"_id"`
+	Name      string    `gorm:"type:text;not null" json:"name" bson:"name"`
+	CreatedAt time.Time `gorm:"default:now();not null" json:"created_at" bson:"created_at"`
+}
+
 // MediaAsset for images and audio files
 type MediaAsset struct {
-	ID         uuid.UUID  `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id" bson:"_id"`
-	StorageKey string     `gorm:"type:text;uniqueIndex;not null" json:"storage_key" bson:"storage_key"` // S3/MinIO key
-	Kind       string     `gorm:"type:text;not null;check:kind IN ('image','audio')" json:"kind" bson:"kind"`
-	MimeType   string     `gorm:"type:text;not null" json:"mime_type" bson:"mime_type"`
-	Bytes      int        `json:"bytes,omitempty" bson:"bytes"`
-	DurationMs int        `json:"duration_ms,omitempty" bson:"duration_ms"` // for audio
-	SHA256     string     `gorm:"type:text;not null;index:media_sha_idx" json:"sha256" bson:"sha256"`
-	CreatedAt  time.Time  `gorm:"default:now();not null" json:"created_at" bson:"created_at"`
-	UploadedBy *uuid.UUID `gorm:"type:uuid" json:"uploaded_by,omitempty" bson:"uploaded_by,omitempty"` // logical FK to users
+	ID           uuid.UUID  `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id" bson:"_id"`
+	StorageKey   string     `gorm:"type:text;uniqueIndex;not null" json:"storage_key" bson:"storage_key"` // S3/MinIO key
+	Kind         string     `gorm:"type:text;not null;check:kind IN ('image','audio')" json:"kind" bson:"kind"`
+	MimeType     string     `gorm:"type:text;not null" json:"mime_type" bson:"mime_type"`
+	FolderID     *uuid.UUID `gorm:"type:uuid" json:"folder_id,omitempty" bson:"folder_id,omitempty"`
+	OriginalName string     `gorm:"type:text;not null" json:"original_name" bson:"original_name"`
+	ThumbnailURL string     `gorm:"type:text" json:"thumbnail_url,omitempty" bson:"thumbnail_url,omitempty"`
+	Bytes        int        `json:"bytes,omitempty" bson:"bytes"`
+	DurationMs   int        `json:"duration_ms,omitempty" bson:"duration_ms"` // for audio
+	SHA256       string     `gorm:"type:text;not null;index:media_sha_idx" json:"sha256" bson:"sha256"`
+	CreatedAt    time.Time  `gorm:"default:now();not null" json:"created_at" bson:"created_at"`
+	UploadedBy   *uuid.UUID `gorm:"type:uuid" json:"uploaded_by,omitempty" bson:"uploaded_by,omitempty"` // logical FK to user
 }
 
 // Lesson modular content with versioning

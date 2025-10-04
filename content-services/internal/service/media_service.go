@@ -19,7 +19,7 @@ import (
 )
 
 type MediaService interface {
-	UploadMedia(ctx context.Context, file io.Reader, filename, mimeType, kind string, userID uuid.UUID) (*models.MediaAsset, error)
+	UploadMedia(ctx context.Context, file io.Reader, filename, mimeType, kind string, userID uuid.UUID, folderID *uuid.UUID) (*models.MediaAsset, error)
 	GetMediaByID(ctx context.Context, id uuid.UUID) (*models.MediaAsset, error)
 	GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]models.MediaAsset, error)
 	GetPresignedURL(ctx context.Context, id uuid.UUID) (string, error)
@@ -40,7 +40,7 @@ func NewMediaService(mediaRepo repository.MediaRepository, storage storage.Objec
 	}
 }
 
-func (s *mediaService) UploadMedia(ctx context.Context, file io.Reader, filename, mimeType, kind string, userID uuid.UUID) (*models.MediaAsset, error) {
+func (s *mediaService) UploadMedia(ctx context.Context, file io.Reader, filename, mimeType, kind string, userID uuid.UUID, folderID *uuid.UUID) (*models.MediaAsset, error) {
 	if file == nil {
 		return nil, errors.New("media: file reader is required")
 	}
@@ -79,12 +79,14 @@ func (s *mediaService) UploadMedia(ctx context.Context, file io.Reader, filename
 	}
 
 	media := &models.MediaAsset{
-		StorageKey: key,
-		Kind:       kind,
-		MimeType:   mimeType,
-		Bytes:      int(written),
-		SHA256:     checksum,
-		CreatedAt:  time.Now().UTC(),
+		StorageKey:   key,
+		Kind:         kind,
+		MimeType:     mimeType,
+		FolderID:     folderID,
+		OriginalName: filename,
+		Bytes:        int(written),
+		SHA256:       checksum,
+		CreatedAt:    time.Now().UTC(),
 	}
 	if userID != uuid.Nil {
 		uid := userID

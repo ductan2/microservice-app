@@ -127,16 +127,19 @@ type ComplexityRoot struct {
 	}
 
 	MediaAsset struct {
-		Bytes       func(childComplexity int) int
-		CreatedAt   func(childComplexity int) int
-		DownloadURL func(childComplexity int) int
-		DurationMs  func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Kind        func(childComplexity int) int
-		MimeType    func(childComplexity int) int
-		Sha256      func(childComplexity int) int
-		StorageKey  func(childComplexity int) int
-		UploadedBy  func(childComplexity int) int
+		Bytes        func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		DownloadURL  func(childComplexity int) int
+		DurationMs   func(childComplexity int) int
+		FolderID     func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Kind         func(childComplexity int) int
+		MimeType     func(childComplexity int) int
+		OriginalName func(childComplexity int) int
+		Sha256       func(childComplexity int) int
+		StorageKey   func(childComplexity int) int
+		ThumbnailURL func(childComplexity int) int
+		UploadedBy   func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -664,6 +667,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.MediaAsset.DurationMs(childComplexity), true
+	case "MediaAsset.folderId":
+		if e.complexity.MediaAsset.FolderID == nil {
+			break
+		}
+
+		return e.complexity.MediaAsset.FolderID(childComplexity), true
 	case "MediaAsset.id":
 		if e.complexity.MediaAsset.ID == nil {
 			break
@@ -682,6 +691,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.MediaAsset.MimeType(childComplexity), true
+	case "MediaAsset.originalName":
+		if e.complexity.MediaAsset.OriginalName == nil {
+			break
+		}
+
+		return e.complexity.MediaAsset.OriginalName(childComplexity), true
 	case "MediaAsset.sha256":
 		if e.complexity.MediaAsset.Sha256 == nil {
 			break
@@ -694,6 +709,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.MediaAsset.StorageKey(childComplexity), true
+	case "MediaAsset.thumbnailURL":
+		if e.complexity.MediaAsset.ThumbnailURL == nil {
+			break
+		}
+
+		return e.complexity.MediaAsset.ThumbnailURL(childComplexity), true
 	case "MediaAsset.uploadedBy":
 		if e.complexity.MediaAsset.UploadedBy == nil {
 			break
@@ -1625,6 +1646,9 @@ type MediaAsset {
   storageKey: String!
   kind: MediaKind!
   mimeType: String!
+  folderId: ID
+  originalName: String!
+  thumbnailURL: String
   bytes: Int!
   durationMs: Int
   sha256: String!
@@ -1639,6 +1663,7 @@ input UploadMediaInput {
   mimeType: String!
   filename: String
   uploadedBy: ID
+  folderId: ID
 }
 
 
@@ -4180,6 +4205,93 @@ func (ec *executionContext) fieldContext_MediaAsset_mimeType(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _MediaAsset_folderId(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAsset_folderId,
+		func(ctx context.Context) (any, error) {
+			return obj.FolderID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAsset_folderId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAsset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAsset_originalName(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAsset_originalName,
+		func(ctx context.Context) (any, error) {
+			return obj.OriginalName, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAsset_originalName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAsset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAsset_thumbnailURL(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAsset_thumbnailURL,
+		func(ctx context.Context) (any, error) {
+			return obj.ThumbnailURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAsset_thumbnailURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAsset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _MediaAsset_bytes(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4808,6 +4920,12 @@ func (ec *executionContext) fieldContext_Mutation_uploadMedia(ctx context.Contex
 				return ec.fieldContext_MediaAsset_kind(ctx, field)
 			case "mimeType":
 				return ec.fieldContext_MediaAsset_mimeType(ctx, field)
+			case "folderId":
+				return ec.fieldContext_MediaAsset_folderId(ctx, field)
+			case "originalName":
+				return ec.fieldContext_MediaAsset_originalName(ctx, field)
+			case "thumbnailURL":
+				return ec.fieldContext_MediaAsset_thumbnailURL(ctx, field)
 			case "bytes":
 				return ec.fieldContext_MediaAsset_bytes(ctx, field)
 			case "durationMs":
@@ -6125,6 +6243,12 @@ func (ec *executionContext) fieldContext_Query_mediaAsset(ctx context.Context, f
 				return ec.fieldContext_MediaAsset_kind(ctx, field)
 			case "mimeType":
 				return ec.fieldContext_MediaAsset_mimeType(ctx, field)
+			case "folderId":
+				return ec.fieldContext_MediaAsset_folderId(ctx, field)
+			case "originalName":
+				return ec.fieldContext_MediaAsset_originalName(ctx, field)
+			case "thumbnailURL":
+				return ec.fieldContext_MediaAsset_thumbnailURL(ctx, field)
 			case "bytes":
 				return ec.fieldContext_MediaAsset_bytes(ctx, field)
 			case "durationMs":
@@ -6188,6 +6312,12 @@ func (ec *executionContext) fieldContext_Query_mediaAssets(ctx context.Context, 
 				return ec.fieldContext_MediaAsset_kind(ctx, field)
 			case "mimeType":
 				return ec.fieldContext_MediaAsset_mimeType(ctx, field)
+			case "folderId":
+				return ec.fieldContext_MediaAsset_folderId(ctx, field)
+			case "originalName":
+				return ec.fieldContext_MediaAsset_originalName(ctx, field)
+			case "thumbnailURL":
+				return ec.fieldContext_MediaAsset_thumbnailURL(ctx, field)
 			case "bytes":
 				return ec.fieldContext_MediaAsset_bytes(ctx, field)
 			case "durationMs":
@@ -10053,7 +10183,7 @@ func (ec *executionContext) unmarshalInputUploadMediaInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"file", "kind", "mimeType", "filename", "uploadedBy"}
+	fieldsInOrder := [...]string{"file", "kind", "mimeType", "filename", "uploadedBy", "folderId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10095,6 +10225,13 @@ func (ec *executionContext) unmarshalInputUploadMediaInput(ctx context.Context, 
 				return it, err
 			}
 			it.UploadedBy = data
+		case "folderId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("folderId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FolderID = data
 		}
 	}
 
@@ -10780,6 +10917,15 @@ func (ec *executionContext) _MediaAsset(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "folderId":
+			out.Values[i] = ec._MediaAsset_folderId(ctx, field, obj)
+		case "originalName":
+			out.Values[i] = ec._MediaAsset_originalName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "thumbnailURL":
+			out.Values[i] = ec._MediaAsset_thumbnailURL(ctx, field, obj)
 		case "bytes":
 			out.Values[i] = ec._MediaAsset_bytes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

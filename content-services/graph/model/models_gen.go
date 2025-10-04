@@ -169,16 +169,19 @@ type Level struct {
 }
 
 type MediaAsset struct {
-	ID          string    `json:"id"`
-	StorageKey  string    `json:"storageKey"`
-	Kind        MediaKind `json:"kind"`
-	MimeType    string    `json:"mimeType"`
-	Bytes       int       `json:"bytes"`
-	DurationMs  *int      `json:"durationMs,omitempty"`
-	Sha256      string    `json:"sha256"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UploadedBy  *string   `json:"uploadedBy,omitempty"`
-	DownloadURL string    `json:"downloadURL"`
+	ID           string    `json:"id"`
+	StorageKey   string    `json:"storageKey"`
+	Kind         MediaKind `json:"kind"`
+	MimeType     string    `json:"mimeType"`
+	FolderID     *string   `json:"folderId,omitempty"`
+	OriginalName string    `json:"originalName"`
+	ThumbnailURL *string   `json:"thumbnailURL,omitempty"`
+	Bytes        int       `json:"bytes"`
+	DurationMs   *int      `json:"durationMs,omitempty"`
+	Sha256       string    `json:"sha256"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UploadedBy   *string   `json:"uploadedBy,omitempty"`
+	DownloadURL  string    `json:"downloadURL"`
 }
 
 type Mutation struct {
@@ -278,6 +281,7 @@ type UploadMediaInput struct {
 	MimeType   string         `json:"mimeType"`
 	Filename   *string        `json:"filename,omitempty"`
 	UploadedBy *string        `json:"uploadedBy,omitempty"`
+	FolderID   *string        `json:"folderId,omitempty"`
 }
 
 type ContentTagKind string
