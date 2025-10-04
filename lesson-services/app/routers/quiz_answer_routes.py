@@ -1,57 +1,91 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
 
-# Import dependencies
-# from app.database.connection import get_db
-# from app.services.quiz_answer_service import QuizAnswerService
-# from app.schemas.quiz_schema import QuizAnswerCreate, QuizAnswerResponse
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy.orm import Session
+
+from app.database.connection import get_db
+from app.schemas.progress_schema import (
+    QuizAnswerCreate,
+    QuizAnswerResponse,
+    QuizAnswerSummary,
+    QuizAnswerUpdate,
+)
+from app.services.quiz_answer_service import QuizAnswerService
+
 
 router = APIRouter(prefix="/api/quiz-answers", tags=["Quiz Answers"])
 
-# GET /api/quiz-answers/attempt/{attempt_id}
-# Logic: Get all answers for a specific quiz attempt
-# - Validate attempt_id
-# - Fetch all quiz_answers filtered by attempt_id
-# - Order by answered_at ASC
-# - Return list of answers with correctness and points
 
-# POST /api/quiz-answers
-# Logic: Save individual answer during quiz (if not batch submit)
-# - Validate request body (attempt_id, question_id, selected_ids/text_answer)
-# - Validate answer against correct answer from content service
-# - Calculate is_correct and points_earned
-# - Set answered_at to current timestamp
-# - Insert quiz_answer record
-# - Return created answer with feedback
+def _get_service(db: Session) -> QuizAnswerService:
+    return QuizAnswerService(db)
 
-# GET /api/quiz-answers/{answer_id}
-# Logic: Get specific answer details
-# - Validate answer_id
-# - Fetch quiz_answer record
-# - Return answer data with correctness
 
-# PUT /api/quiz-answers/{answer_id}
-# Logic: Update answer (before final submission)
-# - Validate answer_id and request body
-# - Check that quiz attempt not yet submitted
-# - Update selected_ids or text_answer
-# - Recalculate is_correct and points_earned
-# - Update answered_at
-# - Return updated answer
+@router.get("/attempt/{attempt_id}", response_model=List[QuizAnswerResponse])
+def get_attempt_answers(
+    attempt_id: UUID,
+    db: Session = Depends(get_db),
+) -> List[QuizAnswerResponse]:
+    service = _get_service(db)
+    return service.get_attempt_answers(attempt_id)
 
-# DELETE /api/quiz-answers/{answer_id}
-# Logic: Delete specific answer (before submission)
-# - Validate that quiz not submitted yet
-# - Delete quiz_answer record
-# - Return 204 No Content
 
-# GET /api/quiz-answers/attempt/{attempt_id}/summary
-# Logic: Get summary of answers for attempt
-# - Count total questions answered
-# - Count correct answers
-# - Calculate accuracy percentage
-# - Sum total points earned
-# - Return summary statistics
+@router.post("", response_model=QuizAnswerResponse, status_code=status.HTTP_201_CREATED)
+def create_answer(
+    payload: QuizAnswerCreate,
+    db: Session = Depends(get_db),
+) -> QuizAnswerResponse:
+    service = _get_service(db)
+    try:
+        return service.create_answer(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.get("/{answer_id}", response_model=QuizAnswerResponse)
+def get_answer(answer_id: UUID, db: Session = Depends(get_db)) -> QuizAnswerResponse:
+    service = _get_service(db)
+    answer = service.get_answer(answer_id)
+    if not answer:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz answer not found")
+    return answer
+
+
+@router.put("/{answer_id}", response_model=QuizAnswerResponse)
+def update_answer(
+    answer_id: UUID,
+    payload: QuizAnswerUpdate,
+    db: Session = Depends(get_db),
+) -> QuizAnswerResponse:
+    service = _get_service(db)
+    try:
+        answer = service.update_answer(answer_id, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    if not answer:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz answer not found")
+    return answer
+
+
+@router.delete("/{answer_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_answer(answer_id: UUID, db: Session = Depends(get_db)) -> Response:
+    service = _get_service(db)
+    try:
+        deleted = service.delete_answer(answer_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz answer not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/attempt/{attempt_id}/summary", response_model=QuizAnswerSummary)
+def get_answer_summary(
+    attempt_id: UUID,
+    db: Session = Depends(get_db),
+) -> QuizAnswerSummary:
+    service = _get_service(db)
+    return service.get_answer_summary(attempt_id)
 
