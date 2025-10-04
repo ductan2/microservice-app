@@ -9,7 +9,8 @@ import (
 )
 
 type Deps struct {
-	UserService services.UserService
+	UserService    services.UserService
+	ContentService services.ContentService
 }
 
 func NewRouter(deps Deps) *gin.Engine {
@@ -40,6 +41,7 @@ func NewRouter(deps Deps) *gin.Engine {
 		passwordCtrl *controllers.PasswordController
 		mfaCtrl      *controllers.MFAController
 		sessionCtrl  *controllers.SessionController
+		contentCtrl  *controllers.ContentController
 	)
 	if deps.UserService != nil {
 		authCtrl = controllers.NewAuthController(deps.UserService)
@@ -47,6 +49,9 @@ func NewRouter(deps Deps) *gin.Engine {
 		passwordCtrl = controllers.NewPasswordController(deps.UserService)
 		mfaCtrl = controllers.NewMFAController(deps.UserService)
 		sessionCtrl = controllers.NewSessionController(deps.UserService)
+	}
+	if deps.ContentService != nil {
+		contentCtrl = controllers.NewContentController(deps.ContentService)
 	}
 
 	api := r.Group("/api/v1")
@@ -82,6 +87,16 @@ func NewRouter(deps Deps) *gin.Engine {
 			api.GET("/sessions", sessionCtrl.List)
 			api.DELETE("/sessions/:id", sessionCtrl.Delete)
 			api.POST("/sessions/revoke-all", sessionCtrl.RevokeAll)
+		}
+		if contentCtrl != nil {
+			content := api.Group("/content")
+			{
+				content.GET("/metadata", contentCtrl.GetTopicsLevelsTags)
+				content.GET("/lessons", contentCtrl.GetLessons)
+				content.POST("/lessons", contentCtrl.CreateLesson)
+				content.GET("/flashcards", contentCtrl.GetFlashcardSets)
+				content.GET("/quizzes", contentCtrl.GetQuizzes)
+			}
 		}
 	}
 

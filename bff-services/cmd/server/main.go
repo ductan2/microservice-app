@@ -20,10 +20,12 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	userService := services.NewUserServiceClient(config.GetUserServiceURL(), nil)
+	contentService := services.NewContentServiceClient(config.GetContentServiceURL(), nil)
 
 	addr := ":" + port
 	r := server.NewRouter(server.Deps{
-		UserService: userService,
+		UserService:    userService,
+		ContentService: contentService,
 	})
 
 	srv := &http.Server{
