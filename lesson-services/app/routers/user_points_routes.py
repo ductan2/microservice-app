@@ -6,7 +6,7 @@ from typing import List
 from uuid import UUID
 
 from app.database.connection import get_db
-from app.schemas.progress_schema import (
+from app.schemas.user_points_schema import (
     PointsAdjustmentRequest,
     PointsLeaderboardEntry,
     UserPointsRankResponse,

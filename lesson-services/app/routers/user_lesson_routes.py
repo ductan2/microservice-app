@@ -6,7 +6,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from app.database.connection import get_db
-from app.schemas.progress_schema import (
+from app.schemas.user_lesson_schema import (
     LessonStatus,
     UserLessonCompletionRequest,
     UserLessonCreate,

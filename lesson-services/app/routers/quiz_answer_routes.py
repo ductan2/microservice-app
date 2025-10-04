@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
-from app.schemas.progress_schema import (
+from app.schemas.quiz_schema import (
     QuizAnswerCreate,
     QuizAnswerResponse,
     QuizAnswerSummary,
@@ -17,25 +17,24 @@ from app.services.quiz_answer_service import QuizAnswerService
 router = APIRouter(prefix="/api/quiz-answers", tags=["Quiz Answers"])
 
 
-def _get_service(db: Session) -> QuizAnswerService:
+def get_quiz_answer_service(db: Session = Depends(get_db)) -> QuizAnswerService:
+    """Dependency to get QuizAnswerService instance."""
     return QuizAnswerService(db)
 
 
 @router.get("/attempt/{attempt_id}", response_model=List[QuizAnswerResponse])
 def get_attempt_answers(
     attempt_id: UUID,
-    db: Session = Depends(get_db),
+    service: QuizAnswerService = Depends(get_quiz_answer_service),
 ) -> List[QuizAnswerResponse]:
-    service = _get_service(db)
     return service.get_attempt_answers(attempt_id)
 
 
 @router.post("", response_model=QuizAnswerResponse, status_code=status.HTTP_201_CREATED)
 def create_answer(
     payload: QuizAnswerCreate,
-    db: Session = Depends(get_db),
+    service: QuizAnswerService = Depends(get_quiz_answer_service),
 ) -> QuizAnswerResponse:
-    service = _get_service(db)
     try:
         return service.create_answer(payload)
     except ValueError as exc:
@@ -43,8 +42,10 @@ def create_answer(
 
 
 @router.get("/{answer_id}", response_model=QuizAnswerResponse)
-def get_answer(answer_id: UUID, db: Session = Depends(get_db)) -> QuizAnswerResponse:
-    service = _get_service(db)
+def get_answer(
+    answer_id: UUID, 
+    service: QuizAnswerService = Depends(get_quiz_answer_service)
+) -> QuizAnswerResponse:
     answer = service.get_answer(answer_id)
     if not answer:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz answer not found")
@@ -55,9 +56,8 @@ def get_answer(answer_id: UUID, db: Session = Depends(get_db)) -> QuizAnswerResp
 def update_answer(
     answer_id: UUID,
     payload: QuizAnswerUpdate,
-    db: Session = Depends(get_db),
+    service: QuizAnswerService = Depends(get_quiz_answer_service),
 ) -> QuizAnswerResponse:
-    service = _get_service(db)
     try:
         answer = service.update_answer(answer_id, payload)
     except ValueError as exc:
@@ -69,8 +69,10 @@ def update_answer(
 
 
 @router.delete("/{answer_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_answer(answer_id: UUID, db: Session = Depends(get_db)) -> Response:
-    service = _get_service(db)
+def delete_answer(
+    answer_id: UUID, 
+    service: QuizAnswerService = Depends(get_quiz_answer_service)
+) -> Response:
     try:
         deleted = service.delete_answer(answer_id)
     except ValueError as exc:
@@ -84,8 +86,7 @@ def delete_answer(answer_id: UUID, db: Session = Depends(get_db)) -> Response:
 @router.get("/attempt/{attempt_id}/summary", response_model=QuizAnswerSummary)
 def get_answer_summary(
     attempt_id: UUID,
-    db: Session = Depends(get_db),
+    service: QuizAnswerService = Depends(get_quiz_answer_service),
 ) -> QuizAnswerSummary:
-    service = _get_service(db)
     return service.get_answer_summary(attempt_id)
 

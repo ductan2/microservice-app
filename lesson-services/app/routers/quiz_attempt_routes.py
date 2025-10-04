@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
-from app.schemas.progress_schema import (
+from app.schemas.quiz_schema import (
     QuizAttemptCreate,
     QuizAttemptDetailResponse,
     QuizAttemptResponse,
@@ -17,23 +17,25 @@ from app.services.quiz_attempt_service import QuizAttemptService
 router = APIRouter(prefix="/api/quiz-attempts", tags=["Quiz Attempts"])
 
 
-def _get_service(db: Session) -> QuizAttemptService:
+def get_quiz_attempt_service(db: Session = Depends(get_db)) -> QuizAttemptService:
+    """Dependency to get QuizAttemptService instance."""
     return QuizAttemptService(db)
 
 
 @router.post("/start", response_model=QuizAttemptResponse, status_code=status.HTTP_201_CREATED)
 def start_quiz_attempt(
     payload: QuizAttemptCreate,
-    db: Session = Depends(get_db),
+    service: QuizAttemptService = Depends(get_quiz_attempt_service),
 ) -> QuizAttemptResponse:
-    service = _get_service(db)
     attempt = service.start_quiz(payload)
     return attempt
 
 
 @router.get("/{attempt_id}", response_model=QuizAttemptDetailResponse)
-def get_quiz_attempt(attempt_id: UUID, db: Session = Depends(get_db)) -> QuizAttemptDetailResponse:
-    service = _get_service(db)
+def get_quiz_attempt(
+    attempt_id: UUID, 
+    service: QuizAttemptService = Depends(get_quiz_attempt_service)
+) -> QuizAttemptDetailResponse:
     attempt = service.get_attempt(attempt_id)
     if not attempt:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz attempt not found")
@@ -44,9 +46,8 @@ def get_quiz_attempt(attempt_id: UUID, db: Session = Depends(get_db)) -> QuizAtt
 def submit_quiz_attempt(
     attempt_id: UUID,
     payload: QuizAttemptSubmit,
-    db: Session = Depends(get_db),
+    service: QuizAttemptService = Depends(get_quiz_attempt_service),
 ) -> QuizAttemptDetailResponse:
-    service = _get_service(db)
     attempt = service.submit_quiz(attempt_id, payload)
     if not attempt:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz attempt not found or already submitted")
@@ -61,9 +62,8 @@ def submit_quiz_attempt(
 def get_user_quiz_attempts(
     user_id: UUID,
     quiz_id: UUID,
-    db: Session = Depends(get_db),
+    service: QuizAttemptService = Depends(get_quiz_attempt_service),
 ) -> List[QuizAttemptResponse]:
-    service = _get_service(db)
     return service.get_user_quiz_attempts(user_id, quiz_id)
 
 
@@ -73,9 +73,8 @@ def get_user_quiz_history(
     passed: Optional[bool] = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db),
+    service: QuizAttemptService = Depends(get_quiz_attempt_service),
 ) -> List[QuizAttemptResponse]:
-    service = _get_service(db)
     return service.get_user_quiz_history(user_id, passed=passed, limit=limit, offset=offset)
 
 
@@ -83,15 +82,16 @@ def get_user_quiz_history(
 def get_lesson_quiz_attempts(
     lesson_id: UUID,
     user_id: UUID,
-    db: Session = Depends(get_db),
+    service: QuizAttemptService = Depends(get_quiz_attempt_service),
 ) -> List[QuizAttemptResponse]:
-    service = _get_service(db)
     return service.get_lesson_quiz_attempts(lesson_id, user_id)
 
 
 @router.delete("/{attempt_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_quiz_attempt(attempt_id: UUID, db: Session = Depends(get_db)) -> Response:
-    service = _get_service(db)
+def delete_quiz_attempt(
+    attempt_id: UUID, 
+    service: QuizAttemptService = Depends(get_quiz_attempt_service)
+) -> Response:
     deleted = service.delete_attempt(attempt_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz attempt not found")

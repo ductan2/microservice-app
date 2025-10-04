@@ -1,10 +1,10 @@
+from typing import Optional
+from pydantic import BaseModel
 from datetime import date
-from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
 
-
+# Daily Activity Schemas
 class DailyActivityBase(BaseModel):
     user_id: UUID
     activity_dt: date
@@ -13,32 +13,35 @@ class DailyActivityBase(BaseModel):
     minutes: int = 0
     points: int = 0
 
-    model_config = ConfigDict(from_attributes=True)
 
-
-class DailyActivityResponse(DailyActivityBase):
+class DailyActivityCreate(DailyActivityBase):
     pass
 
 
-class DailyActivityRangeRequest(BaseModel):
-    date_from: Optional[date] = None
-    date_to: Optional[date] = None
+class DailyActivityUpdate(BaseModel):
+    lessons_completed: Optional[int] = None
+    quizzes_completed: Optional[int] = None
+    minutes: Optional[int] = None
+    points: Optional[int] = None
 
 
-class DailyActivityIncrementRequest(BaseModel):
-    user_id: UUID
-    activity_dt: date = Field(alias="activityDate")
-    field: str
-    amount: int = Field(ge=1)
-
-    model_config = ConfigDict(populate_by_name=True)
+class DailyActivityResponse(DailyActivityBase):
+    class Config:
+        from_attributes = True
 
 
 class DailyTotals(BaseModel):
-    lessons_completed: int
-    quizzes_completed: int
-    minutes: int
-    points: int
+    lessons_completed: int = 0
+    quizzes_completed: int = 0
+    minutes: int = 0
+    points: int = 0
+
+
+class DailyActivityMonthSummary(BaseModel):
+    year: int
+    month: int
+    totals: DailyTotals
+    days: list[DailyActivityResponse]
 
 
 class DailyActivitySummary(BaseModel):
@@ -47,11 +50,11 @@ class DailyActivitySummary(BaseModel):
     last_30_days: DailyTotals
     average_per_day: DailyTotals
     total_active_days: int
-    most_active_day: Optional[DailyActivityResponse] = None
+    most_active_day: DailyActivityResponse | None = None
 
 
-class DailyActivityMonthSummary(BaseModel):
-    year: int
-    month: int
-    totals: DailyTotals
-    days: List[DailyActivityResponse]
+class DailyActivityIncrementRequest(BaseModel):
+    user_id: UUID
+    activity_dt: date
+    field: str  # 'lessons_completed', 'quizzes_completed', 'minutes', 'points'
+    amount: int
