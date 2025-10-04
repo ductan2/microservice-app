@@ -11,16 +11,16 @@ import (
 
 // Cards is the resolver for the cards field.
 func (r *flashcardSetResolver) Cards(ctx context.Context, obj *model.FlashcardSet) ([]*model.Flashcard, error) {
-	if r.Flashcards == nil {
+	if r.FlashcardService == nil {
 		return nil, gqlerror.Errorf("flashcard service not configured")
 	}
 
 	setID, err := uuid.Parse(obj.ID)
-	if err != nil {
+	if err != nil {	
 		return nil, gqlerror.Errorf("invalid flashcard set id")
 	}
 
-	cards, err := r.Flashcards.GetSetCards(ctx, setID)
+	cards, err := r.FlashcardService.GetSetCards(ctx, setID)
 	if err != nil {
 		return nil, mapFlashcardError(err)
 	}

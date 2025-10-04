@@ -12,14 +12,14 @@ import (
 
 // FlashcardSet is the resolver for the flashcardSet field.
 func (r *queryResolver) FlashcardSet(ctx context.Context, id string) (*model.FlashcardSet, error) {
-	if r.Flashcards == nil {
+	if r.FlashcardService == nil {
 		return nil, gqlerror.Errorf("flashcard service not configured")
 	}
 	setID, err := uuid.Parse(id)
 	if err != nil {
 		return nil, gqlerror.Errorf("invalid flashcard set id")
 	}
-	set, err := r.Flashcards.GetSetByID(ctx, setID)
+	set, err := r.FlashcardService.GetSetByID(ctx, setID)
 	if err != nil {
 		if errors.Is(err, repository.ErrFlashcardSetNotFound) {
 			return nil, nil
@@ -31,7 +31,7 @@ func (r *queryResolver) FlashcardSet(ctx context.Context, id string) (*model.Fla
 
 // FlashcardSets is the resolver for the flashcardSets field.
 func (r *queryResolver) FlashcardSets(ctx context.Context, filter *model.FlashcardSetFilterInput, page *int, pageSize *int, orderBy *model.FlashcardSetOrderInput) (*model.FlashcardSetList, error) {
-	if r.Flashcards == nil {
+	if r.FlashcardService == nil {
 		return nil, gqlerror.Errorf("flashcard service not configured")
 	}
 
@@ -50,7 +50,7 @@ func (r *queryResolver) FlashcardSets(ctx context.Context, filter *model.Flashca
 		ps = *pageSize
 	}
 
-	sets, total, err := r.Flashcards.ListSets(ctx, setFilter, setSort, p, ps)
+	sets, total, err := r.FlashcardService.ListSets(ctx, setFilter, setSort, p, ps)
 	if err != nil {
 		return nil, mapFlashcardError(err)
 	}
@@ -70,7 +70,7 @@ func (r *queryResolver) FlashcardSets(ctx context.Context, filter *model.Flashca
 
 // Flashcards is the resolver for the flashcards field.
 func (r *queryResolver) Flashcards(ctx context.Context, setID string, filter *model.FlashcardFilterInput, page *int, pageSize *int, orderBy *model.FlashcardOrderInput) (*model.FlashcardCollection, error) {
-	if r.Flashcards == nil {
+	if r.FlashcardService == nil {
 		return nil, gqlerror.Errorf("flashcard service not configured")
 	}
 
@@ -91,7 +91,7 @@ func (r *queryResolver) Flashcards(ctx context.Context, setID string, filter *mo
 		ps = *pageSize
 	}
 
-	cards, total, err := r.Flashcards.ListSetCards(ctx, id, cardFilter, cardSort, p, ps)
+	cards, total, err := r.FlashcardService.ListSetCards(ctx, id, cardFilter, cardSort, p, ps)
 	if err != nil {
 		return nil, mapFlashcardError(err)
 	}

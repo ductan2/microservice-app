@@ -80,7 +80,7 @@ func main() {
 		Media:         mediaService,
 		LessonService: lessonService,
 		QuizService:   quizService,
-		Flashcards:    flashcardService,
+		FlashcardService:    flashcardService,
 		TagRepo:       tagRepo,
 	}
 	gqlSrv := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})

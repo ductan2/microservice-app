@@ -22,7 +22,7 @@ type LessonService interface {
 	// Sections
 	AddSection(ctx context.Context, lessonID uuid.UUID, section *models.LessonSection) (*models.LessonSection, error)
 	UpdateSection(ctx context.Context, id uuid.UUID, updates *models.LessonSection) (*models.LessonSection, error)
-	ReorderSections(ctx context.Context, lessonID uuid.UUID, sectionIDs []uuid.UUID) ([]models.LessonSection, error)
+	ReorderSections(ctx context.Context, lessonID uuid.UUID, sectionIDs []uuid.UUID) ([]models.LessonSection, int64, error)
 	DeleteSection(ctx context.Context, id uuid.UUID) error
 	ListLessonSections(ctx context.Context, lessonID uuid.UUID, filter *repository.LessonSectionFilter, sort *repository.SortOption, page, pageSize int) ([]models.LessonSection, int64, error)
 }
@@ -216,7 +216,7 @@ func (s *lessonService) AddSection(ctx context.Context, lessonID uuid.UUID, sect
 	section.CreatedAt = time.Now().UTC()
 
 	// Get current max ord
-	sections, err := s.sectionRepo.GetByLessonID(ctx, lessonID)
+	sections, _, err := s.sectionRepo.ListByLessonID(ctx, lessonID, nil, nil, 0, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -258,12 +258,12 @@ func (s *lessonService) UpdateSection(ctx context.Context, id uuid.UUID, updates
 	return existing, nil
 }
 
-func (s *lessonService) ReorderSections(ctx context.Context, lessonID uuid.UUID, sectionIDs []uuid.UUID) ([]models.LessonSection, error) {
+func (s *lessonService) ReorderSections(ctx context.Context, lessonID uuid.UUID, sectionIDs []uuid.UUID) ([]models.LessonSection, int64, error) {
 	if err := s.sectionRepo.Reorder(ctx, lessonID, sectionIDs); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return s.sectionRepo.GetByLessonID(ctx, lessonID)
+	return s.sectionRepo.ListByLessonID(ctx, lessonID, nil, nil, 0, 0)
 }
 
 func (s *lessonService) DeleteSection(ctx context.Context, id uuid.UUID) error {

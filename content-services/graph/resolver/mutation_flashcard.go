@@ -11,7 +11,7 @@ import (
 
 // CreateFlashcardSet is the resolver for the createFlashcardSet field.
 func (r *mutationResolver) CreateFlashcardSet(ctx context.Context, input model.CreateFlashcardSetInput) (*model.FlashcardSet, error) {
-	if r.Flashcards == nil {
+	if r.FlashcardService == nil {
 		return nil, gqlerror.Errorf("flashcard service not configured")
 	}
 
@@ -50,7 +50,7 @@ func (r *mutationResolver) CreateFlashcardSet(ctx context.Context, input model.C
 		CreatedBy:   createdBy,
 	}
 
-	created, err := r.Flashcards.CreateSet(ctx, set, nil)
+	created, err := r.FlashcardService.CreateSet(ctx, set, nil)
 	if err != nil {
 		return nil, mapFlashcardError(err)
 	}
@@ -59,7 +59,7 @@ func (r *mutationResolver) CreateFlashcardSet(ctx context.Context, input model.C
 
 // AddFlashcard is the resolver for the addFlashcard field.
 func (r *mutationResolver) AddFlashcard(ctx context.Context, input model.AddFlashcardInput) (*model.Flashcard, error) {
-	if r.Flashcards == nil {
+	if r.FlashcardService == nil {
 		return nil, gqlerror.Errorf("flashcard service not configured")
 	}
 
@@ -94,7 +94,7 @@ func (r *mutationResolver) AddFlashcard(ctx context.Context, input model.AddFlas
 		copy(card.Hints, input.Hints)
 	}
 
-	created, err := r.Flashcards.AddCard(ctx, setID, card)
+	created, err := r.FlashcardService.AddCard(ctx, setID, card)
 	if err != nil {
 		return nil, mapFlashcardError(err)
 	}
