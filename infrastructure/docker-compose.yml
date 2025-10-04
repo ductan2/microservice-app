@@ -1,15 +1,27 @@
+networks:
+  frontend:
+    driver: bridge
+    name: english-app-frontend
+  backend:
+    driver: bridge
+    name: english-app-backend
+    internal: true  # Isolate backend network
+
 services:
   # =====================
-  # Database & Queue
+  # Database & Queue (Backend Network Only)
   # =====================
   postgres:
     image: postgres:17
     container_name: postgres
     restart: always
+    networks:
+      - backend
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: ${POSTGRES_DB:-english_app}
+    # Only expose in development
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -24,6 +36,9 @@ services:
     image: dpage/pgadmin4
     container_name: pgadmin
     restart: always
+    networks:
+      - frontend
+      - backend
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-password}
@@ -37,6 +52,8 @@ services:
     image: prometheuscommunity/postgres-exporter
     container_name: postgres_exporter
     restart: always
+    networks:
+      - backend
     environment:
       DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-english_app}?sslmode=disable"
     ports:
@@ -49,6 +66,9 @@ services:
     image: mongo:8
     container_name: mongodb
     restart: always
+    networks:
+      - backend
+    # Only expose in development
     ports:
       - "27017:27017"
     volumes:
@@ -58,13 +78,16 @@ services:
     image: redis:8.2
     container_name: redis
     restart: always
-    command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - backend
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-redis_password}"]
+    # Only expose in development
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_password}", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -73,7 +96,9 @@ services:
     image: oliver006/redis_exporter
     container_name: redis_exporter
     restart: always
-    command: ["--redis.addr=redis://redis:6379"]
+    networks:
+      - backend
+    command: ["--redis.addr=redis://:${REDIS_PASSWORD:-redis_password}@redis:6379"]
     ports:
       - "${REDIS_EXPORTER_PORT:-9121}:9121"
     depends_on:
@@ -84,10 +109,13 @@ services:
     image: rabbitmq:4.1-management
     container_name: rabbitmq
     restart: always
+    networks:
+      - backend
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-user}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-password}
       RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+    # Only expose in development
     ports:
       - "${RABBITMQ_PORT:-5672}:5672"
       - "${RABBITMQ_MGMT_PORT:-15672}:15672" # Web UI
@@ -103,6 +131,8 @@ services:
     image: kbudde/rabbitmq-exporter
     container_name: rabbitmq_exporter
     restart: always
+    networks:
+      - backend
     environment:
       RABBITMQ_URL: http://${RABBITMQ_USER:-user}:${RABBITMQ_PASSWORD:-password}@rabbitmq:15672
     ports:
@@ -112,7 +142,7 @@ services:
         condition: service_healthy
 
   # =====================
-  # Microservices
+  # Microservices (Both Networks)
   # =====================
   user-services:
     build:
@@ -120,6 +150,9 @@ services:
       dockerfile: Dockerfile
     container_name: user-services
     restart: always
+    networks:
+      - frontend
+      - backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.user.rule=PathPrefix(`/api/user`)"
@@ -134,6 +167,7 @@ services:
       - DB_NAME=${POSTGRES_DB:-english_app}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=${RABBITMQ_USER:-user}
@@ -153,16 +187,15 @@ services:
       dockerfile: Dockerfile
     container_name: lesson-services
     restart: always
+    networks:
+      - frontend
+      - backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.lesson.rule=PathPrefix(`/api/lesson`)"
       - "traefik.http.services.lesson.loadbalancer.server.port=8000"
-      # Middleware JWT ForwardAuth
-      - "traefik.http.middlewares.jwt-auth.forwardauth.address=http://user-services:8001/api/v1/profile/check-auth"
-      - "traefik.http.middlewares.jwt-auth.forwardauth.authResponseHeaders=X-User-ID,X-User-Email,X-Session-ID"
-      - "traefik.http.middlewares.jwt-auth.forwardauth.trustForwardHeader=true"
       - "traefik.http.middlewares.lesson-stripprefix.stripprefix.prefixes=/api/lesson"
-      - "traefik.http.routers.lesson.middlewares=jwt-auth@docker,lesson-stripprefix@docker"
+      - "traefik.http.routers.lesson.middlewares=lesson-stripprefix@docker"
 
     ports:
       - "${LESSON_SERVICES_PORT:-8005}:8000"
@@ -174,6 +207,7 @@ services:
       - DB_NAME=${POSTGRES_DB:-english_app}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=${RABBITMQ_USER:-user}
@@ -195,6 +229,9 @@ services:
       dockerfile: Dockerfile
     container_name: content-services
     restart: always
+    networks:
+      - frontend
+      - backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.content.rule=PathPrefix(`/api/content`)"
@@ -209,6 +246,7 @@ services:
       - DB_NAME=${POSTGRES_DB:-english_app}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=${RABBITMQ_USER:-user}
@@ -228,6 +266,9 @@ services:
       dockerfile: Dockerfile
     container_name: notification-services
     restart: always
+    networks:
+      - frontend
+      - backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.notification.rule=PathPrefix(`/api/notification`)"
@@ -250,6 +291,9 @@ services:
       dockerfile: Dockerfile
     container_name: bff-services
     restart: always
+    networks:
+      - frontend
+      - backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.bff.rule=PathPrefix(`/api/bff`)"
@@ -278,17 +322,26 @@ services:
   traefik:
     image: traefik:v3.5.3
     container_name: traefik
+    networks:
+      - frontend
     command:
+      - "--api.dashboard=true"
       - "--api.dashboard=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@example.com}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
       - "--log.level=INFO"
     ports:
       - "80:80"
+      - "443:443"
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
     depends_on:
       - user-services
   
@@ -298,21 +351,33 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
+    networks:
+      - frontend
+      - backend
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
     ports:
       - "${PROMETHEUS_PORT:-9090}:9090"
 
   loki:
     image: grafana/loki:2.9.2
     container_name: loki
+    networks:
+      - frontend
+      - backend
     ports:
       - "${LOKI_PORT:-3100}:3100"
+    volumes:
+      - loki_data:/loki
     command: -config.file=/etc/loki/local-config.yaml
 
   promtail:
     image: grafana/promtail:2.9.2
     container_name: promtail
+    networks:
+      - frontend
+      - backend
     volumes:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock
@@ -322,8 +387,13 @@ services:
   grafana:
     image: grafana/grafana:10.0.3
     container_name: grafana
+    networks:
+      - frontend
+      - backend
     ports:
       - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
@@ -335,3 +405,5 @@ volumes:
   rabbitmq_data:
   prometheus_data:
   loki_data:
+  grafana_data:
+  traefik_letsencrypt:

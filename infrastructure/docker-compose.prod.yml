@@ -1,0 +1,105 @@
+# Production Docker Compose Configuration
+# This file overrides the base configuration for production deployment
+
+version: "3.9"
+
+services:
+  # =====================
+  # Database & Queue (No External Ports in Production)
+  # =====================
+  postgres:
+    ports: []  # Remove external port exposure
+    environment:
+      - POSTGRES_LOG_STATEMENT=none
+      - POSTGRES_LOG_MIN_DURATION_STATEMENT=1000
+
+  mongodb:
+    ports: []  # Remove external port exposure
+
+  redis:
+    ports: []  # Remove external port exposure
+
+  rabbitmq:
+    ports: []  # Remove external port exposure
+
+  # =====================
+  # Microservices (Production Security)
+  # =====================
+  user-services:
+    ports: []  # Remove external port exposure
+    environment:
+      - GIN_MODE=release
+
+  lesson-services:
+    ports: []  # Remove external port exposure
+
+  content-services:
+    ports: []  # Remove external port exposure
+
+  notification-services:
+    ports: []  # Remove external port exposure
+
+  bff-services:
+    ports: []  # Remove external port exposure
+
+  # =====================
+  # Traefik (Production HTTPS)
+  # =====================
+  traefik:
+    command:
+      - "--api.dashboard=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--log.level=WARN"
+      # Redirect HTTP to HTTPS
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+    ports:
+      - "80:80"
+      - "443:443"
+      # Remove dashboard port in production
+      # - "8080:8080"
+
+  # =====================
+  # Monitoring (Production Security)
+  # =====================
+  prometheus:
+    ports: []  # Remove external port exposure
+    # Add authentication in production
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+
+  grafana:
+    ports: []  # Remove external port exposure
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_SECURITY_SECRET_KEY=${GRAFANA_SECRET_KEY}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+
+  # Remove development tools in production
+  pgadmin:
+    deploy:
+      replicas: 0
+
+  postgres_exporter:
+    ports: []  # Remove external port exposure
+
+  redis_exporter:
+    ports: []  # Remove external port exposure
+
+  rabbitmq_exporter:
+    ports: []  # Remove external port exposure

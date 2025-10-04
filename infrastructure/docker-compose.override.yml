@@ -27,14 +27,10 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.lesson.rule=PathPrefix(`/api/lesson/v1`)"
       - "traefik.http.services.lesson.loadbalancer.server.port=8000"
-      # Forward auth configuration for JWT authentication
-      - "traefik.http.middlewares.jwt-auth.forwardauth.address=http://user-services:8001/api/v1/profile/check-auth"
-      - "traefik.http.middlewares.jwt-auth.forwardauth.authResponseHeaders=X-User-ID,X-User-Email,X-Session-ID"
-      - "traefik.http.middlewares.jwt-auth.forwardauth.trustForwardHeader=true"
       # Path rewriting middleware using regex
       - "traefik.http.middlewares.lesson-replacepathregex.replacepathregex.regex=^/api/lesson/(.*)"
       - "traefik.http.middlewares.lesson-replacepathregex.replacepathregex.replacement=/api/$1"
-      - "traefik.http.routers.lesson.middlewares=jwt-auth@docker,lesson-replacepathregex@docker"
+      - "traefik.http.routers.lesson.middlewares=lesson-replacepathregex@docker"
     ports:
       - "${LESSON_SERVICES_PORT:-8005}:8000"
     environment:

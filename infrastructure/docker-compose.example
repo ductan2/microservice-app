@@ -1,0 +1,48 @@
+# Production Environment Variables
+# Copy this file and customize for your production environment
+
+# Database Configuration
+POSTGRES_USER=english_app_user
+POSTGRES_PASSWORD=your_secure_postgres_password_here
+POSTGRES_DB=english_app_prod
+POSTGRES_PORT=5432
+
+# Redis Configuration
+REDIS_PASSWORD=your_secure_redis_password_here
+REDIS_PORT=6379
+
+# RabbitMQ Configuration
+RABBITMQ_USER=english_app_user
+RABBITMQ_PASSWORD=your_secure_rabbitmq_password_here
+RABBITMQ_VHOST=/
+RABBITMQ_PORT=5672
+RABBITMQ_MGMT_PORT=15672
+
+# Service Ports (Internal only in production)
+USER_SERVICES_PORT=8001
+LESSON_SERVICES_PORT=8005
+CONTENT_SERVICES_PORT=8003
+NOTIFICATION_SERVICES_PORT=8004
+BFF_SERVICES_PORT=8010
+
+# Monitoring Ports (Internal only in production)
+PROMETHEUS_PORT=9090
+GRAFANA_PORT=3000
+LOKI_PORT=3100
+
+# Exporter Ports (Internal only in production)
+POSTGRES_EXPORTER_PORT=9187
+REDIS_EXPORTER_PORT=9121
+RABBITMQ_EXPORTER_PORT=9419
+
+# Traefik Configuration
+ACME_EMAIL=admin@yourdomain.com
+
+# Grafana Configuration
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=your_secure_grafana_password_here
+GRAFANA_SECRET_KEY=your_grafana_secret_key_here
+
+# PgAdmin Configuration (Development only)
+PGADMIN_DEFAULT_EMAIL=admin@yourdomain.com
+PGADMIN_DEFAULT_PASSWORD=your_secure_pgadmin_password_here
