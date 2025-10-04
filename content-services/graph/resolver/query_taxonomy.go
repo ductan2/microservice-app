@@ -5,6 +5,7 @@ import (
 	"content-services/internal/taxonomy"
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
@@ -37,11 +38,15 @@ func (r *queryResolver) Topic(ctx context.Context, id *string, slug *string) (*m
 }
 
 // Topics is the resolver for the topics field.
-func (r *queryResolver) Topics(ctx context.Context) ([]*model.Topic, error) {
+func (r *queryResolver) Topics(ctx context.Context, search *string) ([]*model.Topic, error) {
 	if r.Taxonomy == nil {
 		return nil, gqlerror.Errorf("taxonomy store not configured")
 	}
-	topics, err := r.Taxonomy.ListTopics(ctx)
+	term := ""
+	if search != nil {
+		term = strings.TrimSpace(*search)
+	}
+	topics, err := r.Taxonomy.ListTopics(ctx, term)
 	if err != nil {
 		return nil, err
 	}
@@ -80,11 +85,15 @@ func (r *queryResolver) Level(ctx context.Context, id *string, code *string) (*m
 }
 
 // Levels is the resolver for the levels field.
-func (r *queryResolver) Levels(ctx context.Context) ([]*model.Level, error) {
+func (r *queryResolver) Levels(ctx context.Context, search *string) ([]*model.Level, error) {
 	if r.Taxonomy == nil {
 		return nil, gqlerror.Errorf("taxonomy store not configured")
 	}
-	levels, err := r.Taxonomy.ListLevels(ctx)
+	term := ""
+	if search != nil {
+		term = strings.TrimSpace(*search)
+	}
+	levels, err := r.Taxonomy.ListLevels(ctx, term)
 	if err != nil {
 		return nil, err
 	}
@@ -123,11 +132,15 @@ func (r *queryResolver) Tag(ctx context.Context, id *string, slug *string) (*mod
 }
 
 // Tags is the resolver for the tags field.
-func (r *queryResolver) Tags(ctx context.Context) ([]*model.Tag, error) {
+func (r *queryResolver) Tags(ctx context.Context, search *string) ([]*model.Tag, error) {
 	if r.Taxonomy == nil {
 		return nil, gqlerror.Errorf("taxonomy store not configured")
 	}
-	tags, err := r.Taxonomy.ListTags(ctx)
+	term := ""
+	if search != nil {
+		term = strings.TrimSpace(*search)
+	}
+	tags, err := r.Taxonomy.ListTags(ctx, term)
 	if err != nil {
 		return nil, err
 	}

@@ -13,10 +13,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type LessonSectionFilter struct {
+	Type *string
+}
+
 type LessonSectionRepository interface {
 	Create(ctx context.Context, section *models.LessonSection) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.LessonSection, error)
-	GetByLessonID(ctx context.Context, lessonID uuid.UUID) ([]models.LessonSection, error)
+	ListByLessonID(ctx context.Context, lessonID uuid.UUID, filter *LessonSectionFilter, sort *SortOption, limit, offset int) ([]models.LessonSection, int64, error)
 	Update(ctx context.Context, section *models.LessonSection) error
 	Reorder(ctx context.Context, lessonID uuid.UUID, sectionIDs []uuid.UUID) error
 	Delete(ctx context.Context, id uuid.UUID) error
@@ -53,14 +57,28 @@ func (r *lessonSectionRepository) GetByID(ctx context.Context, id uuid.UUID) (*m
 	return doc.toModel(), nil
 }
 
-func (r *lessonSectionRepository) GetByLessonID(ctx context.Context, lessonID uuid.UUID) ([]models.LessonSection, error) {
-	cursor, err := r.collection().Find(
-		ctx,
-		bson.M{"lesson_id": lessonID.String()},
-		options.Find().SetSort(bson.D{{Key: "ord", Value: 1}}),
-	)
+func (r *lessonSectionRepository) ListByLessonID(ctx context.Context, lessonID uuid.UUID, filter *LessonSectionFilter, sort *SortOption, limit, offset int) ([]models.LessonSection, int64, error) {
+	filterDoc := bson.M{"lesson_id": lessonID.String()}
+	if filter != nil && filter.Type != nil && *filter.Type != "" {
+		filterDoc["type"] = *filter.Type
+	}
+
+	opts := options.Find()
+	sortField, sortDir := "ord", SortAscending
+	if sort != nil {
+		sortField, sortDir = sort.apply(sortField, sortDir)
+	}
+	opts.SetSort(bson.D{{Key: sortField, Value: int(sortDir)}})
+	if offset > 0 {
+		opts.SetSkip(int64(offset))
+	}
+	if limit > 0 {
+		opts.SetLimit(int64(limit))
+	}
+
+	cursor, err := r.collection().Find(ctx, filterDoc, opts)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer cursor.Close(ctx)
 
@@ -68,20 +86,25 @@ func (r *lessonSectionRepository) GetByLessonID(ctx context.Context, lessonID uu
 	for cursor.Next(ctx) {
 		var doc lessonSectionDoc
 		if err := cursor.Decode(&doc); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		sections = append(sections, *doc.toModel())
 	}
 
 	if err := cursor.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+
+	total, err := r.collection().CountDocuments(ctx, filterDoc)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	if sections == nil {
 		sections = []models.LessonSection{}
 	}
 
-	return sections, nil
+	return sections, total, nil
 }
 
 func (r *lessonSectionRepository) Update(ctx context.Context, section *models.LessonSection) error {

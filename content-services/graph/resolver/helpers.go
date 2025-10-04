@@ -280,7 +280,221 @@ func buildLessonFilter(input *model.LessonFilterInput) (*repository.LessonFilter
 		filter.Search = strings.TrimSpace(*input.Search)
 	}
 
+	if input.CreatedBy != nil && *input.CreatedBy != "" {
+		createdBy, err := uuid.Parse(*input.CreatedBy)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid createdBy: %v", err)
+		}
+		filter.CreatedBy = &createdBy
+	}
+
 	return filter, nil
+}
+
+func buildLessonOrder(input *model.LessonOrderInput) *repository.SortOption {
+	if input == nil {
+		return nil
+	}
+	option := &repository.SortOption{Direction: mapOrderDirection(input.Direction)}
+	switch input.Field {
+	case model.LessonOrderFieldPublishedAt:
+		option.Field = "published_at"
+	case model.LessonOrderFieldVersion:
+		option.Field = "version"
+	default:
+		option.Field = "created_at"
+	}
+	return option
+}
+
+func buildLessonSectionFilter(input *model.LessonSectionFilterInput) *repository.LessonSectionFilter {
+	if input == nil {
+		return nil
+	}
+	filter := &repository.LessonSectionFilter{}
+	if input.Type != nil {
+		sectionType := normalizeLessonSectionType(*input.Type)
+		filter.Type = &sectionType
+	}
+	return filter
+}
+
+func buildLessonSectionOrder(input *model.LessonSectionOrderInput) *repository.SortOption {
+	if input == nil {
+		return nil
+	}
+	option := &repository.SortOption{Direction: mapOrderDirection(input.Direction)}
+	switch input.Field {
+	case model.LessonSectionOrderFieldCreatedAt:
+		option.Field = "created_at"
+	default:
+		option.Field = "ord"
+	}
+	return option
+}
+
+func buildFlashcardSetFilter(input *model.FlashcardSetFilterInput) (*repository.FlashcardSetFilter, error) {
+	if input == nil {
+		return nil, nil
+	}
+	filter := &repository.FlashcardSetFilter{}
+	if input.TopicID != nil && *input.TopicID != "" {
+		id, err := uuid.Parse(*input.TopicID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid topicId: %v", err)
+		}
+		filter.TopicID = &id
+	}
+	if input.LevelID != nil && *input.LevelID != "" {
+		id, err := uuid.Parse(*input.LevelID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid levelId: %v", err)
+		}
+		filter.LevelID = &id
+	}
+	if input.CreatedBy != nil && *input.CreatedBy != "" {
+		id, err := uuid.Parse(*input.CreatedBy)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid createdBy: %v", err)
+		}
+		filter.CreatedBy = &id
+	}
+	if input.Search != nil {
+		filter.Search = strings.TrimSpace(*input.Search)
+	}
+	return filter, nil
+}
+
+func buildFlashcardSetOrder(input *model.FlashcardSetOrderInput) *repository.SortOption {
+	if input == nil {
+		return nil
+	}
+	option := &repository.SortOption{Direction: mapOrderDirection(input.Direction)}
+	switch input.Field {
+	case model.FlashcardSetOrderFieldCardCount:
+		option.Field = "card_count"
+	default:
+		option.Field = "created_at"
+	}
+	return option
+}
+
+func buildFlashcardFilter(input *model.FlashcardFilterInput) *repository.FlashcardFilter {
+	if input == nil {
+		return nil
+	}
+	filter := &repository.FlashcardFilter{}
+	if input.HasMedia != nil {
+		filter.HasMedia = input.HasMedia
+	}
+	return filter
+}
+
+func buildFlashcardOrder(input *model.FlashcardOrderInput) *repository.SortOption {
+	if input == nil {
+		return nil
+	}
+	option := &repository.SortOption{Direction: mapOrderDirection(input.Direction)}
+	switch input.Field {
+	case model.FlashcardOrderFieldCreatedAt:
+		option.Field = "created_at"
+	default:
+		option.Field = "ord"
+	}
+	return option
+}
+
+func buildQuizOrder(input *model.QuizOrderInput) *repository.SortOption {
+	if input == nil {
+		return nil
+	}
+	option := &repository.SortOption{Direction: mapOrderDirection(input.Direction)}
+	switch input.Field {
+	case model.QuizOrderFieldTotalPoints:
+		option.Field = "total_points"
+	default:
+		option.Field = "created_at"
+	}
+	return option
+}
+
+func buildQuizQuestionFilter(input *model.QuizQuestionFilterInput) *repository.QuizQuestionFilter {
+	if input == nil {
+		return nil
+	}
+	filter := &repository.QuizQuestionFilter{}
+	if input.Type != nil && *input.Type != "" {
+		value := strings.TrimSpace(*input.Type)
+		filter.Type = &value
+	}
+	return filter
+}
+
+func buildQuizQuestionOrder(input *model.QuizQuestionOrderInput) *repository.SortOption {
+	if input == nil {
+		return nil
+	}
+	option := &repository.SortOption{Direction: mapOrderDirection(input.Direction)}
+	switch input.Field {
+	case model.QuizQuestionOrderFieldPoints:
+		option.Field = "points"
+	default:
+		option.Field = "ord"
+	}
+	return option
+}
+
+func buildMediaFilter(input *model.MediaAssetFilterInput) (*repository.MediaFilter, error) {
+	if input == nil {
+		return nil, nil
+	}
+	filter := &repository.MediaFilter{}
+	if input.FolderID != nil && *input.FolderID != "" {
+		id, err := uuid.Parse(*input.FolderID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid folderId: %v", err)
+		}
+		filter.FolderID = &id
+	}
+	if input.Kind != nil {
+		kind := strings.ToLower(input.Kind.String())
+		filter.Kind = kind
+	}
+	if input.UploadedBy != nil && *input.UploadedBy != "" {
+		id, err := uuid.Parse(*input.UploadedBy)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid uploadedBy: %v", err)
+		}
+		filter.UploadedBy = &id
+	}
+	if input.Sha256 != nil && *input.Sha256 != "" {
+		filter.SHA256 = *input.Sha256
+	}
+	if input.Search != nil {
+		filter.Search = strings.TrimSpace(*input.Search)
+	}
+	return filter, nil
+}
+
+func buildMediaOrder(input *model.MediaAssetOrderInput) *repository.SortOption {
+	if input == nil {
+		return nil
+	}
+	option := &repository.SortOption{Direction: mapOrderDirection(input.Direction)}
+	switch input.Field {
+	case model.MediaAssetOrderFieldBytes:
+		option.Field = "bytes"
+	default:
+		option.Field = "created_at"
+	}
+	return option
+}
+
+func mapOrderDirection(direction model.OrderDirection) repository.SortDirection {
+	if direction == model.OrderDirectionAsc {
+		return repository.SortAscending
+	}
+	return repository.SortDescending
 }
 
 func cloneBody(body map[string]any) map[string]any {

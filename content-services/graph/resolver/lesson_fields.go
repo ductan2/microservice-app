@@ -3,6 +3,7 @@ package resolver
 import (
 	"content-services/graph/generated"
 	"content-services/graph/model"
+	"content-services/internal/repository"
 	"content-services/internal/taxonomy"
 	"context"
 	"errors"
@@ -84,7 +85,7 @@ func (r *lessonResolver) Sections(ctx context.Context, obj *model.Lesson) ([]*mo
 		return nil, gqlerror.Errorf("invalid lesson ID: %v", err)
 	}
 
-	sections, err := r.LessonService.GetLessonSections(ctx, lessonID)
+	sections, _, err := r.LessonService.ListLessonSections(ctx, lessonID, nil, &repository.SortOption{Field: "ord", Direction: repository.SortAscending}, 1, 0)
 	if err != nil {
 		return nil, mapLessonSectionError(err)
 	}

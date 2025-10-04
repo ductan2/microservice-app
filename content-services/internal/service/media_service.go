@@ -22,6 +22,7 @@ type MediaService interface {
 	UploadMedia(ctx context.Context, file io.Reader, filename, mimeType, kind string, userID uuid.UUID, folderID *uuid.UUID) (*models.MediaAsset, error)
 	GetMediaByID(ctx context.Context, id uuid.UUID) (*models.MediaAsset, error)
 	GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]models.MediaAsset, error)
+	ListMedia(ctx context.Context, filter *repository.MediaFilter, sort *repository.SortOption, page, pageSize int) ([]models.MediaAsset, int64, error)
 	GetPresignedURL(ctx context.Context, id uuid.UUID) (string, error)
 	DeleteMedia(ctx context.Context, id uuid.UUID) error
 }
@@ -106,6 +107,20 @@ func (s *mediaService) GetMediaByID(ctx context.Context, id uuid.UUID) (*models.
 
 func (s *mediaService) GetMediaByIDs(ctx context.Context, ids []uuid.UUID) ([]models.MediaAsset, error) {
 	return s.mediaRepo.GetByIDs(ctx, ids)
+}
+
+func (s *mediaService) ListMedia(ctx context.Context, filter *repository.MediaFilter, sort *repository.SortOption, page, pageSize int) ([]models.MediaAsset, int64, error) {
+	if page < 1 {
+		page = 1
+	}
+	limit := pageSize
+	if pageSize < 1 {
+		limit = 20
+	} else if pageSize > 200 {
+		limit = 200
+	}
+	offset := (page - 1) * limit
+	return s.mediaRepo.List(ctx, filter, sort, limit, offset)
 }
 
 func (s *mediaService) GetPresignedURL(ctx context.Context, id uuid.UUID) (string, error) {

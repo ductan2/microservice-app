@@ -69,3 +69,46 @@ func (r *queryResolver) MediaAssets(ctx context.Context, ids []string) ([]*model
 	}
 	return result, nil
 }
+
+// MediaAssetCollection is the resolver for the mediaAssetCollection field.
+func (r *queryResolver) MediaAssetCollection(ctx context.Context, filter *model.MediaAssetFilterInput, page *int, pageSize *int, orderBy *model.MediaAssetOrderInput) (*model.MediaAssetCollection, error) {
+	if r.Media == nil {
+		return nil, gqlerror.Errorf("media service not configured")
+	}
+
+	mediaFilter, err := buildMediaFilter(filter)
+	if err != nil {
+		return nil, err
+	}
+	mediaSort := buildMediaOrder(orderBy)
+
+	p := 1
+	if page != nil && *page > 0 {
+		p = *page
+	}
+	ps := 20
+	if pageSize != nil && *pageSize > 0 {
+		ps = *pageSize
+	}
+
+	assets, total, err := r.Media.ListMedia(ctx, mediaFilter, mediaSort, p, ps)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]*model.MediaAsset, 0, len(assets))
+	for i := range assets {
+		mapped, err := r.mapMediaAsset(ctx, &assets[i])
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, mapped)
+	}
+
+	return &model.MediaAssetCollection{
+		Items:      items,
+		TotalCount: int(total),
+		Page:       p,
+		PageSize:   ps,
+	}, nil
+}

@@ -70,6 +70,13 @@ type ComplexityRoot struct {
 		SetID        func(childComplexity int) int
 	}
 
+	FlashcardCollection struct {
+		Items      func(childComplexity int) int
+		Page       func(childComplexity int) int
+		PageSize   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
 	FlashcardSet struct {
 		Cards       func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
@@ -108,6 +115,8 @@ type ComplexityRoot struct {
 
 	LessonCollection struct {
 		Items      func(childComplexity int) int
+		Page       func(childComplexity int) int
+		PageSize   func(childComplexity int) int
 		TotalCount func(childComplexity int) int
 	}
 
@@ -118,6 +127,13 @@ type ComplexityRoot struct {
 		LessonID  func(childComplexity int) int
 		Ord       func(childComplexity int) int
 		Type      func(childComplexity int) int
+	}
+
+	LessonSectionCollection struct {
+		Items      func(childComplexity int) int
+		Page       func(childComplexity int) int
+		PageSize   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	Level struct {
@@ -140,6 +156,13 @@ type ComplexityRoot struct {
 		StorageKey   func(childComplexity int) int
 		ThumbnailURL func(childComplexity int) int
 		UploadedBy   func(childComplexity int) int
+	}
+
+	MediaAssetCollection struct {
+		Items      func(childComplexity int) int
+		Page       func(childComplexity int) int
+		PageSize   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -173,23 +196,26 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		FlashcardSet   func(childComplexity int, id string) int
-		FlashcardSets  func(childComplexity int, topicID *string, levelID *string, page *int, pageSize *int) int
-		Health         func(childComplexity int) int
-		Lesson         func(childComplexity int, id string) int
-		LessonByCode   func(childComplexity int, code string) int
-		LessonSections func(childComplexity int, lessonID string) int
-		Lessons        func(childComplexity int, filter *model.LessonFilterInput, page *int, pageSize *int) int
-		Level          func(childComplexity int, id *string, code *string) int
-		Levels         func(childComplexity int) int
-		MediaAsset     func(childComplexity int, id string) int
-		MediaAssets    func(childComplexity int, ids []string) int
-		Quiz           func(childComplexity int, id string) int
-		Quizzes        func(childComplexity int, lessonID *string, page *int, pageSize *int) int
-		Tag            func(childComplexity int, id *string, slug *string) int
-		Tags           func(childComplexity int) int
-		Topic          func(childComplexity int, id *string, slug *string) int
-		Topics         func(childComplexity int) int
+		FlashcardSet         func(childComplexity int, id string) int
+		FlashcardSets        func(childComplexity int, filter *model.FlashcardSetFilterInput, page *int, pageSize *int, orderBy *model.FlashcardSetOrderInput) int
+		Flashcards           func(childComplexity int, setID string, filter *model.FlashcardFilterInput, page *int, pageSize *int, orderBy *model.FlashcardOrderInput) int
+		Health               func(childComplexity int) int
+		Lesson               func(childComplexity int, id string) int
+		LessonByCode         func(childComplexity int, code string) int
+		LessonSections       func(childComplexity int, lessonID string, filter *model.LessonSectionFilterInput, page *int, pageSize *int, orderBy *model.LessonSectionOrderInput) int
+		Lessons              func(childComplexity int, filter *model.LessonFilterInput, page *int, pageSize *int, orderBy *model.LessonOrderInput) int
+		Level                func(childComplexity int, id *string, code *string) int
+		Levels               func(childComplexity int, search *string) int
+		MediaAsset           func(childComplexity int, id string) int
+		MediaAssetCollection func(childComplexity int, filter *model.MediaAssetFilterInput, page *int, pageSize *int, orderBy *model.MediaAssetOrderInput) int
+		MediaAssets          func(childComplexity int, ids []string) int
+		Quiz                 func(childComplexity int, id string) int
+		QuizQuestions        func(childComplexity int, quizID string, filter *model.QuizQuestionFilterInput, page *int, pageSize *int, orderBy *model.QuizQuestionOrderInput) int
+		Quizzes              func(childComplexity int, lessonID *string, search *string, page *int, pageSize *int, orderBy *model.QuizOrderInput) int
+		Tag                  func(childComplexity int, id *string, slug *string) int
+		Tags                 func(childComplexity int, search *string) int
+		Topic                func(childComplexity int, id *string, slug *string) int
+		Topics               func(childComplexity int, search *string) int
 	}
 
 	QuestionOption struct {
@@ -213,8 +239,10 @@ type ComplexityRoot struct {
 		TotalPoints func(childComplexity int) int
 	}
 
-	QuizListResult struct {
+	QuizCollection struct {
 		Items      func(childComplexity int) int
+		Page       func(childComplexity int) int
+		PageSize   func(childComplexity int) int
 		TotalCount func(childComplexity int) int
 	}
 
@@ -228,6 +256,13 @@ type ComplexityRoot struct {
 		PromptMedia func(childComplexity int) int
 		QuizID      func(childComplexity int) int
 		Type        func(childComplexity int) int
+	}
+
+	QuizQuestionCollection struct {
+		Items      func(childComplexity int) int
+		Page       func(childComplexity int) int
+		PageSize   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	Tag struct {
@@ -286,21 +321,24 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Health(ctx context.Context) (string, error)
 	Topic(ctx context.Context, id *string, slug *string) (*model.Topic, error)
-	Topics(ctx context.Context) ([]*model.Topic, error)
+	Topics(ctx context.Context, search *string) ([]*model.Topic, error)
 	Level(ctx context.Context, id *string, code *string) (*model.Level, error)
-	Levels(ctx context.Context) ([]*model.Level, error)
+	Levels(ctx context.Context, search *string) ([]*model.Level, error)
 	Tag(ctx context.Context, id *string, slug *string) (*model.Tag, error)
-	Tags(ctx context.Context) ([]*model.Tag, error)
+	Tags(ctx context.Context, search *string) ([]*model.Tag, error)
 	MediaAsset(ctx context.Context, id string) (*model.MediaAsset, error)
 	MediaAssets(ctx context.Context, ids []string) ([]*model.MediaAsset, error)
+	MediaAssetCollection(ctx context.Context, filter *model.MediaAssetFilterInput, page *int, pageSize *int, orderBy *model.MediaAssetOrderInput) (*model.MediaAssetCollection, error)
 	Lesson(ctx context.Context, id string) (*model.Lesson, error)
 	LessonByCode(ctx context.Context, code string) (*model.Lesson, error)
 	Quiz(ctx context.Context, id string) (*model.Quiz, error)
-	Quizzes(ctx context.Context, lessonID *string, page *int, pageSize *int) (*model.QuizListResult, error)
+	Quizzes(ctx context.Context, lessonID *string, search *string, page *int, pageSize *int, orderBy *model.QuizOrderInput) (*model.QuizCollection, error)
+	QuizQuestions(ctx context.Context, quizID string, filter *model.QuizQuestionFilterInput, page *int, pageSize *int, orderBy *model.QuizQuestionOrderInput) (*model.QuizQuestionCollection, error)
 	FlashcardSet(ctx context.Context, id string) (*model.FlashcardSet, error)
-	FlashcardSets(ctx context.Context, topicID *string, levelID *string, page *int, pageSize *int) (*model.FlashcardSetList, error)
-	Lessons(ctx context.Context, filter *model.LessonFilterInput, page *int, pageSize *int) (*model.LessonCollection, error)
-	LessonSections(ctx context.Context, lessonID string) ([]*model.LessonSection, error)
+	FlashcardSets(ctx context.Context, filter *model.FlashcardSetFilterInput, page *int, pageSize *int, orderBy *model.FlashcardSetOrderInput) (*model.FlashcardSetList, error)
+	Flashcards(ctx context.Context, setID string, filter *model.FlashcardFilterInput, page *int, pageSize *int, orderBy *model.FlashcardOrderInput) (*model.FlashcardCollection, error)
+	Lessons(ctx context.Context, filter *model.LessonFilterInput, page *int, pageSize *int, orderBy *model.LessonOrderInput) (*model.LessonCollection, error)
+	LessonSections(ctx context.Context, lessonID string, filter *model.LessonSectionFilterInput, page *int, pageSize *int, orderBy *model.LessonSectionOrderInput) (*model.LessonSectionCollection, error)
 }
 type QuizResolver interface {
 	Tags(ctx context.Context, obj *model.Quiz) ([]*model.Tag, error)
@@ -408,6 +446,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Flashcard.SetID(childComplexity), true
+
+	case "FlashcardCollection.items":
+		if e.complexity.FlashcardCollection.Items == nil {
+			break
+		}
+
+		return e.complexity.FlashcardCollection.Items(childComplexity), true
+	case "FlashcardCollection.page":
+		if e.complexity.FlashcardCollection.Page == nil {
+			break
+		}
+
+		return e.complexity.FlashcardCollection.Page(childComplexity), true
+	case "FlashcardCollection.pageSize":
+		if e.complexity.FlashcardCollection.PageSize == nil {
+			break
+		}
+
+		return e.complexity.FlashcardCollection.PageSize(childComplexity), true
+	case "FlashcardCollection.totalCount":
+		if e.complexity.FlashcardCollection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.FlashcardCollection.TotalCount(childComplexity), true
 
 	case "FlashcardSet.cards":
 		if e.complexity.FlashcardSet.Cards == nil {
@@ -580,6 +643,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.LessonCollection.Items(childComplexity), true
+	case "LessonCollection.page":
+		if e.complexity.LessonCollection.Page == nil {
+			break
+		}
+
+		return e.complexity.LessonCollection.Page(childComplexity), true
+	case "LessonCollection.pageSize":
+		if e.complexity.LessonCollection.PageSize == nil {
+			break
+		}
+
+		return e.complexity.LessonCollection.PageSize(childComplexity), true
 	case "LessonCollection.totalCount":
 		if e.complexity.LessonCollection.TotalCount == nil {
 			break
@@ -623,6 +698,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.LessonSection.Type(childComplexity), true
+
+	case "LessonSectionCollection.items":
+		if e.complexity.LessonSectionCollection.Items == nil {
+			break
+		}
+
+		return e.complexity.LessonSectionCollection.Items(childComplexity), true
+	case "LessonSectionCollection.page":
+		if e.complexity.LessonSectionCollection.Page == nil {
+			break
+		}
+
+		return e.complexity.LessonSectionCollection.Page(childComplexity), true
+	case "LessonSectionCollection.pageSize":
+		if e.complexity.LessonSectionCollection.PageSize == nil {
+			break
+		}
+
+		return e.complexity.LessonSectionCollection.PageSize(childComplexity), true
+	case "LessonSectionCollection.totalCount":
+		if e.complexity.LessonSectionCollection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.LessonSectionCollection.TotalCount(childComplexity), true
 
 	case "Level.code":
 		if e.complexity.Level.Code == nil {
@@ -721,6 +821,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.MediaAsset.UploadedBy(childComplexity), true
+
+	case "MediaAssetCollection.items":
+		if e.complexity.MediaAssetCollection.Items == nil {
+			break
+		}
+
+		return e.complexity.MediaAssetCollection.Items(childComplexity), true
+	case "MediaAssetCollection.page":
+		if e.complexity.MediaAssetCollection.Page == nil {
+			break
+		}
+
+		return e.complexity.MediaAssetCollection.Page(childComplexity), true
+	case "MediaAssetCollection.pageSize":
+		if e.complexity.MediaAssetCollection.PageSize == nil {
+			break
+		}
+
+		return e.complexity.MediaAssetCollection.PageSize(childComplexity), true
+	case "MediaAssetCollection.totalCount":
+		if e.complexity.MediaAssetCollection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.MediaAssetCollection.TotalCount(childComplexity), true
 
 	case "Mutation.addContentTag":
 		if e.complexity.Mutation.AddContentTag == nil {
@@ -1041,7 +1166,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.FlashcardSets(childComplexity, args["topicId"].(*string), args["levelId"].(*string), args["page"].(*int), args["pageSize"].(*int)), true
+		return e.complexity.Query.FlashcardSets(childComplexity, args["filter"].(*model.FlashcardSetFilterInput), args["page"].(*int), args["pageSize"].(*int), args["orderBy"].(*model.FlashcardSetOrderInput)), true
+	case "Query.flashcards":
+		if e.complexity.Query.Flashcards == nil {
+			break
+		}
+
+		args, err := ec.field_Query_flashcards_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Flashcards(childComplexity, args["setId"].(string), args["filter"].(*model.FlashcardFilterInput), args["page"].(*int), args["pageSize"].(*int), args["orderBy"].(*model.FlashcardOrderInput)), true
 	case "Query.health":
 		if e.complexity.Query.Health == nil {
 			break
@@ -1080,7 +1216,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.LessonSections(childComplexity, args["lessonId"].(string)), true
+		return e.complexity.Query.LessonSections(childComplexity, args["lessonId"].(string), args["filter"].(*model.LessonSectionFilterInput), args["page"].(*int), args["pageSize"].(*int), args["orderBy"].(*model.LessonSectionOrderInput)), true
 	case "Query.lessons":
 		if e.complexity.Query.Lessons == nil {
 			break
@@ -1091,7 +1227,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Lessons(childComplexity, args["filter"].(*model.LessonFilterInput), args["page"].(*int), args["pageSize"].(*int)), true
+		return e.complexity.Query.Lessons(childComplexity, args["filter"].(*model.LessonFilterInput), args["page"].(*int), args["pageSize"].(*int), args["orderBy"].(*model.LessonOrderInput)), true
 	case "Query.level":
 		if e.complexity.Query.Level == nil {
 			break
@@ -1108,7 +1244,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			break
 		}
 
-		return e.complexity.Query.Levels(childComplexity), true
+		args, err := ec.field_Query_levels_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Levels(childComplexity, args["search"].(*string)), true
 	case "Query.mediaAsset":
 		if e.complexity.Query.MediaAsset == nil {
 			break
@@ -1120,6 +1261,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.MediaAsset(childComplexity, args["id"].(string)), true
+	case "Query.mediaAssetCollection":
+		if e.complexity.Query.MediaAssetCollection == nil {
+			break
+		}
+
+		args, err := ec.field_Query_mediaAssetCollection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.MediaAssetCollection(childComplexity, args["filter"].(*model.MediaAssetFilterInput), args["page"].(*int), args["pageSize"].(*int), args["orderBy"].(*model.MediaAssetOrderInput)), true
 	case "Query.mediaAssets":
 		if e.complexity.Query.MediaAssets == nil {
 			break
@@ -1142,6 +1294,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Quiz(childComplexity, args["id"].(string)), true
+	case "Query.quizQuestions":
+		if e.complexity.Query.QuizQuestions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_quizQuestions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.QuizQuestions(childComplexity, args["quizId"].(string), args["filter"].(*model.QuizQuestionFilterInput), args["page"].(*int), args["pageSize"].(*int), args["orderBy"].(*model.QuizQuestionOrderInput)), true
 	case "Query.quizzes":
 		if e.complexity.Query.Quizzes == nil {
 			break
@@ -1152,7 +1315,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Quizzes(childComplexity, args["lessonId"].(*string), args["page"].(*int), args["pageSize"].(*int)), true
+		return e.complexity.Query.Quizzes(childComplexity, args["lessonId"].(*string), args["search"].(*string), args["page"].(*int), args["pageSize"].(*int), args["orderBy"].(*model.QuizOrderInput)), true
 	case "Query.tag":
 		if e.complexity.Query.Tag == nil {
 			break
@@ -1169,7 +1332,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			break
 		}
 
-		return e.complexity.Query.Tags(childComplexity), true
+		args, err := ec.field_Query_tags_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Tags(childComplexity, args["search"].(*string)), true
 	case "Query.topic":
 		if e.complexity.Query.Topic == nil {
 			break
@@ -1186,7 +1354,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			break
 		}
 
-		return e.complexity.Query.Topics(childComplexity), true
+		args, err := ec.field_Query_topics_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Topics(childComplexity, args["search"].(*string)), true
 
 	case "QuestionOption.feedback":
 		if e.complexity.QuestionOption.Feedback == nil {
@@ -1280,18 +1453,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Quiz.TotalPoints(childComplexity), true
 
-	case "QuizListResult.items":
-		if e.complexity.QuizListResult.Items == nil {
+	case "QuizCollection.items":
+		if e.complexity.QuizCollection.Items == nil {
 			break
 		}
 
-		return e.complexity.QuizListResult.Items(childComplexity), true
-	case "QuizListResult.totalCount":
-		if e.complexity.QuizListResult.TotalCount == nil {
+		return e.complexity.QuizCollection.Items(childComplexity), true
+	case "QuizCollection.page":
+		if e.complexity.QuizCollection.Page == nil {
 			break
 		}
 
-		return e.complexity.QuizListResult.TotalCount(childComplexity), true
+		return e.complexity.QuizCollection.Page(childComplexity), true
+	case "QuizCollection.pageSize":
+		if e.complexity.QuizCollection.PageSize == nil {
+			break
+		}
+
+		return e.complexity.QuizCollection.PageSize(childComplexity), true
+	case "QuizCollection.totalCount":
+		if e.complexity.QuizCollection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.QuizCollection.TotalCount(childComplexity), true
 
 	case "QuizQuestion.id":
 		if e.complexity.QuizQuestion.ID == nil {
@@ -1347,6 +1532,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.QuizQuestion.Type(childComplexity), true
+
+	case "QuizQuestionCollection.items":
+		if e.complexity.QuizQuestionCollection.Items == nil {
+			break
+		}
+
+		return e.complexity.QuizQuestionCollection.Items(childComplexity), true
+	case "QuizQuestionCollection.page":
+		if e.complexity.QuizQuestionCollection.Page == nil {
+			break
+		}
+
+		return e.complexity.QuizQuestionCollection.Page(childComplexity), true
+	case "QuizQuestionCollection.pageSize":
+		if e.complexity.QuizQuestionCollection.PageSize == nil {
+			break
+		}
+
+		return e.complexity.QuizQuestionCollection.PageSize(childComplexity), true
+	case "QuizQuestionCollection.totalCount":
+		if e.complexity.QuizQuestionCollection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.QuizQuestionCollection.TotalCount(childComplexity), true
 
 	case "Tag.id":
 		if e.complexity.Tag.ID == nil {
@@ -1411,7 +1621,19 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateQuizQuestionInput,
 		ec.unmarshalInputCreateTagInput,
 		ec.unmarshalInputCreateTopicInput,
+		ec.unmarshalInputFlashcardFilterInput,
+		ec.unmarshalInputFlashcardOrderInput,
+		ec.unmarshalInputFlashcardSetFilterInput,
+		ec.unmarshalInputFlashcardSetOrderInput,
 		ec.unmarshalInputLessonFilterInput,
+		ec.unmarshalInputLessonOrderInput,
+		ec.unmarshalInputLessonSectionFilterInput,
+		ec.unmarshalInputLessonSectionOrderInput,
+		ec.unmarshalInputMediaAssetFilterInput,
+		ec.unmarshalInputMediaAssetOrderInput,
+		ec.unmarshalInputQuizOrderInput,
+		ec.unmarshalInputQuizQuestionFilterInput,
+		ec.unmarshalInputQuizQuestionOrderInput,
 		ec.unmarshalInputUpdateLessonInput,
 		ec.unmarshalInputUpdateLessonSectionInput,
 		ec.unmarshalInputUpdateLevelInput,
@@ -1525,27 +1747,30 @@ type Query {
   health: String!
 
   topic(id: ID, slug: String): Topic
-  topics: [Topic!]!
+  topics(search: String): [Topic!]!
 
   level(id: ID, code: String): Level
-  levels: [Level!]!
+  levels(search: String): [Level!]!
 
   tag(id: ID, slug: String): Tag
-  tags: [Tag!]!
+  tags(search: String): [Tag!]!
 
   mediaAsset(id: ID!): MediaAsset
   mediaAssets(ids: [ID!]!): [MediaAsset!]!
+  mediaAssetCollection(filter: MediaAssetFilterInput, page: Int, pageSize: Int, orderBy: MediaAssetOrderInput): MediaAssetCollection!
 
   lesson(id: ID!): Lesson
   lessonByCode(code: String!): Lesson
 
   quiz(id: ID!): Quiz
-  quizzes(lessonId: ID, page: Int = 1, pageSize: Int = 20): QuizListResult!
+  quizzes(lessonId: ID, search: String, page: Int = 1, pageSize: Int = 20, orderBy: QuizOrderInput): QuizCollection!
+  quizQuestions(quizId: ID!, filter: QuizQuestionFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: QuizQuestionOrderInput): QuizQuestionCollection!
   flashcardSet(id: ID!): FlashcardSet
-  flashcardSets(topicId: ID, levelId: ID, page: Int, pageSize: Int): FlashcardSetList!
-  lessons(filter: LessonFilterInput, page: Int, pageSize: Int): LessonCollection!
+  flashcardSets(filter: FlashcardSetFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: FlashcardSetOrderInput): FlashcardSetList!
+  flashcards(setId: ID!, filter: FlashcardFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: FlashcardOrderInput): FlashcardCollection!
+  lessons(filter: LessonFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: LessonOrderInput): LessonCollection!
 
-  lessonSections(lessonId: ID!): [LessonSection!]!
+  lessonSections(lessonId: ID!, filter: LessonSectionFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: LessonSectionOrderInput): LessonSectionCollection!
 }
 
 type Mutation {
@@ -1657,6 +1882,31 @@ type MediaAsset {
   downloadURL: String!
 }
 
+input MediaAssetFilterInput {
+  folderId: ID
+  kind: MediaKind
+  uploadedBy: ID
+  sha256: String
+  search: String
+}
+
+enum MediaAssetOrderField {
+  CREATED_AT
+  BYTES
+}
+
+input MediaAssetOrderInput {
+  field: MediaAssetOrderField! = CREATED_AT
+  direction: OrderDirection! = DESC
+}
+
+type MediaAssetCollection {
+  items: [MediaAsset!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
 input UploadMediaInput {
   file: Upload!
   kind: MediaKind!
@@ -1717,9 +1967,42 @@ type QuizQuestion {
   options: [QuestionOption!]!
 }
 
-type QuizListResult {
+enum QuizOrderField {
+  CREATED_AT
+  TOTAL_POINTS
+}
+
+input QuizOrderInput {
+  field: QuizOrderField! = CREATED_AT
+  direction: OrderDirection! = DESC
+}
+
+type QuizCollection {
   items: [Quiz!]!
   totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+input QuizQuestionFilterInput {
+  type: String
+}
+
+enum QuizQuestionOrderField {
+  ORD
+  POINTS
+}
+
+input QuizQuestionOrderInput {
+  field: QuizQuestionOrderField! = ORD
+  direction: OrderDirection! = ASC
+}
+
+type QuizQuestionCollection {
+  items: [QuizQuestion!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
 }
 
 input CreateQuizInput {
@@ -1762,11 +2045,25 @@ input LessonFilterInput {
   levelId: ID
   isPublished: Boolean
   search: String
+  createdBy: ID
+}
+
+enum LessonOrderField {
+  CREATED_AT
+  PUBLISHED_AT
+  VERSION
+}
+
+input LessonOrderInput {
+  field: LessonOrderField! = CREATED_AT
+  direction: OrderDirection! = DESC
 }
 
 type LessonCollection {
   items: [Lesson!]!
   totalCount: Int!
+  page: Int!
+  pageSize: Int!
 }
 
 type LessonSection {
@@ -1776,6 +2073,27 @@ type LessonSection {
   type: LessonSectionType!
   body: Map!
   createdAt: Time!
+}
+
+input LessonSectionFilterInput {
+  type: LessonSectionType
+}
+
+enum LessonSectionOrderField {
+  ORD
+  CREATED_AT
+}
+
+input LessonSectionOrderInput {
+  field: LessonSectionOrderField! = ORD
+  direction: OrderDirection! = ASC
+}
+
+type LessonSectionCollection {
+  items: [LessonSection!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
 }
 
 enum LessonSectionType {
@@ -1800,6 +2118,11 @@ scalar Time
 scalar Upload
 scalar JSON
 scalar Map
+
+enum OrderDirection {
+  ASC
+  DESC
+}
 
 type QuestionOption {
   id: ID!
@@ -1853,8 +2176,46 @@ type Flashcard {
   createdAt: Time!
 }
 
+input FlashcardSetFilterInput {
+  topicId: ID
+  levelId: ID
+  createdBy: ID
+  search: String
+}
+
+enum FlashcardSetOrderField {
+  CREATED_AT
+  CARD_COUNT
+}
+
+input FlashcardSetOrderInput {
+  field: FlashcardSetOrderField! = CREATED_AT
+  direction: OrderDirection! = DESC
+}
+
 type FlashcardSetList {
   items: [FlashcardSet!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+input FlashcardFilterInput {
+  hasMedia: Boolean
+}
+
+enum FlashcardOrderField {
+  ORD
+  CREATED_AT
+}
+
+input FlashcardOrderInput {
+  field: FlashcardOrderField! = ORD
+  direction: OrderDirection! = ASC
+}
+
+type FlashcardCollection {
+  items: [Flashcard!]!
   totalCount: Int!
   page: Int!
   pageSize: Int!
@@ -2253,16 +2614,42 @@ func (ec *executionContext) field_Query_flashcardSet_args(ctx context.Context, r
 func (ec *executionContext) field_Query_flashcardSets_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "topicId", ec.unmarshalOID2ᚖstring)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOFlashcardSetFilterInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSetFilterInput)
 	if err != nil {
 		return nil, err
 	}
-	args["topicId"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "levelId", ec.unmarshalOID2ᚖstring)
+	args["filter"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalOInt2ᚖint)
 	if err != nil {
 		return nil, err
 	}
-	args["levelId"] = arg1
+	args["page"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["pageSize"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOFlashcardSetOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSetOrderInput)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_flashcards_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "setId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["setId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOFlashcardFilterInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardFilterInput)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg1
 	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalOInt2ᚖint)
 	if err != nil {
 		return nil, err
@@ -2273,6 +2660,11 @@ func (ec *executionContext) field_Query_flashcardSets_args(ctx context.Context, 
 		return nil, err
 	}
 	args["pageSize"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOFlashcardOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardOrderInput)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -2295,6 +2687,26 @@ func (ec *executionContext) field_Query_lessonSections_args(ctx context.Context,
 		return nil, err
 	}
 	args["lessonId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOLessonSectionFilterInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSectionFilterInput)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["page"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["pageSize"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOLessonSectionOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSectionOrderInput)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -2327,6 +2739,11 @@ func (ec *executionContext) field_Query_lessons_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["pageSize"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOLessonOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonOrderInput)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg3
 	return args, nil
 }
 
@@ -2343,6 +2760,43 @@ func (ec *executionContext) field_Query_level_args(ctx context.Context, rawArgs 
 		return nil, err
 	}
 	args["code"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_levels_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "search", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["search"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_mediaAssetCollection_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOMediaAssetFilterInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAssetFilterInput)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["page"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["pageSize"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOMediaAssetOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAssetOrderInput)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg3
 	return args, nil
 }
 
@@ -2368,6 +2822,37 @@ func (ec *executionContext) field_Query_mediaAssets_args(ctx context.Context, ra
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_quizQuestions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "quizId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["quizId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOQuizQuestionFilterInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizQuestionFilterInput)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["page"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["pageSize"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOQuizQuestionOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizQuestionOrderInput)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_quiz_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2387,16 +2872,26 @@ func (ec *executionContext) field_Query_quizzes_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["lessonId"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalOInt2ᚖint)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "search", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
-	args["page"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalOInt2ᚖint)
+	args["search"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalOInt2ᚖint)
 	if err != nil {
 		return nil, err
 	}
-	args["pageSize"] = arg2
+	args["page"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["pageSize"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOQuizOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizOrderInput)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -2416,6 +2911,17 @@ func (ec *executionContext) field_Query_tag_args(ctx context.Context, rawArgs ma
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_tags_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "search", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["search"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_topic_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2429,6 +2935,17 @@ func (ec *executionContext) field_Query_topic_args(ctx context.Context, rawArgs 
 		return nil, err
 	}
 	args["slug"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_topics_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "search", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["search"] = arg0
 	return args, nil
 }
 
@@ -2864,6 +3381,142 @@ func (ec *executionContext) fieldContext_Flashcard_createdAt(_ context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardCollection_items(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardCollection_items,
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		ec.marshalNFlashcard2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardCollection_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Flashcard_id(ctx, field)
+			case "setId":
+				return ec.fieldContext_Flashcard_setId(ctx, field)
+			case "frontText":
+				return ec.fieldContext_Flashcard_frontText(ctx, field)
+			case "backText":
+				return ec.fieldContext_Flashcard_backText(ctx, field)
+			case "frontMediaId":
+				return ec.fieldContext_Flashcard_frontMediaId(ctx, field)
+			case "backMediaId":
+				return ec.fieldContext_Flashcard_backMediaId(ctx, field)
+			case "ord":
+				return ec.fieldContext_Flashcard_ord(ctx, field)
+			case "hints":
+				return ec.fieldContext_Flashcard_hints(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Flashcard_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Flashcard", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardCollection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardCollection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardCollection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardCollection_page(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardCollection_page,
+		func(ctx context.Context) (any, error) {
+			return obj.Page, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardCollection_page(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardCollection_pageSize(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardCollection_pageSize,
+		func(ctx context.Context) (any, error) {
+			return obj.PageSize, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardCollection_pageSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3828,6 +4481,64 @@ func (ec *executionContext) fieldContext_LessonCollection_totalCount(_ context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _LessonCollection_page(ctx context.Context, field graphql.CollectedField, obj *model.LessonCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LessonCollection_page,
+		func(ctx context.Context) (any, error) {
+			return obj.Page, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LessonCollection_page(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LessonCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LessonCollection_pageSize(ctx context.Context, field graphql.CollectedField, obj *model.LessonCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LessonCollection_pageSize,
+		func(ctx context.Context) (any, error) {
+			return obj.PageSize, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LessonCollection_pageSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LessonCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _LessonSection_id(ctx context.Context, field graphql.CollectedField, obj *model.LessonSection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3997,6 +4708,136 @@ func (ec *executionContext) fieldContext_LessonSection_createdAt(_ context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LessonSectionCollection_items(ctx context.Context, field graphql.CollectedField, obj *model.LessonSectionCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LessonSectionCollection_items,
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		ec.marshalNLessonSection2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSectionᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LessonSectionCollection_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LessonSectionCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_LessonSection_id(ctx, field)
+			case "lessonId":
+				return ec.fieldContext_LessonSection_lessonId(ctx, field)
+			case "ord":
+				return ec.fieldContext_LessonSection_ord(ctx, field)
+			case "type":
+				return ec.fieldContext_LessonSection_type(ctx, field)
+			case "body":
+				return ec.fieldContext_LessonSection_body(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_LessonSection_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LessonSection", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LessonSectionCollection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.LessonSectionCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LessonSectionCollection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LessonSectionCollection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LessonSectionCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LessonSectionCollection_page(ctx context.Context, field graphql.CollectedField, obj *model.LessonSectionCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LessonSectionCollection_page,
+		func(ctx context.Context) (any, error) {
+			return obj.Page, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LessonSectionCollection_page(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LessonSectionCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LessonSectionCollection_pageSize(ctx context.Context, field graphql.CollectedField, obj *model.LessonSectionCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LessonSectionCollection_pageSize,
+		func(ctx context.Context) (any, error) {
+			return obj.PageSize, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LessonSectionCollection_pageSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LessonSectionCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4461,6 +5302,150 @@ func (ec *executionContext) fieldContext_MediaAsset_downloadURL(_ context.Contex
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAssetCollection_items(ctx context.Context, field graphql.CollectedField, obj *model.MediaAssetCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAssetCollection_items,
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		ec.marshalNMediaAsset2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAssetᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAssetCollection_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAssetCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_MediaAsset_id(ctx, field)
+			case "storageKey":
+				return ec.fieldContext_MediaAsset_storageKey(ctx, field)
+			case "kind":
+				return ec.fieldContext_MediaAsset_kind(ctx, field)
+			case "mimeType":
+				return ec.fieldContext_MediaAsset_mimeType(ctx, field)
+			case "folderId":
+				return ec.fieldContext_MediaAsset_folderId(ctx, field)
+			case "originalName":
+				return ec.fieldContext_MediaAsset_originalName(ctx, field)
+			case "thumbnailURL":
+				return ec.fieldContext_MediaAsset_thumbnailURL(ctx, field)
+			case "bytes":
+				return ec.fieldContext_MediaAsset_bytes(ctx, field)
+			case "durationMs":
+				return ec.fieldContext_MediaAsset_durationMs(ctx, field)
+			case "sha256":
+				return ec.fieldContext_MediaAsset_sha256(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_MediaAsset_createdAt(ctx, field)
+			case "uploadedBy":
+				return ec.fieldContext_MediaAsset_uploadedBy(ctx, field)
+			case "downloadURL":
+				return ec.fieldContext_MediaAsset_downloadURL(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MediaAsset", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAssetCollection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.MediaAssetCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAssetCollection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAssetCollection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAssetCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAssetCollection_page(ctx context.Context, field graphql.CollectedField, obj *model.MediaAssetCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAssetCollection_page,
+		func(ctx context.Context) (any, error) {
+			return obj.Page, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAssetCollection_page(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAssetCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaAssetCollection_pageSize(ctx context.Context, field graphql.CollectedField, obj *model.MediaAssetCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MediaAssetCollection_pageSize,
+		func(ctx context.Context) (any, error) {
+			return obj.PageSize, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MediaAssetCollection_pageSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaAssetCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6006,7 +6991,8 @@ func (ec *executionContext) _Query_topics(ctx context.Context, field graphql.Col
 		field,
 		ec.fieldContext_Query_topics,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Query().Topics(ctx)
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().Topics(ctx, fc.Args["search"].(*string))
 		},
 		nil,
 		ec.marshalNTopic2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐTopicᚄ,
@@ -6015,7 +7001,7 @@ func (ec *executionContext) _Query_topics(ctx context.Context, field graphql.Col
 	)
 }
 
-func (ec *executionContext) fieldContext_Query_topics(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_topics(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -6034,6 +7020,17 @@ func (ec *executionContext) fieldContext_Query_topics(_ context.Context, field g
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Topic", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_topics_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -6094,7 +7091,8 @@ func (ec *executionContext) _Query_levels(ctx context.Context, field graphql.Col
 		field,
 		ec.fieldContext_Query_levels,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Query().Levels(ctx)
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().Levels(ctx, fc.Args["search"].(*string))
 		},
 		nil,
 		ec.marshalNLevel2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐLevelᚄ,
@@ -6103,7 +7101,7 @@ func (ec *executionContext) _Query_levels(ctx context.Context, field graphql.Col
 	)
 }
 
-func (ec *executionContext) fieldContext_Query_levels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_levels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -6120,6 +7118,17 @@ func (ec *executionContext) fieldContext_Query_levels(_ context.Context, field g
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Level", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_levels_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -6180,7 +7189,8 @@ func (ec *executionContext) _Query_tags(ctx context.Context, field graphql.Colle
 		field,
 		ec.fieldContext_Query_tags,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Query().Tags(ctx)
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().Tags(ctx, fc.Args["search"].(*string))
 		},
 		nil,
 		ec.marshalNTag2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐTagᚄ,
@@ -6189,7 +7199,7 @@ func (ec *executionContext) _Query_tags(ctx context.Context, field graphql.Colle
 	)
 }
 
-func (ec *executionContext) fieldContext_Query_tags(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_tags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -6206,6 +7216,17 @@ func (ec *executionContext) fieldContext_Query_tags(_ context.Context, field gra
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_tags_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -6342,6 +7363,57 @@ func (ec *executionContext) fieldContext_Query_mediaAssets(ctx context.Context, 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_mediaAssets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_mediaAssetCollection(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_mediaAssetCollection,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().MediaAssetCollection(ctx, fc.Args["filter"].(*model.MediaAssetFilterInput), fc.Args["page"].(*int), fc.Args["pageSize"].(*int), fc.Args["orderBy"].(*model.MediaAssetOrderInput))
+		},
+		nil,
+		ec.marshalNMediaAssetCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAssetCollection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_mediaAssetCollection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "items":
+				return ec.fieldContext_MediaAssetCollection_items(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_MediaAssetCollection_totalCount(ctx, field)
+			case "page":
+				return ec.fieldContext_MediaAssetCollection_page(ctx, field)
+			case "pageSize":
+				return ec.fieldContext_MediaAssetCollection_pageSize(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MediaAssetCollection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_mediaAssetCollection_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6559,10 +7631,10 @@ func (ec *executionContext) _Query_quizzes(ctx context.Context, field graphql.Co
 		ec.fieldContext_Query_quizzes,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Quizzes(ctx, fc.Args["lessonId"].(*string), fc.Args["page"].(*int), fc.Args["pageSize"].(*int))
+			return ec.resolvers.Query().Quizzes(ctx, fc.Args["lessonId"].(*string), fc.Args["search"].(*string), fc.Args["page"].(*int), fc.Args["pageSize"].(*int), fc.Args["orderBy"].(*model.QuizOrderInput))
 		},
 		nil,
-		ec.marshalNQuizListResult2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizListResult,
+		ec.marshalNQuizCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizCollection,
 		true,
 		true,
 	)
@@ -6577,11 +7649,15 @@ func (ec *executionContext) fieldContext_Query_quizzes(ctx context.Context, fiel
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "items":
-				return ec.fieldContext_QuizListResult_items(ctx, field)
+				return ec.fieldContext_QuizCollection_items(ctx, field)
 			case "totalCount":
-				return ec.fieldContext_QuizListResult_totalCount(ctx, field)
+				return ec.fieldContext_QuizCollection_totalCount(ctx, field)
+			case "page":
+				return ec.fieldContext_QuizCollection_page(ctx, field)
+			case "pageSize":
+				return ec.fieldContext_QuizCollection_pageSize(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type QuizListResult", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type QuizCollection", field.Name)
 		},
 	}
 	defer func() {
@@ -6592,6 +7668,57 @@ func (ec *executionContext) fieldContext_Query_quizzes(ctx context.Context, fiel
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_quizzes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_quizQuestions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_quizQuestions,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().QuizQuestions(ctx, fc.Args["quizId"].(string), fc.Args["filter"].(*model.QuizQuestionFilterInput), fc.Args["page"].(*int), fc.Args["pageSize"].(*int), fc.Args["orderBy"].(*model.QuizQuestionOrderInput))
+		},
+		nil,
+		ec.marshalNQuizQuestionCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizQuestionCollection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_quizQuestions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "items":
+				return ec.fieldContext_QuizQuestionCollection_items(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_QuizQuestionCollection_totalCount(ctx, field)
+			case "page":
+				return ec.fieldContext_QuizQuestionCollection_page(ctx, field)
+			case "pageSize":
+				return ec.fieldContext_QuizQuestionCollection_pageSize(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type QuizQuestionCollection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_quizQuestions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6667,7 +7794,7 @@ func (ec *executionContext) _Query_flashcardSets(ctx context.Context, field grap
 		ec.fieldContext_Query_flashcardSets,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().FlashcardSets(ctx, fc.Args["topicId"].(*string), fc.Args["levelId"].(*string), fc.Args["page"].(*int), fc.Args["pageSize"].(*int))
+			return ec.resolvers.Query().FlashcardSets(ctx, fc.Args["filter"].(*model.FlashcardSetFilterInput), fc.Args["page"].(*int), fc.Args["pageSize"].(*int), fc.Args["orderBy"].(*model.FlashcardSetOrderInput))
 		},
 		nil,
 		ec.marshalNFlashcardSetList2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSetList,
@@ -6710,6 +7837,57 @@ func (ec *executionContext) fieldContext_Query_flashcardSets(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_flashcards(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_flashcards,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().Flashcards(ctx, fc.Args["setId"].(string), fc.Args["filter"].(*model.FlashcardFilterInput), fc.Args["page"].(*int), fc.Args["pageSize"].(*int), fc.Args["orderBy"].(*model.FlashcardOrderInput))
+		},
+		nil,
+		ec.marshalNFlashcardCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardCollection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_flashcards(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "items":
+				return ec.fieldContext_FlashcardCollection_items(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_FlashcardCollection_totalCount(ctx, field)
+			case "page":
+				return ec.fieldContext_FlashcardCollection_page(ctx, field)
+			case "pageSize":
+				return ec.fieldContext_FlashcardCollection_pageSize(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type FlashcardCollection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_flashcards_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_lessons(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6718,7 +7896,7 @@ func (ec *executionContext) _Query_lessons(ctx context.Context, field graphql.Co
 		ec.fieldContext_Query_lessons,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Lessons(ctx, fc.Args["filter"].(*model.LessonFilterInput), fc.Args["page"].(*int), fc.Args["pageSize"].(*int))
+			return ec.resolvers.Query().Lessons(ctx, fc.Args["filter"].(*model.LessonFilterInput), fc.Args["page"].(*int), fc.Args["pageSize"].(*int), fc.Args["orderBy"].(*model.LessonOrderInput))
 		},
 		nil,
 		ec.marshalNLessonCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonCollection,
@@ -6739,6 +7917,10 @@ func (ec *executionContext) fieldContext_Query_lessons(ctx context.Context, fiel
 				return ec.fieldContext_LessonCollection_items(ctx, field)
 			case "totalCount":
 				return ec.fieldContext_LessonCollection_totalCount(ctx, field)
+			case "page":
+				return ec.fieldContext_LessonCollection_page(ctx, field)
+			case "pageSize":
+				return ec.fieldContext_LessonCollection_pageSize(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type LessonCollection", field.Name)
 		},
@@ -6765,10 +7947,10 @@ func (ec *executionContext) _Query_lessonSections(ctx context.Context, field gra
 		ec.fieldContext_Query_lessonSections,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().LessonSections(ctx, fc.Args["lessonId"].(string))
+			return ec.resolvers.Query().LessonSections(ctx, fc.Args["lessonId"].(string), fc.Args["filter"].(*model.LessonSectionFilterInput), fc.Args["page"].(*int), fc.Args["pageSize"].(*int), fc.Args["orderBy"].(*model.LessonSectionOrderInput))
 		},
 		nil,
-		ec.marshalNLessonSection2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSectionᚄ,
+		ec.marshalNLessonSectionCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSectionCollection,
 		true,
 		true,
 	)
@@ -6782,20 +7964,16 @@ func (ec *executionContext) fieldContext_Query_lessonSections(ctx context.Contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_LessonSection_id(ctx, field)
-			case "lessonId":
-				return ec.fieldContext_LessonSection_lessonId(ctx, field)
-			case "ord":
-				return ec.fieldContext_LessonSection_ord(ctx, field)
-			case "type":
-				return ec.fieldContext_LessonSection_type(ctx, field)
-			case "body":
-				return ec.fieldContext_LessonSection_body(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_LessonSection_createdAt(ctx, field)
+			case "items":
+				return ec.fieldContext_LessonSectionCollection_items(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_LessonSectionCollection_totalCount(ctx, field)
+			case "page":
+				return ec.fieldContext_LessonSectionCollection_page(ctx, field)
+			case "pageSize":
+				return ec.fieldContext_LessonSectionCollection_pageSize(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type LessonSection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type LessonSectionCollection", field.Name)
 		},
 	}
 	defer func() {
@@ -7383,12 +8561,12 @@ func (ec *executionContext) fieldContext_Quiz_questions(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _QuizListResult_items(ctx context.Context, field graphql.CollectedField, obj *model.QuizListResult) (ret graphql.Marshaler) {
+func (ec *executionContext) _QuizCollection_items(ctx context.Context, field graphql.CollectedField, obj *model.QuizCollection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_QuizListResult_items,
+		ec.fieldContext_QuizCollection_items,
 		func(ctx context.Context) (any, error) {
 			return obj.Items, nil
 		},
@@ -7399,9 +8577,9 @@ func (ec *executionContext) _QuizListResult_items(ctx context.Context, field gra
 	)
 }
 
-func (ec *executionContext) fieldContext_QuizListResult_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_QuizCollection_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "QuizListResult",
+		Object:     "QuizCollection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -7432,12 +8610,12 @@ func (ec *executionContext) fieldContext_QuizListResult_items(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _QuizListResult_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.QuizListResult) (ret graphql.Marshaler) {
+func (ec *executionContext) _QuizCollection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.QuizCollection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_QuizListResult_totalCount,
+		ec.fieldContext_QuizCollection_totalCount,
 		func(ctx context.Context) (any, error) {
 			return obj.TotalCount, nil
 		},
@@ -7448,9 +8626,67 @@ func (ec *executionContext) _QuizListResult_totalCount(ctx context.Context, fiel
 	)
 }
 
-func (ec *executionContext) fieldContext_QuizListResult_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_QuizCollection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "QuizListResult",
+		Object:     "QuizCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QuizCollection_page(ctx context.Context, field graphql.CollectedField, obj *model.QuizCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_QuizCollection_page,
+		func(ctx context.Context) (any, error) {
+			return obj.Page, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_QuizCollection_page(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QuizCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QuizCollection_pageSize(ctx context.Context, field graphql.CollectedField, obj *model.QuizCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_QuizCollection_pageSize,
+		func(ctx context.Context) (any, error) {
+			return obj.PageSize, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_QuizCollection_pageSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QuizCollection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -7731,6 +8967,142 @@ func (ec *executionContext) fieldContext_QuizQuestion_options(_ context.Context,
 				return ec.fieldContext_QuestionOption_feedback(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type QuestionOption", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QuizQuestionCollection_items(ctx context.Context, field graphql.CollectedField, obj *model.QuizQuestionCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_QuizQuestionCollection_items,
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		ec.marshalNQuizQuestion2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizQuestionᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_QuizQuestionCollection_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QuizQuestionCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_QuizQuestion_id(ctx, field)
+			case "quizId":
+				return ec.fieldContext_QuizQuestion_quizId(ctx, field)
+			case "ord":
+				return ec.fieldContext_QuizQuestion_ord(ctx, field)
+			case "type":
+				return ec.fieldContext_QuizQuestion_type(ctx, field)
+			case "prompt":
+				return ec.fieldContext_QuizQuestion_prompt(ctx, field)
+			case "promptMedia":
+				return ec.fieldContext_QuizQuestion_promptMedia(ctx, field)
+			case "points":
+				return ec.fieldContext_QuizQuestion_points(ctx, field)
+			case "metadata":
+				return ec.fieldContext_QuizQuestion_metadata(ctx, field)
+			case "options":
+				return ec.fieldContext_QuizQuestion_options(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type QuizQuestion", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QuizQuestionCollection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.QuizQuestionCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_QuizQuestionCollection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_QuizQuestionCollection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QuizQuestionCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QuizQuestionCollection_page(ctx context.Context, field graphql.CollectedField, obj *model.QuizQuestionCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_QuizQuestionCollection_page,
+		func(ctx context.Context) (any, error) {
+			return obj.Page, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_QuizQuestionCollection_page(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QuizQuestionCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QuizQuestionCollection_pageSize(ctx context.Context, field graphql.CollectedField, obj *model.QuizQuestionCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_QuizQuestionCollection_pageSize,
+		func(ctx context.Context) (any, error) {
+			return obj.PageSize, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_QuizQuestionCollection_pageSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QuizQuestionCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9896,6 +11268,163 @@ func (ec *executionContext) unmarshalInputCreateTopicInput(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputFlashcardFilterInput(ctx context.Context, obj any) (model.FlashcardFilterInput, error) {
+	var it model.FlashcardFilterInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"hasMedia"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "hasMedia":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasMedia"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasMedia = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputFlashcardOrderInput(ctx context.Context, obj any) (model.FlashcardOrderInput, error) {
+	var it model.FlashcardOrderInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["field"]; !present {
+		asMap["field"] = "ORD"
+	}
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "ASC"
+	}
+
+	fieldsInOrder := [...]string{"field", "direction"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNFlashcardOrderField2contentᚑservicesᚋgraphᚋmodelᚐFlashcardOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2contentᚑservicesᚋgraphᚋmodelᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputFlashcardSetFilterInput(ctx context.Context, obj any) (model.FlashcardSetFilterInput, error) {
+	var it model.FlashcardSetFilterInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"topicId", "levelId", "createdBy", "search"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "topicId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("topicId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TopicID = data
+		case "levelId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("levelId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LevelID = data
+		case "createdBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdBy"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedBy = data
+		case "search":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Search = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputFlashcardSetOrderInput(ctx context.Context, obj any) (model.FlashcardSetOrderInput, error) {
+	var it model.FlashcardSetOrderInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["field"]; !present {
+		asMap["field"] = "CREATED_AT"
+	}
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "DESC"
+	}
+
+	fieldsInOrder := [...]string{"field", "direction"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNFlashcardSetOrderField2contentᚑservicesᚋgraphᚋmodelᚐFlashcardSetOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2contentᚑservicesᚋgraphᚋmodelᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputLessonFilterInput(ctx context.Context, obj any) (model.LessonFilterInput, error) {
 	var it model.LessonFilterInput
 	asMap := map[string]any{}
@@ -9903,7 +11432,7 @@ func (ec *executionContext) unmarshalInputLessonFilterInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"topicId", "levelId", "isPublished", "search"}
+	fieldsInOrder := [...]string{"topicId", "levelId", "isPublished", "search", "createdBy"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9938,6 +11467,327 @@ func (ec *executionContext) unmarshalInputLessonFilterInput(ctx context.Context,
 				return it, err
 			}
 			it.Search = data
+		case "createdBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdBy"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedBy = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputLessonOrderInput(ctx context.Context, obj any) (model.LessonOrderInput, error) {
+	var it model.LessonOrderInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["field"]; !present {
+		asMap["field"] = "CREATED_AT"
+	}
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "DESC"
+	}
+
+	fieldsInOrder := [...]string{"field", "direction"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNLessonOrderField2contentᚑservicesᚋgraphᚋmodelᚐLessonOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2contentᚑservicesᚋgraphᚋmodelᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputLessonSectionFilterInput(ctx context.Context, obj any) (model.LessonSectionFilterInput, error) {
+	var it model.LessonSectionFilterInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"type"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			data, err := ec.unmarshalOLessonSectionType2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSectionType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Type = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputLessonSectionOrderInput(ctx context.Context, obj any) (model.LessonSectionOrderInput, error) {
+	var it model.LessonSectionOrderInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["field"]; !present {
+		asMap["field"] = "ORD"
+	}
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "ASC"
+	}
+
+	fieldsInOrder := [...]string{"field", "direction"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNLessonSectionOrderField2contentᚑservicesᚋgraphᚋmodelᚐLessonSectionOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2contentᚑservicesᚋgraphᚋmodelᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputMediaAssetFilterInput(ctx context.Context, obj any) (model.MediaAssetFilterInput, error) {
+	var it model.MediaAssetFilterInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"folderId", "kind", "uploadedBy", "sha256", "search"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "folderId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("folderId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FolderID = data
+		case "kind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			data, err := ec.unmarshalOMediaKind2ᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaKind(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kind = data
+		case "uploadedBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("uploadedBy"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UploadedBy = data
+		case "sha256":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sha256"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Sha256 = data
+		case "search":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Search = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputMediaAssetOrderInput(ctx context.Context, obj any) (model.MediaAssetOrderInput, error) {
+	var it model.MediaAssetOrderInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["field"]; !present {
+		asMap["field"] = "CREATED_AT"
+	}
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "DESC"
+	}
+
+	fieldsInOrder := [...]string{"field", "direction"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNMediaAssetOrderField2contentᚑservicesᚋgraphᚋmodelᚐMediaAssetOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2contentᚑservicesᚋgraphᚋmodelᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputQuizOrderInput(ctx context.Context, obj any) (model.QuizOrderInput, error) {
+	var it model.QuizOrderInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["field"]; !present {
+		asMap["field"] = "CREATED_AT"
+	}
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "DESC"
+	}
+
+	fieldsInOrder := [...]string{"field", "direction"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNQuizOrderField2contentᚑservicesᚋgraphᚋmodelᚐQuizOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2contentᚑservicesᚋgraphᚋmodelᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputQuizQuestionFilterInput(ctx context.Context, obj any) (model.QuizQuestionFilterInput, error) {
+	var it model.QuizQuestionFilterInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"type"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Type = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputQuizQuestionOrderInput(ctx context.Context, obj any) (model.QuizQuestionOrderInput, error) {
+	var it model.QuizQuestionOrderInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["field"]; !present {
+		asMap["field"] = "ORD"
+	}
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "ASC"
+	}
+
+	fieldsInOrder := [...]string{"field", "direction"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNQuizQuestionOrderField2contentᚑservicesᚋgraphᚋmodelᚐQuizQuestionOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2contentᚑservicesᚋgraphᚋmodelᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
 		}
 	}
 
@@ -10367,6 +12217,60 @@ func (ec *executionContext) _Flashcard(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
+var flashcardCollectionImplementors = []string{"FlashcardCollection"}
+
+func (ec *executionContext) _FlashcardCollection(ctx context.Context, sel ast.SelectionSet, obj *model.FlashcardCollection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, flashcardCollectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FlashcardCollection")
+		case "items":
+			out.Values[i] = ec._FlashcardCollection_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._FlashcardCollection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "page":
+			out.Values[i] = ec._FlashcardCollection_page(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageSize":
+			out.Values[i] = ec._FlashcardCollection_pageSize(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var flashcardSetImplementors = []string{"FlashcardSet"}
 
 func (ec *executionContext) _FlashcardSet(ctx context.Context, sel ast.SelectionSet, obj *model.FlashcardSet) graphql.Marshaler {
@@ -10750,6 +12654,16 @@ func (ec *executionContext) _LessonCollection(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "page":
+			out.Values[i] = ec._LessonCollection_page(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageSize":
+			out.Values[i] = ec._LessonCollection_pageSize(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10811,6 +12725,60 @@ func (ec *executionContext) _LessonSection(ctx context.Context, sel ast.Selectio
 			}
 		case "createdAt":
 			out.Values[i] = ec._LessonSection_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var lessonSectionCollectionImplementors = []string{"LessonSectionCollection"}
+
+func (ec *executionContext) _LessonSectionCollection(ctx context.Context, sel ast.SelectionSet, obj *model.LessonSectionCollection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, lessonSectionCollectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LessonSectionCollection")
+		case "items":
+			out.Values[i] = ec._LessonSectionCollection_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._LessonSectionCollection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "page":
+			out.Values[i] = ec._LessonSectionCollection_page(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageSize":
+			out.Values[i] = ec._LessonSectionCollection_pageSize(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -10947,6 +12915,60 @@ func (ec *executionContext) _MediaAsset(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = ec._MediaAsset_uploadedBy(ctx, field, obj)
 		case "downloadURL":
 			out.Values[i] = ec._MediaAsset_downloadURL(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var mediaAssetCollectionImplementors = []string{"MediaAssetCollection"}
+
+func (ec *executionContext) _MediaAssetCollection(ctx context.Context, sel ast.SelectionSet, obj *model.MediaAssetCollection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mediaAssetCollectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MediaAssetCollection")
+		case "items":
+			out.Values[i] = ec._MediaAssetCollection_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._MediaAssetCollection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "page":
+			out.Values[i] = ec._MediaAssetCollection_page(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageSize":
+			out.Values[i] = ec._MediaAssetCollection_pageSize(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -11409,6 +13431,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "mediaAssetCollection":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_mediaAssetCollection(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "lesson":
 			field := field
 
@@ -11488,6 +13532,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "quizQuestions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_quizQuestions(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "flashcardSet":
 			field := field
 
@@ -11517,6 +13583,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_flashcardSets(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "flashcards":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_flashcards(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -11797,24 +13885,34 @@ func (ec *executionContext) _Quiz(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
-var quizListResultImplementors = []string{"QuizListResult"}
+var quizCollectionImplementors = []string{"QuizCollection"}
 
-func (ec *executionContext) _QuizListResult(ctx context.Context, sel ast.SelectionSet, obj *model.QuizListResult) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, quizListResultImplementors)
+func (ec *executionContext) _QuizCollection(ctx context.Context, sel ast.SelectionSet, obj *model.QuizCollection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, quizCollectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("QuizListResult")
+			out.Values[i] = graphql.MarshalString("QuizCollection")
 		case "items":
-			out.Values[i] = ec._QuizListResult_items(ctx, field, obj)
+			out.Values[i] = ec._QuizCollection_items(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "totalCount":
-			out.Values[i] = ec._QuizListResult_totalCount(ctx, field, obj)
+			out.Values[i] = ec._QuizCollection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "page":
+			out.Values[i] = ec._QuizCollection_page(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageSize":
+			out.Values[i] = ec._QuizCollection_pageSize(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -11925,6 +14023,60 @@ func (ec *executionContext) _QuizQuestion(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var quizQuestionCollectionImplementors = []string{"QuizQuestionCollection"}
+
+func (ec *executionContext) _QuizQuestionCollection(ctx context.Context, sel ast.SelectionSet, obj *model.QuizQuestionCollection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, quizQuestionCollectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("QuizQuestionCollection")
+		case "items":
+			out.Values[i] = ec._QuizQuestionCollection_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._QuizQuestionCollection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "page":
+			out.Values[i] = ec._QuizQuestionCollection_page(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageSize":
+			out.Values[i] = ec._QuizQuestionCollection_pageSize(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -12539,6 +14691,30 @@ func (ec *executionContext) marshalNFlashcard2ᚖcontentᚑservicesᚋgraphᚋmo
 	return ec._Flashcard(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNFlashcardCollection2contentᚑservicesᚋgraphᚋmodelᚐFlashcardCollection(ctx context.Context, sel ast.SelectionSet, v model.FlashcardCollection) graphql.Marshaler {
+	return ec._FlashcardCollection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNFlashcardCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardCollection(ctx context.Context, sel ast.SelectionSet, v *model.FlashcardCollection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._FlashcardCollection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNFlashcardOrderField2contentᚑservicesᚋgraphᚋmodelᚐFlashcardOrderField(ctx context.Context, v any) (model.FlashcardOrderField, error) {
+	var res model.FlashcardOrderField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFlashcardOrderField2contentᚑservicesᚋgraphᚋmodelᚐFlashcardOrderField(ctx context.Context, sel ast.SelectionSet, v model.FlashcardOrderField) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNFlashcardSet2contentᚑservicesᚋgraphᚋmodelᚐFlashcardSet(ctx context.Context, sel ast.SelectionSet, v model.FlashcardSet) graphql.Marshaler {
 	return ec._FlashcardSet(ctx, sel, &v)
 }
@@ -12609,6 +14785,16 @@ func (ec *executionContext) marshalNFlashcardSetList2ᚖcontentᚑservicesᚋgra
 		return graphql.Null
 	}
 	return ec._FlashcardSetList(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNFlashcardSetOrderField2contentᚑservicesᚋgraphᚋmodelᚐFlashcardSetOrderField(ctx context.Context, v any) (model.FlashcardSetOrderField, error) {
+	var res model.FlashcardSetOrderField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFlashcardSetOrderField2contentᚑservicesᚋgraphᚋmodelᚐFlashcardSetOrderField(ctx context.Context, sel ast.SelectionSet, v model.FlashcardSetOrderField) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v any) (string, error) {
@@ -12767,6 +14953,16 @@ func (ec *executionContext) marshalNLessonCollection2ᚖcontentᚑservicesᚋgra
 	return ec._LessonCollection(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNLessonOrderField2contentᚑservicesᚋgraphᚋmodelᚐLessonOrderField(ctx context.Context, v any) (model.LessonOrderField, error) {
+	var res model.LessonOrderField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNLessonOrderField2contentᚑservicesᚋgraphᚋmodelᚐLessonOrderField(ctx context.Context, sel ast.SelectionSet, v model.LessonOrderField) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNLessonSection2contentᚑservicesᚋgraphᚋmodelᚐLessonSection(ctx context.Context, sel ast.SelectionSet, v model.LessonSection) graphql.Marshaler {
 	return ec._LessonSection(ctx, sel, &v)
 }
@@ -12823,6 +15019,30 @@ func (ec *executionContext) marshalNLessonSection2ᚖcontentᚑservicesᚋgraph�
 		return graphql.Null
 	}
 	return ec._LessonSection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNLessonSectionCollection2contentᚑservicesᚋgraphᚋmodelᚐLessonSectionCollection(ctx context.Context, sel ast.SelectionSet, v model.LessonSectionCollection) graphql.Marshaler {
+	return ec._LessonSectionCollection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLessonSectionCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSectionCollection(ctx context.Context, sel ast.SelectionSet, v *model.LessonSectionCollection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._LessonSectionCollection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNLessonSectionOrderField2contentᚑservicesᚋgraphᚋmodelᚐLessonSectionOrderField(ctx context.Context, v any) (model.LessonSectionOrderField, error) {
+	var res model.LessonSectionOrderField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNLessonSectionOrderField2contentᚑservicesᚋgraphᚋmodelᚐLessonSectionOrderField(ctx context.Context, sel ast.SelectionSet, v model.LessonSectionOrderField) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNLessonSectionType2contentᚑservicesᚋgraphᚋmodelᚐLessonSectionType(ctx context.Context, v any) (model.LessonSectionType, error) {
@@ -12973,6 +15193,30 @@ func (ec *executionContext) marshalNMediaAsset2ᚖcontentᚑservicesᚋgraphᚋm
 	return ec._MediaAsset(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNMediaAssetCollection2contentᚑservicesᚋgraphᚋmodelᚐMediaAssetCollection(ctx context.Context, sel ast.SelectionSet, v model.MediaAssetCollection) graphql.Marshaler {
+	return ec._MediaAssetCollection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMediaAssetCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAssetCollection(ctx context.Context, sel ast.SelectionSet, v *model.MediaAssetCollection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MediaAssetCollection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNMediaAssetOrderField2contentᚑservicesᚋgraphᚋmodelᚐMediaAssetOrderField(ctx context.Context, v any) (model.MediaAssetOrderField, error) {
+	var res model.MediaAssetOrderField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMediaAssetOrderField2contentᚑservicesᚋgraphᚋmodelᚐMediaAssetOrderField(ctx context.Context, sel ast.SelectionSet, v model.MediaAssetOrderField) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNMediaKind2contentᚑservicesᚋgraphᚋmodelᚐMediaKind(ctx context.Context, v any) (model.MediaKind, error) {
 	var res model.MediaKind
 	err := res.UnmarshalGQL(v)
@@ -12980,6 +15224,16 @@ func (ec *executionContext) unmarshalNMediaKind2contentᚑservicesᚋgraphᚋmod
 }
 
 func (ec *executionContext) marshalNMediaKind2contentᚑservicesᚋgraphᚋmodelᚐMediaKind(ctx context.Context, sel ast.SelectionSet, v model.MediaKind) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNOrderDirection2contentᚑservicesᚋgraphᚋmodelᚐOrderDirection(ctx context.Context, v any) (model.OrderDirection, error) {
+	var res model.OrderDirection
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNOrderDirection2contentᚑservicesᚋgraphᚋmodelᚐOrderDirection(ctx context.Context, sel ast.SelectionSet, v model.OrderDirection) graphql.Marshaler {
 	return v
 }
 
@@ -13099,18 +15353,28 @@ func (ec *executionContext) marshalNQuiz2ᚖcontentᚑservicesᚋgraphᚋmodel�
 	return ec._Quiz(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNQuizListResult2contentᚑservicesᚋgraphᚋmodelᚐQuizListResult(ctx context.Context, sel ast.SelectionSet, v model.QuizListResult) graphql.Marshaler {
-	return ec._QuizListResult(ctx, sel, &v)
+func (ec *executionContext) marshalNQuizCollection2contentᚑservicesᚋgraphᚋmodelᚐQuizCollection(ctx context.Context, sel ast.SelectionSet, v model.QuizCollection) graphql.Marshaler {
+	return ec._QuizCollection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNQuizListResult2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizListResult(ctx context.Context, sel ast.SelectionSet, v *model.QuizListResult) graphql.Marshaler {
+func (ec *executionContext) marshalNQuizCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizCollection(ctx context.Context, sel ast.SelectionSet, v *model.QuizCollection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._QuizListResult(ctx, sel, v)
+	return ec._QuizCollection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNQuizOrderField2contentᚑservicesᚋgraphᚋmodelᚐQuizOrderField(ctx context.Context, v any) (model.QuizOrderField, error) {
+	var res model.QuizOrderField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNQuizOrderField2contentᚑservicesᚋgraphᚋmodelᚐQuizOrderField(ctx context.Context, sel ast.SelectionSet, v model.QuizOrderField) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNQuizQuestion2contentᚑservicesᚋgraphᚋmodelᚐQuizQuestion(ctx context.Context, sel ast.SelectionSet, v model.QuizQuestion) graphql.Marshaler {
@@ -13169,6 +15433,30 @@ func (ec *executionContext) marshalNQuizQuestion2ᚖcontentᚑservicesᚋgraph�
 		return graphql.Null
 	}
 	return ec._QuizQuestion(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNQuizQuestionCollection2contentᚑservicesᚋgraphᚋmodelᚐQuizQuestionCollection(ctx context.Context, sel ast.SelectionSet, v model.QuizQuestionCollection) graphql.Marshaler {
+	return ec._QuizQuestionCollection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNQuizQuestionCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizQuestionCollection(ctx context.Context, sel ast.SelectionSet, v *model.QuizQuestionCollection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._QuizQuestionCollection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNQuizQuestionOrderField2contentᚑservicesᚋgraphᚋmodelᚐQuizQuestionOrderField(ctx context.Context, v any) (model.QuizQuestionOrderField, error) {
+	var res model.QuizQuestionOrderField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNQuizQuestionOrderField2contentᚑservicesᚋgraphᚋmodelᚐQuizQuestionOrderField(ctx context.Context, sel ast.SelectionSet, v model.QuizQuestionOrderField) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
@@ -13646,11 +15934,43 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) unmarshalOFlashcardFilterInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardFilterInput(ctx context.Context, v any) (*model.FlashcardFilterInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputFlashcardFilterInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOFlashcardOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardOrderInput(ctx context.Context, v any) (*model.FlashcardOrderInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputFlashcardOrderInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalOFlashcardSet2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSet(ctx context.Context, sel ast.SelectionSet, v *model.FlashcardSet) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._FlashcardSet(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOFlashcardSetFilterInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSetFilterInput(ctx context.Context, v any) (*model.FlashcardSetFilterInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputFlashcardSetFilterInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOFlashcardSetOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSetOrderInput(ctx context.Context, v any) (*model.FlashcardSetOrderInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputFlashcardSetOrderInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v any) (*string, error) {
@@ -13722,6 +16042,30 @@ func (ec *executionContext) unmarshalOLessonFilterInput2ᚖcontentᚑservicesᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalOLessonOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonOrderInput(ctx context.Context, v any) (*model.LessonOrderInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputLessonOrderInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOLessonSectionFilterInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSectionFilterInput(ctx context.Context, v any) (*model.LessonSectionFilterInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputLessonSectionFilterInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOLessonSectionOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSectionOrderInput(ctx context.Context, v any) (*model.LessonSectionOrderInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputLessonSectionOrderInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOLessonSectionType2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSectionType(ctx context.Context, v any) (*model.LessonSectionType, error) {
 	if v == nil {
 		return nil, nil
@@ -13770,11 +16114,67 @@ func (ec *executionContext) marshalOMediaAsset2ᚖcontentᚑservicesᚋgraphᚋm
 	return ec._MediaAsset(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOMediaAssetFilterInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAssetFilterInput(ctx context.Context, v any) (*model.MediaAssetFilterInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputMediaAssetFilterInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOMediaAssetOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAssetOrderInput(ctx context.Context, v any) (*model.MediaAssetOrderInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputMediaAssetOrderInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOMediaKind2ᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaKind(ctx context.Context, v any) (*model.MediaKind, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.MediaKind)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOMediaKind2ᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaKind(ctx context.Context, sel ast.SelectionSet, v *model.MediaKind) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
 func (ec *executionContext) marshalOQuiz2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuiz(ctx context.Context, sel ast.SelectionSet, v *model.Quiz) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Quiz(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOQuizOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizOrderInput(ctx context.Context, v any) (*model.QuizOrderInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputQuizOrderInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOQuizQuestionFilterInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizQuestionFilterInput(ctx context.Context, v any) (*model.QuizQuestionFilterInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputQuizQuestionFilterInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOQuizQuestionOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizQuestionOrderInput(ctx context.Context, v any) (*model.QuizQuestionOrderInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputQuizQuestionOrderInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {

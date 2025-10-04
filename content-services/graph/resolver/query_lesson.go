@@ -44,7 +44,7 @@ func (r *queryResolver) LessonByCode(ctx context.Context, code string) (*model.L
 }
 
 // Lessons is the resolver for the lessons field.
-func (r *queryResolver) Lessons(ctx context.Context, filter *model.LessonFilterInput, page *int, pageSize *int) (*model.LessonCollection, error) {
+func (r *queryResolver) Lessons(ctx context.Context, filter *model.LessonFilterInput, page *int, pageSize *int, orderBy *model.LessonOrderInput) (*model.LessonCollection, error) {
 	lessonService := r.Resolver.LessonService
 	if lessonService == nil {
 		return nil, gqlerror.Errorf("lesson service not configured")
@@ -54,6 +54,8 @@ func (r *queryResolver) Lessons(ctx context.Context, filter *model.LessonFilterI
 	if err != nil {
 		return nil, err
 	}
+
+	lessonSort := buildLessonOrder(orderBy)
 
 	pageVal := 1
 	if page != nil && *page > 0 {
@@ -65,7 +67,7 @@ func (r *queryResolver) Lessons(ctx context.Context, filter *model.LessonFilterI
 		pageSizeVal = *pageSize
 	}
 
-	lessons, total, err := lessonService.ListLessons(ctx, lessonFilter, pageVal, pageSizeVal)
+	lessons, total, err := lessonService.ListLessons(ctx, lessonFilter, lessonSort, pageVal, pageSizeVal)
 	if err != nil {
 		return nil, mapLessonError(err)
 	}
@@ -78,11 +80,13 @@ func (r *queryResolver) Lessons(ctx context.Context, filter *model.LessonFilterI
 	return &model.LessonCollection{
 		Items:      items,
 		TotalCount: int(total),
+		Page:       pageVal,
+		PageSize:   pageSizeVal,
 	}, nil
 }
 
 // LessonSections is the resolver for the lessonSections field.
-func (r *queryResolver) LessonSections(ctx context.Context, lessonID string) ([]*model.LessonSection, error) {
+func (r *queryResolver) LessonSections(ctx context.Context, lessonID string, filter *model.LessonSectionFilterInput, page *int, pageSize *int, orderBy *model.LessonSectionOrderInput) (*model.LessonSectionCollection, error) {
 	lessonService := r.Resolver.LessonService
 	if lessonService == nil {
 		return nil, gqlerror.Errorf("lesson service not configured")
@@ -93,10 +97,27 @@ func (r *queryResolver) LessonSections(ctx context.Context, lessonID string) ([]
 		return nil, gqlerror.Errorf("invalid lesson ID: %v", err)
 	}
 
-	sections, err := lessonService.GetLessonSections(ctx, id)
+	sectionFilter := buildLessonSectionFilter(filter)
+	sectionSort := buildLessonSectionOrder(orderBy)
+
+	pageVal := 1
+	if page != nil && *page > 0 {
+		pageVal = *page
+	}
+	pageSizeVal := 20
+	if pageSize != nil && *pageSize > 0 {
+		pageSizeVal = *pageSize
+	}
+
+	sections, total, err := lessonService.ListLessonSections(ctx, id, sectionFilter, sectionSort, pageVal, pageSizeVal)
 	if err != nil {
 		return nil, mapLessonSectionError(err)
 	}
 
-	return mapLessonSections(sections), nil
+	return &model.LessonSectionCollection{
+		Items:      mapLessonSections(sections),
+		TotalCount: int(total),
+		Page:       pageVal,
+		PageSize:   pageSizeVal,
+	}, nil
 }

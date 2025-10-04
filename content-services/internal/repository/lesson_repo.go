@@ -19,13 +19,14 @@ type LessonFilter struct {
 	LevelID     *uuid.UUID
 	IsPublished *bool
 	Search      string
+	CreatedBy   *uuid.UUID
 }
 
 type LessonRepository interface {
 	Create(ctx context.Context, lesson *models.Lesson) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.Lesson, error)
 	GetByCode(ctx context.Context, code string) (*models.Lesson, error)
-	List(ctx context.Context, filter *LessonFilter, limit, offset int) ([]models.Lesson, int64, error)
+	List(ctx context.Context, filter *LessonFilter, sort *SortOption, limit, offset int) ([]models.Lesson, int64, error)
 	Update(ctx context.Context, lesson *models.Lesson) error
 	Publish(ctx context.Context, id uuid.UUID) error
 	Unpublish(ctx context.Context, id uuid.UUID) error
@@ -176,7 +177,7 @@ func (r *lessonRepository) GetByCode(ctx context.Context, code string) (*models.
 	return doc.toModel(), nil
 }
 
-func (r *lessonRepository) List(ctx context.Context, filter *LessonFilter, limit, offset int) ([]models.Lesson, int64, error) {
+func (r *lessonRepository) List(ctx context.Context, filter *LessonFilter, sort *SortOption, limit, offset int) ([]models.Lesson, int64, error) {
 	// Build filter
 	filterDoc := bson.M{}
 
@@ -189,6 +190,9 @@ func (r *lessonRepository) List(ctx context.Context, filter *LessonFilter, limit
 		}
 		if filter.IsPublished != nil {
 			filterDoc["is_published"] = *filter.IsPublished
+		}
+		if filter.CreatedBy != nil {
+			filterDoc["created_by"] = filter.CreatedBy.String()
 		}
 		if filter.Search != "" {
 			filterDoc["$or"] = []bson.M{
@@ -206,10 +210,19 @@ func (r *lessonRepository) List(ctx context.Context, filter *LessonFilter, limit
 	}
 
 	// Find with pagination
-	opts := options.Find().
-		SetSort(bson.D{{Key: "created_at", Value: -1}}).
-		SetSkip(int64(offset)).
-		SetLimit(int64(limit))
+	opts := options.Find()
+
+	sortField, sortDir := "created_at", SortDescending
+	if sort != nil {
+		sortField, sortDir = sort.apply(sortField, sortDir)
+	}
+	opts.SetSort(bson.D{{Key: sortField, Value: int(sortDir)}})
+	if offset > 0 {
+		opts.SetSkip(int64(offset))
+	}
+	if limit > 0 {
+		opts.SetLimit(int64(limit))
+	}
 
 	cursor, err := r.collection.Find(ctx, filterDoc, opts)
 	if err != nil {

@@ -15,7 +15,7 @@ import (
 type QuizRepository interface {
 	Create(ctx context.Context, quiz *models.Quiz) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.Quiz, error)
-	List(ctx context.Context, lessonID *uuid.UUID, limit, offset int) ([]models.Quiz, int64, error)
+	List(ctx context.Context, filter *QuizFilter, sort *SortOption, limit, offset int) ([]models.Quiz, int64, error)
 	Update(ctx context.Context, quiz *models.Quiz) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
@@ -23,10 +23,19 @@ type QuizRepository interface {
 type QuizQuestionRepository interface {
 	Create(ctx context.Context, question *models.QuizQuestion) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.QuizQuestion, error)
-	GetByQuizID(ctx context.Context, quizID uuid.UUID) ([]models.QuizQuestion, error)
+	ListByQuizID(ctx context.Context, quizID uuid.UUID, filter *QuizQuestionFilter, sort *SortOption, limit, offset int) ([]models.QuizQuestion, int64, error)
 	Update(ctx context.Context, question *models.QuizQuestion) error
 	Reorder(ctx context.Context, quizID uuid.UUID, questionIDs []uuid.UUID) error
 	Delete(ctx context.Context, id uuid.UUID) error
+}
+
+type QuizFilter struct {
+	LessonID *uuid.UUID
+	Search   string
+}
+
+type QuizQuestionFilter struct {
+	Type *string
 }
 
 type QuestionOptionRepository interface {
@@ -188,23 +197,38 @@ func (r *quizRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Qui
 	return doc.toModel(), nil
 }
 
-func (r *quizRepository) List(ctx context.Context, lessonID *uuid.UUID, limit, offset int) ([]models.Quiz, int64, error) {
-	filter := bson.M{}
-	if lessonID != nil {
-		filter["lesson_id"] = lessonID.String()
+func (r *quizRepository) List(ctx context.Context, filter *QuizFilter, sort *SortOption, limit, offset int) ([]models.Quiz, int64, error) {
+	filterDoc := bson.M{}
+	if filter != nil {
+		if filter.LessonID != nil {
+			filterDoc["lesson_id"] = filter.LessonID.String()
+		}
+		if filter.Search != "" {
+			regex := bson.M{"$regex": filter.Search, "$options": "i"}
+			filterDoc["$or"] = []bson.M{
+				{"title": regex},
+				{"description": regex},
+			}
+		}
 	}
 
 	findOptions := options.Find()
+	sortField, sortDir := "created_at", SortDescending
+	if sort != nil {
+		sortField, sortDir = sort.apply(sortField, sortDir)
+	}
+	if sortField != "created_at" && sortField != "total_points" {
+		sortField = "created_at"
+	}
+	findOptions.SetSort(bson.D{{Key: sortField, Value: int(sortDir)}})
 	if limit > 0 {
-		l := int64(limit)
-		findOptions.SetLimit(l)
+		findOptions.SetLimit(int64(limit))
 	}
 	if offset > 0 {
 		findOptions.SetSkip(int64(offset))
 	}
-	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
 
-	cursor, err := r.collection.Find(ctx, filter, findOptions)
+	cursor, err := r.collection.Find(ctx, filterDoc, findOptions)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -222,7 +246,7 @@ func (r *quizRepository) List(ctx context.Context, lessonID *uuid.UUID, limit, o
 		return nil, 0, err
 	}
 
-	total, err := r.collection.CountDocuments(ctx, filter)
+	total, err := r.collection.CountDocuments(ctx, filterDoc)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -304,10 +328,31 @@ func (r *quizQuestionRepository) GetByID(ctx context.Context, id uuid.UUID) (*mo
 	return doc.toModel(), nil
 }
 
-func (r *quizQuestionRepository) GetByQuizID(ctx context.Context, quizID uuid.UUID) ([]models.QuizQuestion, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{"quiz_id": quizID.String()}, options.Find().SetSort(bson.D{{Key: "ord", Value: 1}}))
+func (r *quizQuestionRepository) ListByQuizID(ctx context.Context, quizID uuid.UUID, filter *QuizQuestionFilter, sort *SortOption, limit, offset int) ([]models.QuizQuestion, int64, error) {
+	filterDoc := bson.M{"quiz_id": quizID.String()}
+	if filter != nil && filter.Type != nil && *filter.Type != "" {
+		filterDoc["type"] = *filter.Type
+	}
+
+	opts := options.Find()
+	sortField, sortDir := "ord", SortAscending
+	if sort != nil {
+		sortField, sortDir = sort.apply(sortField, sortDir)
+	}
+	if sortField != "ord" && sortField != "points" {
+		sortField = "ord"
+	}
+	opts.SetSort(bson.D{{Key: sortField, Value: int(sortDir)}})
+	if limit > 0 {
+		opts.SetLimit(int64(limit))
+	}
+	if offset > 0 {
+		opts.SetSkip(int64(offset))
+	}
+
+	cursor, err := r.collection.Find(ctx, filterDoc, opts)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer cursor.Close(ctx)
 
@@ -315,15 +360,24 @@ func (r *quizQuestionRepository) GetByQuizID(ctx context.Context, quizID uuid.UU
 	for cursor.Next(ctx) {
 		var doc quizQuestionDoc
 		if err := cursor.Decode(&doc); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		questions = append(questions, *doc.toModel())
 	}
 	if err := cursor.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return questions, nil
+	total, err := r.collection.CountDocuments(ctx, filterDoc)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if questions == nil {
+		questions = []models.QuizQuestion{}
+	}
+
+	return questions, total, nil
 }
 
 func (r *quizQuestionRepository) Update(ctx context.Context, question *models.QuizQuestion) error {
