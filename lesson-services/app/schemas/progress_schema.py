@@ -34,9 +34,24 @@ class UserLessonResponse(UserLessonBase):
     id: UUID
     started_at: datetime
     completed_at: Optional[datetime] = None
-    
+
     class Config:
         from_attributes = True
+
+
+class UserLessonCompletionRequest(BaseModel):
+    score_total: Optional[int] = None
+    last_section_ord: Optional[int] = None
+    completed_at: Optional[datetime] = None
+
+
+class UserLessonStats(BaseModel):
+    total_started: int
+    in_progress: int
+    completed: int
+    abandoned: int
+    completion_rate: float
+    total_score: int
 
 # Quiz Attempt Schemas
 class QuizAttemptBase(BaseModel):
@@ -202,6 +217,31 @@ class UserStreakResponse(UserStreakBase):
     class Config:
         from_attributes = True
 
+
+class StreakCheckRequest(BaseModel):
+    activity_date: Optional[date] = None
+
+
+class UserStreakStatusResponse(BaseModel):
+    user_id: UUID
+    current_len: int
+    longest_len: int
+    last_day: Optional[date] = None
+    status: str
+    has_activity_today: bool
+    days_since_last: Optional[int] = None
+
+
+class StreakLeaderboardEntry(BaseModel):
+    rank: int
+    user_id: UUID
+    current_len: int
+    longest_len: int
+    last_day: Optional[date] = None
+
+    class Config:
+        from_attributes = True
+
 # User Points Schemas
 class UserPointsBase(BaseModel):
     user_id: UUID
@@ -219,9 +259,25 @@ class UserPointsUpdate(BaseModel):
 
 class UserPointsResponse(UserPointsBase):
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
+
+
+class PointsAdjustmentRequest(BaseModel):
+    points: int = Field(..., ge=1)
+
+
+class UserPointsRankResponse(BaseModel):
+    lifetime_rank: Optional[int] = None
+    weekly_rank: Optional[int] = None
+    monthly_rank: Optional[int] = None
+
+
+class PointsLeaderboardEntry(BaseModel):
+    rank: int
+    user_id: UUID
+    points: int
 
 # Leaderboard Schemas
 class LeaderboardEntry(BaseModel):

@@ -1,72 +1,127 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import List
 from uuid import UUID
 
-# Import dependencies
-# from app.database.connection import get_db
-# from app.services.user_points_service import UserPointsService
-# from app.schemas.points_schema import UserPointsResponse
+from app.database.connection import get_db
+from app.schemas.progress_schema import (
+    PointsAdjustmentRequest,
+    PointsLeaderboardEntry,
+    UserPointsRankResponse,
+    UserPointsResponse,
+)
+from app.services.user_points_service import UserPointsService
+
 
 router = APIRouter(prefix="/api/points", tags=["User Points"])
 
-# GET /api/points/user/{user_id}
-# Logic: Get user's point totals
-# - Fetch user_points record by user_id
-# - Return lifetime, weekly, monthly points with updated_at
-# - Return zeros if no record exists
 
-# POST /api/points/user/{user_id}/add
-# Logic: Add points to user's totals
-# - Validate request body (points amount)
-# - Find or create user_points record
-# - Increment lifetime points
-# - Increment weekly points
-# - Increment monthly points
-# - Update updated_at timestamp
-# - Return updated point totals
+def get_user_points_service(db: Session = Depends(get_db)) -> UserPointsService:
+    return UserPointsService(db)
 
-# GET /api/points/leaderboard/lifetime
-# Logic: Get lifetime points leaderboard
-# - Query user_points
-# - Order by lifetime DESC
-# - Limit to top 100 or query param
-# - Return ranked list
 
-# GET /api/points/leaderboard/weekly
-# Logic: Get weekly points leaderboard
-# - Query user_points
-# - Order by weekly DESC
-# - Limit to top 100
-# - Return ranked list for current week
+@router.get("/user/{user_id}", response_model=UserPointsResponse)
+def get_user_points(
+    user_id: UUID,
+    service: UserPointsService = Depends(get_user_points_service),
+) -> UserPointsResponse:
+    return service.get_or_create_points(user_id)
 
-# GET /api/points/leaderboard/monthly
-# Logic: Get monthly points leaderboard
-# - Query user_points
-# - Order by monthly DESC
-# - Limit to top 100
-# - Return ranked list for current month
 
-# POST /api/points/reset/weekly
-# Logic: Reset weekly points for all users (cron job)
-# - Update all user_points records
-# - Set weekly = 0
-# - Keep lifetime and monthly unchanged
-# - Return success message
-# - Should be called by scheduler every Monday
+@router.post("/user/{user_id}/add", response_model=UserPointsResponse)
+def add_user_points(
+    user_id: UUID,
+    payload: PointsAdjustmentRequest,
+    service: UserPointsService = Depends(get_user_points_service),
+) -> UserPointsResponse:
+    try:
+        return service.add_points(user_id, payload.points)
+    except ValueError as exc:  # pragma: no cover - defensive validation
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
-# POST /api/points/reset/monthly
-# Logic: Reset monthly points for all users (cron job)
-# - Update all user_points records
-# - Set monthly = 0
-# - Keep lifetime and weekly unchanged
-# - Return success message
-# - Should be called by scheduler on 1st of month
 
-# GET /api/points/user/{user_id}/rank
-# Logic: Get user's rank in different leaderboards
-# - Calculate rank in lifetime leaderboard
-# - Calculate rank in weekly leaderboard
-# - Calculate rank in monthly leaderboard
-# - Return ranks object with position in each category
+@router.post("/user/{user_id}/subtract", response_model=UserPointsResponse)
+def subtract_user_points(
+    user_id: UUID,
+    payload: PointsAdjustmentRequest,
+    service: UserPointsService = Depends(get_user_points_service),
+) -> UserPointsResponse:
+    try:
+        return service.subtract_points(user_id, payload.points)
+    except ValueError as exc:  # pragma: no cover - defensive validation
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
+
+def _build_leaderboard(records, attribute: str) -> List[PointsLeaderboardEntry]:
+    entries: List[PointsLeaderboardEntry] = []
+    for index, record in enumerate(records, start=1):
+        entries.append(
+            PointsLeaderboardEntry(
+                rank=index,
+                user_id=record.user_id,
+                points=getattr(record, attribute, 0),
+            )
+        )
+    return entries
+
+
+@router.get("/leaderboard/lifetime", response_model=List[PointsLeaderboardEntry])
+def get_lifetime_leaderboard(
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    service: UserPointsService = Depends(get_user_points_service),
+) -> List[PointsLeaderboardEntry]:
+    records = service.get_lifetime_leaderboard(limit=limit, offset=offset)
+    return _build_leaderboard(records, "lifetime")
+
+
+@router.get("/leaderboard/weekly", response_model=List[PointsLeaderboardEntry])
+def get_weekly_leaderboard(
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    service: UserPointsService = Depends(get_user_points_service),
+) -> List[PointsLeaderboardEntry]:
+    records = service.get_weekly_leaderboard(limit=limit, offset=offset)
+    return _build_leaderboard(records, "weekly")
+
+
+@router.get("/leaderboard/monthly", response_model=List[PointsLeaderboardEntry])
+def get_monthly_leaderboard(
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    service: UserPointsService = Depends(get_user_points_service),
+) -> List[PointsLeaderboardEntry]:
+    records = service.get_monthly_leaderboard(limit=limit, offset=offset)
+    return _build_leaderboard(records, "monthly")
+
+
+@router.post("/reset/weekly")
+def reset_weekly_points(
+    service: UserPointsService = Depends(get_user_points_service),
+) -> dict:
+    updated = service.reset_weekly_points()
+    return {"updated": updated}
+
+
+@router.post("/reset/monthly")
+def reset_monthly_points(
+    service: UserPointsService = Depends(get_user_points_service),
+) -> dict:
+    updated = service.reset_monthly_points()
+    return {"updated": updated}
+
+
+@router.get("/user/{user_id}/rank", response_model=UserPointsRankResponse)
+def get_user_rank(
+    user_id: UUID,
+    service: UserPointsService = Depends(get_user_points_service),
+) -> UserPointsRankResponse:
+    ranks = service.get_user_ranks(user_id)
+    if ranks is None:
+        service.initialize_user_points(user_id)
+        ranks = service.get_user_ranks(user_id)
+    if ranks is None:  # pragma: no cover - should not happen, but defensive
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User points not found")
+    return UserPointsRankResponse(**ranks)
