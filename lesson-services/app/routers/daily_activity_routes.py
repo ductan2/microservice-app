@@ -1,64 +1,148 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List
+from datetime import date, timedelta
+from typing import List, Optional
 from uuid import UUID
-from datetime import date, datetime
 
-# Import dependencies
-# from app.database.connection import get_db
-# from app.services.daily_activity_service import DailyActivityService
-# from app.schemas.activity_schema import DailyActivityResponse, DailyActivityStats
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
+
+from app.database.connection import get_db
+from app.schemas.daily_activity_schema import (
+    DailyActivityIncrementRequest,
+    DailyActivityMonthSummary,
+    DailyActivityResponse,
+    DailyActivitySummary,
+    DailyTotals,
+)
+from app.services.daily_activity_service import DailyActivityService
+
 
 router = APIRouter(prefix="/api/daily-activity", tags=["Daily Activity"])
 
-# GET /api/daily-activity/user/{user_id}/today
-# Logic: Get today's activity for user
-# - Get current date
-# - Fetch daily_activity for user_id and today's date
-# - Return today's stats (lessons, quizzes, minutes, points)
-# - Return empty/zero stats if no activity today
 
-# GET /api/daily-activity/user/{user_id}/date/{activity_date}
-# Logic: Get activity for specific date
-# - Validate date format
-# - Fetch daily_activity for user_id and specified date
-# - Return activity stats for that date
+def _get_service(db: Session) -> DailyActivityService:
+    return DailyActivityService(db)
 
-# GET /api/daily-activity/user/{user_id}/range
-# Logic: Get activity for date range
-# - Query params: date_from, date_to (default last 30 days)
-# - Fetch all daily_activity records in range
-# - Order by activity_dt ASC
-# - Return list of daily activity records
 
-# GET /api/daily-activity/user/{user_id}/week
-# Logic: Get current week's activity (Mon-Sun)
-# - Calculate start and end of current week
-# - Fetch daily_activity for week range
-# - Return 7 days of data (fill missing days with zeros)
+def _empty_activity(user_id: UUID, activity_dt: date) -> DailyActivityResponse:
+    return DailyActivityResponse(
+        user_id=user_id,
+        activity_dt=activity_dt,
+        lessons_completed=0,
+        quizzes_completed=0,
+        minutes=0,
+        points=0,
+    )
 
-# GET /api/daily-activity/user/{user_id}/month
-# Logic: Get current month's activity
-# - Calculate start and end of current month
-# - Fetch daily_activity for month
-# - Aggregate totals: total lessons, quizzes, minutes, points
-# - Return monthly summary with daily breakdown
 
-# GET /api/daily-activity/user/{user_id}/stats/summary
-# Logic: Get aggregated activity statistics
-# - Calculate total lifetime stats (all-time totals)
-# - Calculate last 7 days totals
-# - Calculate last 30 days totals
-# - Calculate averages (daily average)
-# - Find most active day
-# - Return comprehensive summary
+@router.get("/user/{user_id}/today", response_model=DailyActivityResponse)
+def get_today_activity(user_id: UUID, db: Session = Depends(get_db)) -> DailyActivityResponse:
+    service = _get_service(db)
+    activity = service.get_today_activity(user_id)
+    if activity is None:
+        return _empty_activity(user_id, date.today())
+    return DailyActivityResponse.model_validate(activity)
 
-# POST /api/daily-activity/increment
-# Logic: Increment activity counters (internal use)
-# - Validate request body (user_id, date, field to increment, amount)
-# - Find or create daily_activity record for user+date
-# - Increment specified field (lessons_completed, quizzes_completed, minutes, points)
-# - Commit transaction
-# - Return updated activity record
-# - Note: This is called by other services when activities complete
+
+@router.get(
+    "/user/{user_id}/date/{activity_date}", response_model=DailyActivityResponse
+)
+def get_activity_by_date(
+    user_id: UUID, activity_date: date, db: Session = Depends(get_db)
+) -> DailyActivityResponse:
+    service = _get_service(db)
+    activity = service.get_activity_by_date(user_id, activity_date)
+    if activity is None:
+        return _empty_activity(user_id, activity_date)
+    return DailyActivityResponse.model_validate(activity)
+
+
+@router.get("/user/{user_id}/range", response_model=List[DailyActivityResponse])
+def get_activity_range(
+    user_id: UUID,
+    date_from: Optional[date] = Query(default=None),
+    date_to: Optional[date] = Query(default=None),
+    db: Session = Depends(get_db),
+) -> List[DailyActivityResponse]:
+    end_date = date_to or date.today()
+    start_date = date_from or (end_date - timedelta(days=29))
+    if start_date > end_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="date_from must be before or equal to date_to",
+        )
+
+    service = _get_service(db)
+    activities = service.get_activity_range(user_id, start_date, end_date)
+    return [DailyActivityResponse.model_validate(activity) for activity in activities]
+
+
+@router.get("/user/{user_id}/week", response_model=List[DailyActivityResponse])
+def get_week_activity(user_id: UUID, db: Session = Depends(get_db)) -> List[DailyActivityResponse]:
+    service = _get_service(db)
+    activities = service.get_week_activity(user_id)
+    return [DailyActivityResponse.model_validate(activity) for activity in activities]
+
+
+@router.get("/user/{user_id}/month", response_model=DailyActivityMonthSummary)
+def get_month_activity(
+    user_id: UUID,
+    year: Optional[int] = Query(default=None),
+    month: Optional[int] = Query(default=None, ge=1, le=12),
+    db: Session = Depends(get_db),
+) -> DailyActivityMonthSummary:
+    today = date.today()
+    target_year = year or today.year
+    target_month = month or today.month
+
+    service = _get_service(db)
+    summary = service.get_month_activity(user_id, target_year, target_month)
+    return DailyActivityMonthSummary(
+        year=summary["year"],
+        month=summary["month"],
+        totals=DailyTotals(**summary["totals"]),
+        days=[
+            DailyActivityResponse.model_validate(activity)
+            for activity in summary["days"]
+        ],
+    )
+
+
+@router.get("/user/{user_id}/stats/summary", response_model=DailyActivitySummary)
+def get_activity_summary(
+    user_id: UUID, db: Session = Depends(get_db)
+) -> DailyActivitySummary:
+    service = _get_service(db)
+    summary = service.get_activity_summary(user_id)
+    return DailyActivitySummary(
+        lifetime=DailyTotals(**summary["lifetime"]),
+        last_7_days=DailyTotals(**summary["last_7_days"]),
+        last_30_days=DailyTotals(**summary["last_30_days"]),
+        average_per_day=DailyTotals(**summary["average_per_day"]),
+        total_active_days=summary["total_active_days"],
+        most_active_day=(
+            DailyActivityResponse.model_validate(summary["most_active_day"])
+            if summary["most_active_day"]
+            else None
+        ),
+    )
+
+
+@router.post("/increment", response_model=DailyActivityResponse)
+def increment_activity(
+    payload: DailyActivityIncrementRequest, db: Session = Depends(get_db)
+) -> DailyActivityResponse:
+    service = _get_service(db)
+    try:
+        activity = service.increment_activity(
+            user_id=payload.user_id,
+            activity_date=payload.activity_dt,
+            field=payload.field,
+            amount=payload.amount,
+        )
+    except ValueError as exc:  # pragma: no cover - defensive, ensures 400 for invalid field
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
+
+    return DailyActivityResponse.model_validate(activity)
 
