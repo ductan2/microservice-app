@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.progress_models import SRReview
-from app.schemas.progress_schema import SRCardCreate, SRReviewCreate
+from app.schemas import SRCardCreate, SRReviewCreate
 from app.services.daily_activity_service import DailyActivityService
 from app.services.sr_card_service import SRCardService
 

@@ -6,7 +6,7 @@ from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
 from app.models.progress_models import LeaderboardSnapshot, UserPoints
-from app.schemas.progress_schema import (
+from app.schemas.leaderboard_schema import (
     LeaderboardEntry,
     LeaderboardPeriod,
     LeaderboardResponse,

@@ -252,6 +252,9 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER:-user}
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password}
       - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+      # MongoDB configuration
+      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_DB=content
     depends_on:
       postgres:
         condition: service_healthy
@@ -259,6 +262,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      mongodb:
+        condition: service_started
 
   notification-services:
     build:

@@ -6,7 +6,7 @@ from sqlalchemy import desc, func
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.progress_models import QuizAnswer, QuizAttempt
-from app.schemas.progress_schema import (
+from app.schemas import (
     QuizAnswerCreate,
     QuizAnswerSubmission,
     QuizAttemptCreate,

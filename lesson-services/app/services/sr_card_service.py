@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.progress_models import SRCard
-from app.schemas.progress_schema import SRCardCreate
+from app.schemas import SRCardCreate
 
 
 class SRCardService:

@@ -8,7 +8,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.progress_models import UserLesson
-from app.schemas.progress_schema import (
+from app.schemas import (
     LessonStatus,
     UserLessonCompletionRequest,
     UserLessonCreate,

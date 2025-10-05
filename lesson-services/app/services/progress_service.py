@@ -8,7 +8,7 @@ from app.models.progress_models import (
     DailyActivity, UserStreak, UserPoints, LeaderboardSnapshot,
     ProgressEvent, Outbox
 )
-from app.schemas.progress_schema import (
+from app.schemas import (
     UserLessonCreate, UserLessonUpdate, UserLessonResponse,
     QuizAttemptCreate, QuizAttemptUpdate, QuizAttemptResponse,
     QuizAnswerCreate, QuizAnswerResponse,

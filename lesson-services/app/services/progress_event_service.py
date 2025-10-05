@@ -5,7 +5,7 @@ from uuid import UUID
 from datetime import datetime, date, time, timedelta
 
 from app.models.progress_models import ProgressEvent
-from app.schemas.progress_schema import ProgressEventCreate
+from app.schemas import ProgressEventCreate
 
 
 class ProgressEventService:

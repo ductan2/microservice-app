@@ -66,6 +66,9 @@ services:
       dockerfile: Dockerfile.dev
     container_name: content-services
     restart: always
+    networks:
+      - frontend
+      - backend
     ports:
       - "${CONTENT_SERVICES_PORT:-8003}:8003"
     environment:
@@ -76,6 +79,7 @@ services:
       - DB_NAME=${POSTGRES_DB:-english_app}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=${RABBITMQ_USER:-user}
@@ -91,6 +95,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      mongodb:
+        condition: service_started
 
   # Override for notification-services with auto reload
   notification-services:

@@ -1,0 +1,1870 @@
+{
+    "info": {
+        "name": "Lesson Services API",
+        "description": "Complete API collection for Lesson Services microservice",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8000",
+            "type": "string"
+        },
+        {
+            "key": "user_id",
+            "value": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+        },
+        {
+            "key": "lesson_id",
+            "value": "123e4567-e89b-12d3-a456-426614174001",
+            "type": "string"
+        },
+        {
+            "key": "quiz_id",
+            "value": "123e4567-e89b-12d3-a456-426614174002",
+            "type": "string"
+        },
+        {
+            "key": "attempt_id",
+            "value": "123e4567-e89b-12d3-a456-426614174003",
+            "type": "string"
+        },
+        {
+            "key": "answer_id",
+            "value": "123e4567-e89b-12d3-a456-426614174004",
+            "type": "string"
+        },
+        {
+            "key": "card_id",
+            "value": "123e4567-e89b-12d3-a456-426614174005",
+            "type": "string"
+        },
+        {
+            "key": "flashcard_id",
+            "value": "123e4567-e89b-12d3-a456-426614174006",
+            "type": "string"
+        },
+        {
+            "key": "review_id",
+            "value": "123e4567-e89b-12d3-a456-426614174007",
+            "type": "string"
+        },
+        {
+            "key": "question_id",
+            "value": "123e4567-e89b-12d3-a456-426614174008",
+            "type": "string"
+        },
+        {
+            "key": "option_id",
+            "value": "123e4567-e89b-12d3-a456-426614174009",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Health",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/health",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "health"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "User Preferences",
+            "item": [
+                {
+                    "name": "Get User Preferences",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/users/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                "{{user_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create User Preferences",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"locale\": \"en\",\n  \"timezone\": \"UTC\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/users",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update User Preferences",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"locale\": \"vi\",\n  \"timezone\": \"Asia/Ho_Chi_Minh\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/users/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                "{{user_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update User Locale",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"locale\": \"en\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/users/{{user_id}}/locale",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                "{{user_id}}",
+                                "locale"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete User Preferences",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/users/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "users",
+                                "{{user_id}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "User Lessons",
+            "item": [
+                {
+                    "name": "List User Lessons",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/user-lessons/{{user_id}}?status=in_progress",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user-lessons",
+                                "{{user_id}}"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status",
+                                    "value": "in_progress"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Lesson",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/user-lessons/{{user_id}}/{{lesson_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user-lessons",
+                                "{{user_id}}",
+                                "{{lesson_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Start User Lesson",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"lesson_id\": \"{{lesson_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/user-lessons/start",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user-lessons",
+                                "start"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Lesson Progress",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"last_section_ord\": 3,\n  \"score_total\": 85\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/user-lessons/{{user_id}}/{{lesson_id}}/progress",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user-lessons",
+                                "{{user_id}}",
+                                "{{lesson_id}}",
+                                "progress"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Complete Lesson",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"score_total\": 100,\n  \"last_section_ord\": 5\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/user-lessons/{{user_id}}/{{lesson_id}}/complete",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user-lessons",
+                                "{{user_id}}",
+                                "{{lesson_id}}",
+                                "complete"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Abandon Lesson",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/user-lessons/{{user_id}}/{{lesson_id}}/abandon",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user-lessons",
+                                "{{user_id}}",
+                                "{{lesson_id}}",
+                                "abandon"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get In Progress Lessons",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/user-lessons/{{user_id}}/in-progress",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user-lessons",
+                                "{{user_id}}",
+                                "in-progress"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Completed Lessons",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/user-lessons/{{user_id}}/completed?limit=50&offset=0",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user-lessons",
+                                "{{user_id}}",
+                                "completed"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Lesson Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/user-lessons/{{user_id}}/stats",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user-lessons",
+                                "{{user_id}}",
+                                "stats"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete User Lesson",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/user-lessons/{{user_id}}/{{lesson_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user-lessons",
+                                "{{user_id}}",
+                                "{{lesson_id}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Quiz Attempts",
+            "item": [
+                {
+                    "name": "Start Quiz Attempt",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"quiz_id\": \"{{quiz_id}}\",\n  \"lesson_id\": \"{{lesson_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/quiz-attempts/start",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "quiz-attempts",
+                                "start"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Quiz Attempt",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/quiz-attempts/{{attempt_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "quiz-attempts",
+                                "{{attempt_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Submit Quiz Attempt",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"total_points\": 85,\n  \"max_points\": 100,\n  \"passed\": true,\n  \"duration_ms\": 300000\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/quiz-attempts/{{attempt_id}}/submit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "quiz-attempts",
+                                "{{attempt_id}}",
+                                "submit"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Quiz Attempts",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/quiz-attempts/user/{{user_id}}/quiz/{{quiz_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "quiz-attempts",
+                                "user",
+                                "{{user_id}}",
+                                "quiz",
+                                "{{quiz_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Quiz History",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/quiz-attempts/user/{{user_id}}/history?passed=true&limit=50&offset=0",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "quiz-attempts",
+                                "user",
+                                "{{user_id}}",
+                                "history"
+                            ],
+                            "query": [
+                                {
+                                    "key": "passed",
+                                    "value": "true"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Lesson Quiz Attempts",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/quiz-attempts/lesson/{{lesson_id}}/user/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "quiz-attempts",
+                                "lesson",
+                                "{{lesson_id}}",
+                                "user",
+                                "{{user_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Quiz Attempt",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/quiz-attempts/{{attempt_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "quiz-attempts",
+                                "{{attempt_id}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Quiz Answers",
+            "item": [
+                {
+                    "name": "Get Attempt Answers",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/quiz-answers/attempt/{{attempt_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "quiz-answers",
+                                "attempt",
+                                "{{attempt_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Answer",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"attempt_id\": \"{{attempt_id}}\",\n  \"question_id\": \"{{question_id}}\",\n  \"selected_ids\": [\"{{option_id}}\"],\n  \"text_answer\": \"My answer\",\n  \"points_earned\": 10\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/quiz-answers",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "quiz-answers"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Answer",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/quiz-answers/{{answer_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "quiz-answers",
+                                "{{answer_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Answer",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"selected_ids\": [\"{{option_id}}\"],\n  \"text_answer\": \"Updated answer\",\n  \"points_earned\": 15\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/quiz-answers/{{answer_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "quiz-answers",
+                                "{{answer_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Answer",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/quiz-answers/{{answer_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "quiz-answers",
+                                "{{answer_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Answer Summary",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/quiz-answers/attempt/{{attempt_id}}/summary",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "quiz-answers",
+                                "attempt",
+                                "{{attempt_id}}",
+                                "summary"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Spaced Repetition Cards",
+            "item": [
+                {
+                    "name": "Get User Cards",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/spaced-repetition/cards/user/{{user_id}}?suspended=false&due_only=true",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "spaced-repetition",
+                                "cards",
+                                "user",
+                                "{{user_id}}"
+                            ],
+                            "query": [
+                                {
+                                    "key": "suspended",
+                                    "value": "false"
+                                },
+                                {
+                                    "key": "due_only",
+                                    "value": "true"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Due Cards",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/spaced-repetition/cards/user/{{user_id}}/due",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "spaced-repetition",
+                                "cards",
+                                "user",
+                                "{{user_id}}",
+                                "due"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Card",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"flashcard_id\": \"{{flashcard_id}}\",\n  \"ease_factor\": 2.5,\n  \"interval_d\": 0,\n  \"repetition\": 0,\n  \"suspended\": false\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/spaced-repetition/cards",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "spaced-repetition",
+                                "cards"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Card",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/spaced-repetition/cards/{{card_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "spaced-repetition",
+                                "cards",
+                                "{{card_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Suspend Card",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/spaced-repetition/cards/{{card_id}}/suspend",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "spaced-repetition",
+                                "cards",
+                                "{{card_id}}",
+                                "suspend"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Unsuspend Card",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/spaced-repetition/cards/{{card_id}}/unsuspend",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "spaced-repetition",
+                                "cards",
+                                "{{card_id}}",
+                                "unsuspend"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Card",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/spaced-repetition/cards/{{card_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "spaced-repetition",
+                                "cards",
+                                "{{card_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Card Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/spaced-repetition/cards/user/{{user_id}}/stats",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "spaced-repetition",
+                                "cards",
+                                "user",
+                                "{{user_id}}",
+                                "stats"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Spaced Repetition Reviews",
+            "item": [
+                {
+                    "name": "Create Review",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"flashcard_id\": \"{{flashcard_id}}\",\n  \"quality\": 4,\n  \"prev_interval\": 1,\n  \"new_interval\": 2,\n  \"new_ef\": 2.6\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/spaced-repetition/reviews",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "spaced-repetition",
+                                "reviews"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Reviews",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/spaced-repetition/reviews/user/{{user_id}}?limit=100&offset=0",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "spaced-repetition",
+                                "reviews",
+                                "user",
+                                "{{user_id}}"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "100"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Flashcard Reviews",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/spaced-repetition/reviews/user/{{user_id}}/flashcard/{{flashcard_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "spaced-repetition",
+                                "reviews",
+                                "user",
+                                "{{user_id}}",
+                                "flashcard",
+                                "{{flashcard_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Today Review Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/spaced-repetition/reviews/user/{{user_id}}/today",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "spaced-repetition",
+                                "reviews",
+                                "user",
+                                "{{user_id}}",
+                                "today"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Review Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/spaced-repetition/reviews/user/{{user_id}}/stats",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "spaced-repetition",
+                                "reviews",
+                                "user",
+                                "{{user_id}}",
+                                "stats"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Review",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/spaced-repetition/reviews/{{review_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "spaced-repetition",
+                                "reviews",
+                                "{{review_id}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Daily Activity",
+            "item": [
+                {
+                    "name": "Get Today Activity",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/daily-activity/user/{{user_id}}/today",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "daily-activity",
+                                "user",
+                                "{{user_id}}",
+                                "today"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Activity by Date",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/daily-activity/user/{{user_id}}/date/2024-01-15",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "daily-activity",
+                                "user",
+                                "{{user_id}}",
+                                "date",
+                                "2024-01-15"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Activity Range",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/daily-activity/user/{{user_id}}/range?date_from=2024-01-01&date_to=2024-01-31",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "daily-activity",
+                                "user",
+                                "{{user_id}}",
+                                "range"
+                            ],
+                            "query": [
+                                {
+                                    "key": "date_from",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "date_to",
+                                    "value": "2024-01-31"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Week Activity",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/daily-activity/user/{{user_id}}/week",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "daily-activity",
+                                "user",
+                                "{{user_id}}",
+                                "week"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Month Activity",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/daily-activity/user/{{user_id}}/month?year=2024&month=1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "daily-activity",
+                                "user",
+                                "{{user_id}}",
+                                "month"
+                            ],
+                            "query": [
+                                {
+                                    "key": "year",
+                                    "value": "2024"
+                                },
+                                {
+                                    "key": "month",
+                                    "value": "1"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Activity Summary",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/daily-activity/user/{{user_id}}/stats/summary",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "daily-activity",
+                                "user",
+                                "{{user_id}}",
+                                "stats",
+                                "summary"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Increment Activity",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"activity_dt\": \"2024-01-15\",\n  \"field\": \"lessons_completed\",\n  \"amount\": 1\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/daily-activity/increment",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "daily-activity",
+                                "increment"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "User Streaks",
+            "item": [
+                {
+                    "name": "Get User Streak",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/streaks/user/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "streaks",
+                                "user",
+                                "{{user_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Check User Streak",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"activity_date\": \"2024-01-15\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/streaks/user/{{user_id}}/check",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "streaks",
+                                "user",
+                                "{{user_id}}",
+                                "check"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Streak Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/streaks/user/{{user_id}}/status",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "streaks",
+                                "user",
+                                "{{user_id}}",
+                                "status"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "User Points",
+            "item": [
+                {
+                    "name": "Get User Points",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/points/user/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "points",
+                                "user",
+                                "{{user_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Add User Points",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"points\": 100\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/points/user/{{user_id}}/add",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "points",
+                                "user",
+                                "{{user_id}}",
+                                "add"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Subtract User Points",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"points\": 50\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/points/user/{{user_id}}/subtract",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "points",
+                                "user",
+                                "{{user_id}}",
+                                "subtract"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get User Points Rank",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/points/user/{{user_id}}/rank",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "points",
+                                "user",
+                                "{{user_id}}",
+                                "rank"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Leaderboards",
+            "item": [
+                {
+                    "name": "Get Current Weekly Leaderboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/leaderboards/weekly/current?limit=100&offset=0",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "leaderboards",
+                                "weekly",
+                                "current"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "100"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Current Monthly Leaderboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/leaderboards/monthly/current?limit=100&offset=0",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "leaderboards",
+                                "monthly",
+                                "current"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "100"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Weekly History",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/leaderboards/weekly/history?limit=10&offset=0",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "leaderboards",
+                                "weekly",
+                                "history"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Monthly History",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/leaderboards/monthly/history?limit=12&offset=0",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "leaderboards",
+                                "monthly",
+                                "history"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "12"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Weekly Snapshot",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"period_key\": \"2024-W03\",\n  \"entries\": [\n    {\n      \"rank\": 1,\n      \"user_id\": \"{{user_id}}\",\n      \"points\": 1000\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/leaderboards/snapshot/weekly",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "leaderboards",
+                                "snapshot",
+                                "weekly"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Monthly Snapshot",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"period_key\": \"2024-01\",\n  \"entries\": [\n    {\n      \"rank\": 1,\n      \"user_id\": \"{{user_id}}\",\n      \"points\": 5000\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/leaderboards/snapshot/monthly",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "leaderboards",
+                                "snapshot",
+                                "monthly"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get User History",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/leaderboards/user/{{user_id}}/history",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "leaderboards",
+                                "user",
+                                "{{user_id}}",
+                                "history"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Week Leaderboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/leaderboards/week/2024-W03?limit=100&offset=0",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "leaderboards",
+                                "week",
+                                "2024-W03"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "100"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Month Leaderboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/leaderboards/month/2024-01?limit=100&offset=0",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "leaderboards",
+                                "month",
+                                "2024-01"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "100"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Progress Events",
+            "item": [
+                {
+                    "name": "Get User Events",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/progress-events/user/{{user_id}}?type=lesson_completed&limit=100&offset=0",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "progress-events",
+                                "user",
+                                "{{user_id}}"
+                            ],
+                            "query": [
+                                {
+                                    "key": "type",
+                                    "value": "lesson_completed"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "100"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Event",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/progress-events/1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "progress-events",
+                                "1"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Event",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"type\": \"lesson_completed\",\n  \"payload\": {\n    \"lesson_id\": \"{{lesson_id}}\",\n    \"score\": 100\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/progress-events",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "progress-events"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Events by Type",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/progress-events/user/{{user_id}}/type/lesson_completed?limit=100&offset=0",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "progress-events",
+                                "user",
+                                "{{user_id}}",
+                                "type",
+                                "lesson_completed"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "100"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Recent Events",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/progress-events/user/{{user_id}}/recent?limit=50",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "progress-events",
+                                "user",
+                                "{{user_id}}",
+                                "recent"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Event",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/progress-events/1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "progress-events",
+                                "1"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Event Type Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/progress-events/stats/types?date_from=2024-01-01&date_to=2024-01-31",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "progress-events",
+                                "stats",
+                                "types"
+                            ],
+                            "query": [
+                                {
+                                    "key": "date_from",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "date_to",
+                                    "value": "2024-01-31"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
