@@ -32,6 +32,10 @@ type UserService interface {
 	GetSessions(ctx context.Context, token string) (*HTTPResponse, error)
 	DeleteSession(ctx context.Context, token, sessionID string) (*HTTPResponse, error)
 	RevokeAllSessions(ctx context.Context, token string) (*HTTPResponse, error)
+	GetUsers(ctx context.Context, page, pageSize, status, search string) (*HTTPResponse, error)
+	// New methods for internal communication with user context
+	GetProfileWithContext(ctx context.Context, userID, email, sessionID string) (*HTTPResponse, error)
+	UpdateProfileWithContext(ctx context.Context, userID, email, sessionID string, payload dto.UpdateProfileRequest) (*HTTPResponse, error)
 }
 
 type UserServiceClient struct {
@@ -140,6 +144,27 @@ func (c *UserServiceClient) RevokeAllSessions(ctx context.Context, token string)
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/sessions/revoke-all", nil, authHeader(token))
 }
 
+func (c *UserServiceClient) GetUsers(ctx context.Context, page, pageSize, status, search string) (*HTTPResponse, error) {
+	path := "/api/v1/users"
+	query := url.Values{}
+	if page != "" {
+		query.Add("page", page)
+	}
+	if pageSize != "" {
+		query.Add("page_size", pageSize)
+	}
+	if status != "" {
+		query.Add("status", status)
+	}
+	if search != "" {
+		query.Add("search", search)
+	}
+	if len(query) > 0 {
+		path += "?" + query.Encode()
+	}
+	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
+}
+
 func (c *UserServiceClient) doRequest(ctx context.Context, method, path string, payload interface{}, headers http.Header) (*HTTPResponse, error) {
 	if c.baseURL == "" {
 		return nil, fmt.Errorf("user service base URL is not configured")
@@ -199,4 +224,21 @@ func authHeader(token string) http.Header {
 	header := http.Header{}
 	header.Set("Authorization", "Bearer "+token)
 	return header
+}
+
+// internalAuthHeaders creates headers for internal microservice communication
+func internalAuthHeaders(userID, email, sessionID string) http.Header {
+	header := http.Header{}
+	header.Set("X-User-ID", userID)
+	header.Set("X-User-Email", email)
+	header.Set("X-Session-ID", sessionID)
+	return header
+}
+
+func (c *UserServiceClient) GetProfileWithContext(ctx context.Context, userID, email, sessionID string) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodGet, "/api/v1/profile", nil, internalAuthHeaders(userID, email, sessionID))
+}
+
+func (c *UserServiceClient) UpdateProfileWithContext(ctx context.Context, userID, email, sessionID string, payload dto.UpdateProfileRequest) (*HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPut, "/api/v1/profile", payload, internalAuthHeaders(userID, email, sessionID))
 }

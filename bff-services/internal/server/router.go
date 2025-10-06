@@ -2,7 +2,9 @@ package server
 
 import (
 	"bff-services/internal/api/controllers"
+	"bff-services/internal/cache"
 	"bff-services/internal/config"
+	middleware "bff-services/internal/middlewares"
 	"bff-services/internal/services"
 
 	"github.com/gin-gonic/gin"
@@ -11,6 +13,8 @@ import (
 type Deps struct {
 	UserService    services.UserService
 	ContentService services.ContentService
+	LessonService  services.LessonService
+	SessionCache   *cache.SessionCache
 }
 
 func NewRouter(deps Deps) *gin.Engine {
@@ -42,6 +46,7 @@ func NewRouter(deps Deps) *gin.Engine {
 		mfaCtrl      *controllers.MFAController
 		sessionCtrl  *controllers.SessionController
 		contentCtrl  *controllers.ContentController
+		usersCtrl    *controllers.UsersController
 	)
 	if deps.UserService != nil {
 		authCtrl = controllers.NewAuthController(deps.UserService)
@@ -53,6 +58,9 @@ func NewRouter(deps Deps) *gin.Engine {
 	if deps.ContentService != nil {
 		contentCtrl = controllers.NewContentController(deps.ContentService)
 	}
+	if deps.UserService != nil && deps.LessonService != nil {
+		usersCtrl = controllers.NewUsersController(deps.UserService, deps.LessonService)
+	}
 
 	api := r.Group("/api/v1")
 	{
@@ -62,15 +70,18 @@ func NewRouter(deps Deps) *gin.Engine {
 			api.POST("/login", authCtrl.Login)
 			api.POST("/logout", authCtrl.Logout)
 			api.GET("/verify-email", authCtrl.VerifyEmail)
-
-			// Backwards compatibility for existing clients
-			api.POST("/user/register", authCtrl.Register)
-			api.POST("/user/login", authCtrl.Login)
 		}
 		if profileCtrl != nil {
-			api.GET("/profile", profileCtrl.GetProfile)
-			api.PUT("/profile", profileCtrl.UpdateProfile)
-			api.GET("/profile/check-auth", profileCtrl.CheckAuth)
+			// Profile routes require authentication
+			profile := api.Group("/profile")
+			if deps.SessionCache != nil {
+				profile.Use(middleware.AuthRequired(deps.SessionCache))
+			}
+			{
+				profile.GET("", profileCtrl.GetProfile)
+				profile.PUT("", profileCtrl.UpdateProfile)
+				profile.GET("/check-auth", profileCtrl.CheckAuth)
+			}
 		}
 		if passwordCtrl != nil {
 			api.POST("/password/reset/request", passwordCtrl.RequestReset)
@@ -98,6 +109,9 @@ func NewRouter(deps Deps) *gin.Engine {
 				content.GET("/flashcards", contentCtrl.GetFlashcardSets)
 				content.GET("/quizzes", contentCtrl.GetQuizzes)
 			}
+		}
+		if usersCtrl != nil {
+			api.GET("/users", usersCtrl.ListUsersWithProgress)
 		}
 	}
 

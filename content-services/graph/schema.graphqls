@@ -12,7 +12,7 @@ type Query {
   level(id: ID, code: String): Level
   levels(search: String): [Level!]!
 
-  tag(id: ID, slug: String): Tag
+  tag(id: ID, slug: String)
   tags(search: String): [Tag!]!
 
   mediaAsset(id: ID!): MediaAsset

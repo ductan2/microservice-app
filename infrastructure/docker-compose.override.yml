@@ -120,6 +120,14 @@ services:
       rabbitmq:
         condition: service_healthy
 
+
+  bff-services:
+    build:
+      context: ../bff-services
+      dockerfile: Dockerfile.dev
+    container_name: bff-services
+    restart: always
+
   # Development database with more verbose logging
   postgres:
     environment:

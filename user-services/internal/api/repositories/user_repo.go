@@ -21,6 +21,7 @@ type UserRepository interface {
 	UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error
 	GetByVerificationToken(ctx context.Context, tokenHash string) (*models.User, error)
 	DeleteUser(ctx context.Context, userID string) error
+	ListUsers(ctx context.Context, page, pageSize int, status, search string) ([]models.User, int64, error)
 }
 
 type userRepository struct {
@@ -133,4 +134,38 @@ func (r *userRepository) GetByVerificationToken(ctx context.Context, tokenHash s
 // DeleteUser soft deletes a user
 func (r *userRepository) DeleteUser(ctx context.Context, userID string) error {
 	return r.DB.WithContext(ctx).Where("id = ?", userID).Delete(&models.User{}).Error
+}
+
+// ListUsers retrieves a paginated list of users with optional filtering
+func (r *userRepository) ListUsers(ctx context.Context, page, pageSize int, status, search string) ([]models.User, int64, error) {
+	var users []models.User
+	var total int64
+
+	query := r.DB.WithContext(ctx).Model(&models.User{})
+
+	// Apply filters
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+	if search != "" {
+		query = query.Where("email ILIKE ?", "%"+search+"%")
+	}
+
+	// Count total records
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply pagination
+	offset := (page - 1) * pageSize
+	if err := query.
+		Preload("Profile").
+		Order("created_at DESC").
+		Offset(offset).
+		Limit(pageSize).
+		Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
 }

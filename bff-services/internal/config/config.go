@@ -38,10 +38,29 @@ func GetContentServiceURL() string {
 	return "http://localhost/api/content"
 }
 
+func GetLessonServiceURL() string {
+	if v := os.Getenv("LESSON_SERVICE_URL"); v != "" {
+		return v
+	}
+	return "http://localhost:8002"
+}
+
 // GetCORSOrigin returns allowed CORS origin from env CORS_URL; default http://localhost:3000
 func GetCORSOrigin() string {
 	if v := os.Getenv("CORS_URL"); v != "" {
 		return v
 	}
 	return "http://localhost:3000"
+}
+
+// Redis
+type RedisConfig struct {
+	Addr     string
+	Password string
+}
+func GetRedisConfig() RedisConfig {
+	return RedisConfig{
+		Addr:     os.Getenv("REDIS_HOST") + ":" + os.Getenv("REDIS_PORT"),
+		Password: os.Getenv("REDIS_PASSWORD"),
+	}
 }
