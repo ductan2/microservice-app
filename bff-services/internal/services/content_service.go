@@ -15,6 +15,7 @@ import (
 
 // ContentService defines the contract for interacting with the content service GraphQL API.
 type ContentService interface {
+	ExecuteGraphQL(ctx context.Context, token string, payload dto.GraphQLRequest) (*HTTPResponse, error)
 	GetTopicsLevelsTags(ctx context.Context, token string) (*HTTPResponse, error)
 	GetLessons(ctx context.Context, token string, params dto.LessonQueryParams) (*HTTPResponse, error)
 	CreateLesson(ctx context.Context, token string, payload dto.CreateLessonRequest) (*HTTPResponse, error)
@@ -29,8 +30,9 @@ type ContentServiceClient struct {
 }
 
 type graphQLRequest struct {
-	Query     string                 `json:"query"`
-	Variables map[string]interface{} `json:"variables,omitempty"`
+	Query         string                 `json:"query"`
+	Variables     map[string]interface{} `json:"variables,omitempty"`
+	OperationName string                 `json:"operationName,omitempty"`
 }
 
 // NewContentServiceClient constructs a new ContentServiceClient.
@@ -127,6 +129,24 @@ const (
 }`
 )
 
+// ExecuteGraphQL forwards raw GraphQL operations to the content service.
+func (c *ContentServiceClient) ExecuteGraphQL(ctx context.Context, token string, payload dto.GraphQLRequest) (*HTTPResponse, error) {
+	query := strings.TrimSpace(payload.Query)
+	if query == "" {
+		return nil, fmt.Errorf("graphql query is required")
+	}
+
+	request := graphQLRequest{Query: query}
+	if len(payload.Variables) > 0 {
+		request.Variables = payload.Variables
+	}
+	if op := strings.TrimSpace(payload.OperationName); op != "" {
+		request.OperationName = op
+	}
+
+	return c.sendGraphQLRequest(ctx, request, token)
+}
+
 // GetTopicsLevelsTags fetches topics, levels, and tags metadata.
 func (c *ContentServiceClient) GetTopicsLevelsTags(ctx context.Context, token string) (*HTTPResponse, error) {
 	return c.doGraphQLRequest(ctx, topicsLevelsTagsQuery, nil, token)
@@ -217,13 +237,16 @@ func (c *ContentServiceClient) GetQuizzes(ctx context.Context, token string, par
 }
 
 func (c *ContentServiceClient) doGraphQLRequest(ctx context.Context, query string, variables map[string]interface{}, token string) (*HTTPResponse, error) {
+	request := graphQLRequest{Query: query}
+	if len(variables) > 0 {
+		request.Variables = variables
+	}
+	return c.sendGraphQLRequest(ctx, request, token)
+}
+
+func (c *ContentServiceClient) sendGraphQLRequest(ctx context.Context, payload graphQLRequest, token string) (*HTTPResponse, error) {
 	if c.baseURL == "" {
 		return nil, fmt.Errorf("content service base URL is not configured")
-	}
-
-	payload := graphQLRequest{Query: query}
-	if len(variables) > 0 {
-		payload.Variables = variables
 	}
 
 	body, err := json.Marshal(payload)
