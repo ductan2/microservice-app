@@ -32,3 +32,10 @@ type QuizQueryParams struct {
 	Page     int    `form:"page,default=1"`
 	PageSize int    `form:"pageSize,default=10"`
 }
+
+// GraphQLRequest represents a GraphQL operation forwarded to the content service.
+type GraphQLRequest struct {
+	Query         string                 `json:"query" binding:"required"`
+	OperationName string                 `json:"operationName,omitempty"`
+	Variables     map[string]interface{} `json:"variables,omitempty"`
+}

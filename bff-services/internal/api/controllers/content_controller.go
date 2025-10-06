@@ -111,3 +111,22 @@ func (c *ContentController) GetQuizzes(ctx *gin.Context) {
 
 	respondWithServiceResponse(ctx, resp)
 }
+
+// ProxyGraphQL forwards arbitrary GraphQL requests to the content service.
+func (c *ContentController) ProxyGraphQL(ctx *gin.Context) {
+	token := getOptionalBearerToken(ctx)
+
+	var payload dto.GraphQLRequest
+	if err := ctx.ShouldBindJSON(&payload); err != nil {
+		utils.Fail(ctx, "Invalid GraphQL request", http.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp, err := c.contentService.ExecuteGraphQL(ctx.Request.Context(), token, payload)
+	if err != nil {
+		utils.Fail(ctx, "Unable to execute GraphQL request", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(ctx, resp)
+}

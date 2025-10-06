@@ -91,6 +91,7 @@ func NewRouter(deps Deps) *gin.Engine {
 		if contentCtrl != nil {
 			content := api.Group("/content")
 			{
+				content.POST("/graphql", contentCtrl.ProxyGraphQL)
 				content.GET("/metadata", contentCtrl.GetTopicsLevelsTags)
 				content.GET("/lessons", contentCtrl.GetLessons)
 				content.POST("/lessons", contentCtrl.CreateLesson)
