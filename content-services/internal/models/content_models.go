@@ -29,11 +29,14 @@ type Tag struct {
 	Name string    `gorm:"type:text;not null" json:"name"`
 }
 
-// Folder groups media assets
+// Folder groups media assets with up to 3 levels of nesting
 type Folder struct {
-	ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id" bson:"_id"`
-	Name      string    `gorm:"type:text;not null" json:"name" bson:"name"`
-	CreatedAt time.Time `gorm:"default:now();not null" json:"created_at" bson:"created_at"`
+	ID        uuid.UUID  `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id" bson:"_id"`
+	Name      string     `gorm:"type:text;not null" json:"name" bson:"name"`
+	ParentID  *uuid.UUID `gorm:"type:uuid;index:folders_parent_idx" json:"parent_id,omitempty" bson:"parent_id,omitempty"`
+	Depth     int        `gorm:"not null;default:1;check:depth >= 1 AND depth <= 3" json:"depth" bson:"depth"` // 1=root, 2=child, 3=grandchild
+	CreatedAt time.Time  `gorm:"default:now();not null" json:"created_at" bson:"created_at"`
+	UpdatedAt time.Time  `gorm:"default:now();not null" json:"updated_at" bson:"updated_at"`
 }
 
 // MediaAsset for images and audio files

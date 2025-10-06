@@ -13,6 +13,7 @@ type Resolver struct {
 	DB               *mongo.Database
 	Taxonomy         *taxonomy.Store
 	Media            service.MediaService
+	FolderService    service.FolderService
 	LessonService    service.LessonService
 	QuizService      service.QuizService
 	FlashcardService service.FlashcardService

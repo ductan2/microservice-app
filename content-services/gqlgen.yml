@@ -49,6 +49,16 @@ models:
     fields:
       options:
         resolver: true
+  Folder:
+    fields:
+      parent:
+        resolver: true
+      children:
+        resolver: true
+      childrenCount:
+        resolver: true
+      mediaCount:
+        resolver: true
   Map:
     model:
       - github.com/99designs/gqlgen/graphql.Map

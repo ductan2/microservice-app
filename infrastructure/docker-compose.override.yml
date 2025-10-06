@@ -26,13 +26,13 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.lesson.rule=PathPrefix(`/api/lesson/v1`)"
-      - "traefik.http.services.lesson.loadbalancer.server.port=8000"
+      - "traefik.http.services.lesson.loadbalancer.server.port=8005"
       # Path rewriting middleware using regex
       - "traefik.http.middlewares.lesson-replacepathregex.replacepathregex.regex=^/api/lesson/(.*)"
       - "traefik.http.middlewares.lesson-replacepathregex.replacepathregex.replacement=/api/$1"
       - "traefik.http.routers.lesson.middlewares=lesson-replacepathregex@docker"
     ports:
-      - "${LESSON_SERVICES_PORT:-8005}:8000"
+      - "${LESSON_SERVICES_PORT:-8005}:8005"
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -70,8 +70,9 @@ services:
       - frontend
       - backend
     ports:
-      - "${CONTENT_SERVICES_PORT:-8003}:8003"
+      - "${CONTENT_SERVICES_PORT:-8004}:8004"
     environment:
+      - PORT=8004
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=${POSTGRES_USER:-user}
@@ -85,6 +86,8 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER:-user}
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password}
       - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_DB=content
     volumes:
       - ../content-services:/app
       - /app/vendor  # Exclude vendor directory
@@ -106,8 +109,9 @@ services:
     container_name: notification-services
     restart: always
     ports:
-      - "${NOTIFICATION_SERVICES_PORT:-8004}:8004"
+      - "${NOTIFICATION_SERVICES_PORT:-8003}:8003"
     environment:
+      - PORT=8003
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=${RABBITMQ_USER:-user}

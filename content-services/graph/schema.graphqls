@@ -12,8 +12,14 @@ type Query {
   level(id: ID, code: String): Level
   levels(search: String): [Level!]!
 
-  tag(id: ID, slug: String)
+  tag(id: ID, slug: String): Tag
   tags(search: String): [Tag!]!
+
+  folder(id: ID!): Folder
+  folders(filter: FolderFilterInput, page: Int = 1, pageSize: Int = 100, orderBy: FolderOrderInput): FolderCollection!
+  rootFolders: [Folder!]!
+  folderTree(id: ID!): FolderTree!
+  folderPath(id: ID!): [Folder!]!
 
   mediaAsset(id: ID!): MediaAsset
   mediaAssets(ids: [ID!]!): [MediaAsset!]!
@@ -45,6 +51,10 @@ type Mutation {
   createTag(input: CreateTagInput!): Tag!
   updateTag(id: ID!, input: UpdateTagInput!): Tag!
   deleteTag(id: ID!): Boolean!
+
+  createFolder(input: CreateFolderInput!): Folder!
+  updateFolder(id: ID!, input: UpdateFolderInput!): Folder!
+  deleteFolder(id: ID!): Boolean!
 
   uploadMedia(input: UploadMediaInput!): MediaAsset!
   deleteMedia(id: ID!): Boolean!
@@ -496,6 +506,58 @@ input AddFlashcardInput {
   frontMediaId: ID
   backMediaId: ID
   hints: [String!]
+}
+
+# ============= FOLDER TYPES =============
+
+type Folder {
+  id: ID!
+  name: String!
+  parentId: ID
+  parent: Folder
+  depth: Int!
+  children: [Folder!]
+  childrenCount: Int!
+  mediaCount: Int!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type FolderTree {
+  folder: Folder!
+  children: [FolderTree!]!
+}
+
+type FolderCollection {
+  items: [Folder!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+input CreateFolderInput {
+  name: String!
+  parentId: ID
+}
+
+input UpdateFolderInput {
+  name: String!
+}
+
+input FolderFilterInput {
+  parentId: ID
+  depth: Int
+  search: String
+}
+
+enum FolderOrderField {
+  NAME
+  CREATED_AT
+}
+
+input FolderOrderInput {
+  field: FolderOrderField! = NAME
+  direction: OrderDirection! = ASC
 }
 
 

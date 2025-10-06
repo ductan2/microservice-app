@@ -26,7 +26,7 @@ docker-compose logs -f golang-init
 
 ### Microservices
 - **user-services**: Port 8001
-- **lesson-services**: Port 8002  
+- **lesson-services**: Port 8005  
 - **content-services**: Port 8003
 - **golang-init**: Port 8004
 
@@ -61,7 +61,7 @@ RABBITMQ_PASSWORD=password
 
 # Service Ports
 USER_SERVICES_PORT=8001
-LESSON_SERVICES_PORT=8002
+LESSON_SERVICES_PORT=8005
 CONTENT_SERVICES_PORT=8003
 GOLANG_INIT_PORT=8004
 ```

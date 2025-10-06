@@ -46,6 +46,7 @@ func main() {
 
 	// Build GraphQL server
 	mediaRepo := repository.NewMediaRepository(database)
+	folderRepo := repository.NewFolderRepository(database)
 	lessonRepo := repository.NewLessonRepository(database)
 	sectionRepo := repository.NewLessonSectionRepository(database)
 	quizRepo := repository.NewQuizRepository(database)
@@ -70,18 +71,20 @@ func main() {
 		log.Fatalf("s3 init error: %v", err)
 	}
 	mediaService := service.NewMediaService(mediaRepo, s3Client, config.GetS3PresignTTL())
+	folderService := service.NewFolderService(folderRepo)
 	lessonService := service.NewLessonService(lessonRepo, sectionRepo, outboxRepo)
 	quizService := service.NewQuizService(quizRepo, quizQuestionRepo, nil, tagRepo, outboxRepo)
 	flashcardService := service.NewFlashcardService(flashcardSetRepo, flashcardRepo, tagRepo)
 
 	resolver := &gqlresolver.Resolver{
-		DB:            database,
-		Taxonomy:      taxonomyStore,
-		Media:         mediaService,
-		LessonService: lessonService,
-		QuizService:   quizService,
-		FlashcardService:    flashcardService,
-		TagRepo:       tagRepo,
+		DB:               database,
+		Taxonomy:         taxonomyStore,
+		Media:            mediaService,
+		FolderService:    folderService,
+		LessonService:    lessonService,
+		QuizService:      quizService,
+		FlashcardService: flashcardService,
+		TagRepo:          tagRepo,
 	}
 	gqlSrv := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	graphqlHandler := handler.NewDefaultServer(gqlSrv)

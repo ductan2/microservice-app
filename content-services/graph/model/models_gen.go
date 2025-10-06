@@ -42,6 +42,11 @@ type CreateFlashcardSetInput struct {
 	CreatedBy   *string `json:"createdBy,omitempty"`
 }
 
+type CreateFolderInput struct {
+	Name     string  `json:"name"`
+	ParentID *string `json:"parentId,omitempty"`
+}
+
 type CreateLessonInput struct {
 	Code        *string `json:"code,omitempty"`
 	Title       string  `json:"title"`
@@ -150,6 +155,42 @@ type FlashcardSetList struct {
 type FlashcardSetOrderInput struct {
 	Field     FlashcardSetOrderField `json:"field"`
 	Direction OrderDirection         `json:"direction"`
+}
+
+type Folder struct {
+	ID            string    `json:"id"`
+	Name          string    `json:"name"`
+	ParentID      *string   `json:"parentId,omitempty"`
+	Parent        *Folder   `json:"parent,omitempty"`
+	Depth         int       `json:"depth"`
+	Children      []*Folder `json:"children,omitempty"`
+	ChildrenCount int       `json:"childrenCount"`
+	MediaCount    int       `json:"mediaCount"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
+type FolderCollection struct {
+	Items      []*Folder `json:"items"`
+	TotalCount int       `json:"totalCount"`
+	Page       int       `json:"page"`
+	PageSize   int       `json:"pageSize"`
+}
+
+type FolderFilterInput struct {
+	ParentID *string `json:"parentId,omitempty"`
+	Depth    *int    `json:"depth,omitempty"`
+	Search   *string `json:"search,omitempty"`
+}
+
+type FolderOrderInput struct {
+	Field     FolderOrderField `json:"field"`
+	Direction OrderDirection   `json:"direction"`
+}
+
+type FolderTree struct {
+	Folder   *Folder       `json:"folder"`
+	Children []*FolderTree `json:"children"`
 }
 
 type Lesson struct {
@@ -334,6 +375,10 @@ type Topic struct {
 	Slug      string    `json:"slug"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+type UpdateFolderInput struct {
+	Name string `json:"name"`
 }
 
 type UpdateLessonInput struct {
@@ -541,6 +586,61 @@ func (e *FlashcardSetOrderField) UnmarshalJSON(b []byte) error {
 }
 
 func (e FlashcardSetOrderField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type FolderOrderField string
+
+const (
+	FolderOrderFieldName      FolderOrderField = "NAME"
+	FolderOrderFieldCreatedAt FolderOrderField = "CREATED_AT"
+)
+
+var AllFolderOrderField = []FolderOrderField{
+	FolderOrderFieldName,
+	FolderOrderFieldCreatedAt,
+}
+
+func (e FolderOrderField) IsValid() bool {
+	switch e {
+	case FolderOrderFieldName, FolderOrderFieldCreatedAt:
+		return true
+	}
+	return false
+}
+
+func (e FolderOrderField) String() string {
+	return string(e)
+}
+
+func (e *FolderOrderField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FolderOrderField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FolderOrderField", str)
+	}
+	return nil
+}
+
+func (e FolderOrderField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FolderOrderField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FolderOrderField) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
