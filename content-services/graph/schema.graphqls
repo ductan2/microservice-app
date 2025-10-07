@@ -61,6 +61,7 @@ type Mutation {
 
   createLesson(input: CreateLessonInput!): Lesson!
   updateLesson(id: ID!, input: UpdateLessonInput!): Lesson!
+  deleteLesson(id: ID!): Boolean!
   publishLesson(id: ID!): Lesson!
   unpublishLesson(id: ID!): Lesson!
 

@@ -191,6 +191,24 @@ func (r *mutationResolver) UnpublishLesson(ctx context.Context, id string) (*mod
 	return mapLesson(lesson), nil
 }
 
+// DeleteLesson is the resolver for the deleteLesson field.
+func (r *mutationResolver) DeleteLesson(ctx context.Context, id string) (bool, error) {
+	if r.LessonService == nil {
+		return false, gqlerror.Errorf("lesson service not configured")
+	}
+
+	lessonID, err := uuid.Parse(id)
+	if err != nil {
+		return false, gqlerror.Errorf("invalid lesson ID: %v", err)
+	}
+
+	if err := r.LessonService.DeleteLesson(ctx, lessonID); err != nil {
+		return false, mapLessonError(err)
+	}
+
+	return true, nil
+}
+
 // CreateLessonSection is the resolver for the createLessonSection field.
 func (r *mutationResolver) CreateLessonSection(ctx context.Context, lessonID string, input model.CreateLessonSectionInput) (*model.LessonSection, error) {
 	if r.LessonService == nil {

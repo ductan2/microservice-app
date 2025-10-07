@@ -205,6 +205,7 @@ type ComplexityRoot struct {
 		CreateTag            func(childComplexity int, input model.CreateTagInput) int
 		CreateTopic          func(childComplexity int, input model.CreateTopicInput) int
 		DeleteFolder         func(childComplexity int, id string) int
+		DeleteLesson         func(childComplexity int, id string) int
 		DeleteLessonSection  func(childComplexity int, id string) int
 		DeleteLevel          func(childComplexity int, id string) int
 		DeleteMedia          func(childComplexity int, id string) int
@@ -347,6 +348,7 @@ type MutationResolver interface {
 	DeleteMedia(ctx context.Context, id string) (bool, error)
 	CreateLesson(ctx context.Context, input model.CreateLessonInput) (*model.Lesson, error)
 	UpdateLesson(ctx context.Context, id string, input model.UpdateLessonInput) (*model.Lesson, error)
+	DeleteLesson(ctx context.Context, id string) (bool, error)
 	PublishLesson(ctx context.Context, id string) (*model.Lesson, error)
 	UnpublishLesson(ctx context.Context, id string) (*model.Lesson, error)
 	CreateLessonSection(ctx context.Context, lessonID string, input model.CreateLessonSectionInput) (*model.LessonSection, error)
@@ -1138,6 +1140,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteFolder(childComplexity, args["id"].(string)), true
+	case "Mutation.deleteLesson":
+		if e.complexity.Mutation.DeleteLesson == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteLesson_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteLesson(childComplexity, args["id"].(string)), true
 	case "Mutation.deleteLessonSection":
 		if e.complexity.Mutation.DeleteLessonSection == nil {
 			break
@@ -2036,6 +2049,7 @@ type Mutation {
 
   createLesson(input: CreateLessonInput!): Lesson!
   updateLesson(id: ID!, input: UpdateLessonInput!): Lesson!
+  deleteLesson(id: ID!): Boolean!
   publishLesson(id: ID!): Lesson!
   unpublishLesson(id: ID!): Lesson!
 
@@ -2703,6 +2717,17 @@ func (ec *executionContext) field_Mutation_deleteFolder_args(ctx context.Context
 }
 
 func (ec *executionContext) field_Mutation_deleteLessonSection_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteLesson_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
@@ -7237,6 +7262,47 @@ func (ec *executionContext) fieldContext_Mutation_updateLesson(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateLesson_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteLesson(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteLesson,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteLesson(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteLesson(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteLesson_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -14956,6 +15022,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateLesson":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateLesson(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteLesson":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteLesson(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
