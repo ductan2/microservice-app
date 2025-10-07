@@ -222,6 +222,7 @@ type ComplexityRoot struct {
 		UpdateTag            func(childComplexity int, id string, input model.UpdateTagInput) int
 		UpdateTopic          func(childComplexity int, id string, input model.UpdateTopicInput) int
 		UploadMedia          func(childComplexity int, input model.UploadMediaInput) int
+		UploadMediaBatch     func(childComplexity int, inputs []model.UploadMediaInput) int
 	}
 
 	Query struct {
@@ -344,6 +345,7 @@ type MutationResolver interface {
 	UpdateFolder(ctx context.Context, id string, input model.UpdateFolderInput) (*model.Folder, error)
 	DeleteFolder(ctx context.Context, id string) (bool, error)
 	UploadMedia(ctx context.Context, input model.UploadMediaInput) (*model.MediaAsset, error)
+	UploadMediaBatch(ctx context.Context, inputs []model.UploadMediaInput) ([]*model.MediaAsset, error)
 	DeleteMedia(ctx context.Context, id string) (bool, error)
 	CreateLesson(ctx context.Context, input model.CreateLessonInput) (*model.Lesson, error)
 	UpdateLesson(ctx context.Context, id string, input model.UpdateLessonInput) (*model.Lesson, error)
@@ -1325,6 +1327,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UploadMedia(childComplexity, args["input"].(model.UploadMediaInput)), true
+
+	case "Mutation.uploadMediaBatch":
+		if e.complexity.Mutation.UploadMediaBatch == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_uploadMediaBatch_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UploadMediaBatch(childComplexity, args["inputs"].([]model.UploadMediaInput)), true
 
 	case "Query.flashcardSet":
 		if e.complexity.Query.FlashcardSet == nil {
@@ -2921,6 +2935,17 @@ func (ec *executionContext) field_Mutation_uploadMedia_args(ctx context.Context,
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_uploadMediaBatch_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "inputs", ec.unmarshalNUploadMediaInput2ᚕcontentᚑservicesᚋgraphᚋmodelᚐUploadMediaInputᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["inputs"] = arg0
 	return args, nil
 }
 
@@ -7054,6 +7079,76 @@ func (ec *executionContext) fieldContext_Mutation_uploadMedia(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_uploadMedia_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_uploadMediaBatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_uploadMediaBatch,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UploadMediaBatch(ctx, fc.Args["inputs"].([]model.UploadMediaInput))
+		},
+		nil,
+		ec.marshalNMediaAsset2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐMediaAssetᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_uploadMediaBatch(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		IsList:     true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_MediaAsset_id(ctx, field)
+			case "storageKey":
+				return ec.fieldContext_MediaAsset_storageKey(ctx, field)
+			case "kind":
+				return ec.fieldContext_MediaAsset_kind(ctx, field)
+			case "mimeType":
+				return ec.fieldContext_MediaAsset_mimeType(ctx, field)
+			case "folderId":
+				return ec.fieldContext_MediaAsset_folderId(ctx, field)
+			case "originalName":
+				return ec.fieldContext_MediaAsset_originalName(ctx, field)
+			case "thumbnailURL":
+				return ec.fieldContext_MediaAsset_thumbnailURL(ctx, field)
+			case "bytes":
+				return ec.fieldContext_MediaAsset_bytes(ctx, field)
+			case "durationMs":
+				return ec.fieldContext_MediaAsset_durationMs(ctx, field)
+			case "sha256":
+				return ec.fieldContext_MediaAsset_sha256(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_MediaAsset_createdAt(ctx, field)
+			case "uploadedBy":
+				return ec.fieldContext_MediaAsset_uploadedBy(ctx, field)
+			case "downloadURL":
+				return ec.fieldContext_MediaAsset_downloadURL(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MediaAsset", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_uploadMediaBatch_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -14939,6 +15034,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "uploadMediaBatch":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_uploadMediaBatch(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "deleteMedia":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteMedia(ctx, field)
@@ -17761,6 +17863,21 @@ func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋg
 func (ec *executionContext) unmarshalNUploadMediaInput2contentᚑservicesᚋgraphᚋmodelᚐUploadMediaInput(ctx context.Context, v any) (model.UploadMediaInput, error) {
 	res, err := ec.unmarshalInputUploadMediaInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUploadMediaInput2ᚕcontentᚑservicesᚋgraphᚋmodelᚐUploadMediaInputᚄ(ctx context.Context, v any) ([]model.UploadMediaInput, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]model.UploadMediaInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNUploadMediaInput2contentᚑservicesᚋgraphᚋmodelᚐUploadMediaInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
