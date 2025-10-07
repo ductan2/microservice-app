@@ -405,6 +405,13 @@ type UpdateQuestionOptionInput struct {
 	Feedback  *string `json:"feedback,omitempty"`
 }
 
+type UpdateQuizInput struct {
+	LessonID    *string `json:"lessonId,omitempty"`
+	Title       *string `json:"title,omitempty"`
+	Description *string `json:"description,omitempty"`
+	TimeLimitS  *int    `json:"timeLimitS,omitempty"`
+}
+
 type UpdateTagInput struct {
 	Slug *string `json:"slug,omitempty"`
 	Name *string `json:"name,omitempty"`

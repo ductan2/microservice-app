@@ -202,6 +202,8 @@ type ComplexityRoot struct {
 		CreateLessonSection  func(childComplexity int, lessonID string, input model.CreateLessonSectionInput) int
 		CreateLevel          func(childComplexity int, input model.CreateLevelInput) int
 		CreateQuiz           func(childComplexity int, input model.CreateQuizInput) int
+		UpdateQuiz           func(childComplexity int, id string, input model.UpdateQuizInput) int
+		DeleteQuiz           func(childComplexity int, id string) int
 		CreateTag            func(childComplexity int, input model.CreateTagInput) int
 		CreateTopic          func(childComplexity int, input model.CreateTopicInput) int
 		DeleteFolder         func(childComplexity int, id string) int
@@ -357,6 +359,8 @@ type MutationResolver interface {
 	CreateFlashcardSet(ctx context.Context, input model.CreateFlashcardSetInput) (*model.FlashcardSet, error)
 	AddFlashcard(ctx context.Context, input model.AddFlashcardInput) (*model.Flashcard, error)
 	CreateQuiz(ctx context.Context, input model.CreateQuizInput) (*model.Quiz, error)
+	UpdateQuiz(ctx context.Context, id string, input model.UpdateQuizInput) (*model.Quiz, error)
+	DeleteQuiz(ctx context.Context, id string) (bool, error)
 	AddQuizQuestion(ctx context.Context, quizID string, input model.CreateQuizQuestionInput) (*model.QuizQuestion, error)
 	AddQuestionOption(ctx context.Context, questionID string, input model.CreateQuestionOptionInput) (*model.QuestionOption, error)
 	UpdateQuestionOption(ctx context.Context, id string, input model.UpdateQuestionOptionInput) (*model.QuestionOption, error)
@@ -1107,6 +1111,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateQuiz(childComplexity, args["input"].(model.CreateQuizInput)), true
+	case "Mutation.updateQuiz":
+		if e.complexity.Mutation.UpdateQuiz == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateQuiz_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateQuiz(childComplexity, args["id"].(string), args["input"].(model.UpdateQuizInput)), true
+	case "Mutation.deleteQuiz":
+		if e.complexity.Mutation.DeleteQuiz == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteQuiz_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteQuiz(childComplexity, args["id"].(string)), true
 	case "Mutation.createTag":
 		if e.complexity.Mutation.CreateTag == nil {
 			break
@@ -2061,6 +2087,8 @@ type Mutation {
   addFlashcard(input: AddFlashcardInput!): Flashcard!
 
   createQuiz(input: CreateQuizInput!): Quiz!
+  updateQuiz(id: ID!, input: UpdateQuizInput!): Quiz!
+  deleteQuiz(id: ID!): Boolean!
   addQuizQuestion(quizId: ID!, input: CreateQuizQuestionInput!): QuizQuestion!
   addQuestionOption(questionId: ID!, input: CreateQuestionOptionInput!): QuestionOption!
   updateQuestionOption(id: ID!, input: UpdateQuestionOptionInput!): QuestionOption!
@@ -2267,6 +2295,13 @@ type QuizQuestionCollection {
 input CreateQuizInput {
   lessonId: ID
   title: String!
+  description: String
+  timeLimitS: Int
+}
+
+input UpdateQuizInput {
+  lessonId: ID
+  title: String
   description: String
   timeLimitS: Int
 }
@@ -2680,6 +2715,33 @@ func (ec *executionContext) field_Mutation_createQuiz_args(ctx context.Context, 
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateQuiz_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateQuizInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateQuizInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteQuiz_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -7785,6 +7847,105 @@ func (ec *executionContext) fieldContext_Mutation_createQuiz(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateQuiz(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateQuiz,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateQuiz(ctx, fc.Args["id"].(string), fc.Args["input"].(model.UpdateQuizInput))
+		},
+		nil,
+		ec.marshalNQuiz2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuiz,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateQuiz(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Quiz_id(ctx, field)
+			case "lessonId":
+				return ec.fieldContext_Quiz_lessonId(ctx, field)
+			case "title":
+				return ec.fieldContext_Quiz_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Quiz_description(ctx, field)
+			case "totalPoints":
+				return ec.fieldContext_Quiz_totalPoints(ctx, field)
+			case "timeLimitS":
+				return ec.fieldContext_Quiz_timeLimitS(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Quiz_createdAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Quiz_tags(ctx, field)
+			case "questions":
+				return ec.fieldContext_Quiz_questions(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Quiz", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateQuiz_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteQuiz(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteQuiz,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteQuiz(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteQuiz(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteQuiz_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_addQuizQuestion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -12635,6 +12796,54 @@ func (ec *executionContext) unmarshalInputCreateQuizInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateQuizInput(ctx context.Context, obj any) (model.UpdateQuizInput, error) {
+	var it model.UpdateQuizInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"lessonId", "title", "description", "timeLimitS"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "lessonId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lessonId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LessonID = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "timeLimitS":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timeLimitS"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TimeLimitS = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateQuizQuestionInput(ctx context.Context, obj any) (model.CreateQuizQuestionInput, error) {
 	var it model.CreateQuizQuestionInput
 	asMap := map[string]any{}
@@ -15089,6 +15298,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "updateQuiz":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateQuiz(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteQuiz":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteQuiz(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "addQuizQuestion":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_addQuizQuestion(ctx, field)
@@ -16655,6 +16878,11 @@ func (ec *executionContext) unmarshalNCreateQuestionOptionInput2contentᚑservic
 
 func (ec *executionContext) unmarshalNCreateQuizInput2contentᚑservicesᚋgraphᚋmodelᚐCreateQuizInput(ctx context.Context, v any) (model.CreateQuizInput, error) {
 	res, err := ec.unmarshalInputCreateQuizInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateQuizInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateQuizInput(ctx context.Context, v any) (model.UpdateQuizInput, error) {
+	res, err := ec.unmarshalInputUpdateQuizInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

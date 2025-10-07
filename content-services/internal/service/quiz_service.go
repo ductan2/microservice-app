@@ -110,7 +110,11 @@ func (s *quizService) UpdateQuiz(ctx context.Context, id uuid.UUID, updates *mod
 		existing.Description = updates.Description
 	}
 	if updates.LessonID != nil {
-		existing.LessonID = updates.LessonID
+		if *updates.LessonID == uuid.Nil {
+			existing.LessonID = nil
+		} else {
+			existing.LessonID = updates.LessonID
+		}
 	}
 	if updates.TimeLimitS != 0 {
 		existing.TimeLimitS = updates.TimeLimitS

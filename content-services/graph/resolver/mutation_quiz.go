@@ -4,9 +4,11 @@ import (
 	"content-services/graph/model"
 	"content-services/internal/models"
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // CreateQuiz is the resolver for the createQuiz field.
@@ -42,6 +44,78 @@ func (r *mutationResolver) CreateQuiz(ctx context.Context, input model.CreateQui
 	}
 
 	return mapQuiz(created), nil
+}
+
+// UpdateQuiz is the resolver for the updateQuiz field.
+func (r *mutationResolver) UpdateQuiz(ctx context.Context, id string, input model.UpdateQuizInput) (*model.Quiz, error) {
+	quizService := r.Resolver.QuizService
+	if quizService == nil {
+		return nil, gqlerror.Errorf("quiz service not configured")
+	}
+
+	quizID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, gqlerror.Errorf("invalid quiz ID: %v", err)
+	}
+
+	updates := &models.Quiz{}
+
+	if input.Title != nil {
+		updates.Title = *input.Title
+	}
+
+	if input.Description != nil {
+		updates.Description = *input.Description
+	}
+
+	if input.LessonID != nil {
+		if *input.LessonID == "" {
+			nilID := uuid.Nil
+			updates.LessonID = &nilID
+		} else {
+			lessonID, err := uuid.Parse(*input.LessonID)
+			if err != nil {
+				return nil, gqlerror.Errorf("invalid lesson ID: %v", err)
+			}
+			updates.LessonID = &lessonID
+		}
+	}
+
+	if input.TimeLimitS != nil {
+		updates.TimeLimitS = *input.TimeLimitS
+	}
+
+	updated, err := quizService.UpdateQuiz(ctx, quizID, updates)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, gqlerror.Errorf("quiz not found: %s", id)
+		}
+		return nil, err
+	}
+
+	return mapQuiz(updated), nil
+}
+
+// DeleteQuiz is the resolver for the deleteQuiz field.
+func (r *mutationResolver) DeleteQuiz(ctx context.Context, id string) (bool, error) {
+	quizService := r.Resolver.QuizService
+	if quizService == nil {
+		return false, gqlerror.Errorf("quiz service not configured")
+	}
+
+	quizID, err := uuid.Parse(id)
+	if err != nil {
+		return false, gqlerror.Errorf("invalid quiz ID: %v", err)
+	}
+
+	if err := quizService.DeleteQuiz(ctx, quizID); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return false, gqlerror.Errorf("quiz not found: %s", id)
+		}
+		return false, err
+	}
+
+	return true, nil
 }
 
 // AddQuizQuestion is the resolver for the addQuizQuestion field.
