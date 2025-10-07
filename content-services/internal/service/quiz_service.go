@@ -116,6 +116,12 @@ func (s *quizService) UpdateQuiz(ctx context.Context, id uuid.UUID, updates *mod
 			existing.LessonID = updates.LessonID
 		}
 	}
+	if updates.TopicID != nil {
+		existing.TopicID = updates.TopicID
+	}
+	if updates.LevelID != nil {
+		existing.LevelID = updates.LevelID
+	}
 	if updates.TimeLimitS != 0 {
 		existing.TimeLimitS = updates.TimeLimitS
 	}

@@ -31,7 +31,7 @@ func (r *queryResolver) Quiz(ctx context.Context, id string) (*model.Quiz, error
 }
 
 // Quizzes is the resolver for the quizzes field.
-func (r *queryResolver) Quizzes(ctx context.Context, lessonID *string, search *string, page *int, pageSize *int, orderBy *model.QuizOrderInput) (*model.QuizCollection, error) {
+func (r *queryResolver) Quizzes(ctx context.Context, lessonID *string, topicID *string, levelID *string, search *string, page *int, pageSize *int, orderBy *model.QuizOrderInput) (*model.QuizCollection, error) {
 	quizService := r.Resolver.QuizService
 	if quizService == nil {
 		return nil, gqlerror.Errorf("quiz service not configured")
@@ -46,7 +46,29 @@ func (r *queryResolver) Quizzes(ctx context.Context, lessonID *string, search *s
 		lessonUUID = &parsed
 	}
 
-	quizFilter := &repository.QuizFilter{LessonID: lessonUUID}
+	var topicUUID *uuid.UUID
+	if topicID != nil {
+		parsed, err := uuid.Parse(*topicID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid topic ID: %v", err)
+		}
+		topicUUID = &parsed
+	}
+
+	var levelUUID *uuid.UUID
+	if levelID != nil {
+		parsed, err := uuid.Parse(*levelID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid level ID: %v", err)
+		}
+		levelUUID = &parsed
+	}
+
+	quizFilter := &repository.QuizFilter{
+		LessonID: lessonUUID,
+		TopicID:  topicUUID,
+		LevelID:  levelUUID,
+	}
 	if search != nil {
 		quizFilter.Search = strings.TrimSpace(*search)
 	}

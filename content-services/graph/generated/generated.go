@@ -202,8 +202,6 @@ type ComplexityRoot struct {
 		CreateLessonSection  func(childComplexity int, lessonID string, input model.CreateLessonSectionInput) int
 		CreateLevel          func(childComplexity int, input model.CreateLevelInput) int
 		CreateQuiz           func(childComplexity int, input model.CreateQuizInput) int
-		UpdateQuiz           func(childComplexity int, id string, input model.UpdateQuizInput) int
-		DeleteQuiz           func(childComplexity int, id string) int
 		CreateTag            func(childComplexity int, input model.CreateTagInput) int
 		CreateTopic          func(childComplexity int, input model.CreateTopicInput) int
 		DeleteFolder         func(childComplexity int, id string) int
@@ -212,6 +210,7 @@ type ComplexityRoot struct {
 		DeleteLevel          func(childComplexity int, id string) int
 		DeleteMedia          func(childComplexity int, id string) int
 		DeleteQuestionOption func(childComplexity int, id string) int
+		DeleteQuiz           func(childComplexity int, id string) int
 		DeleteTag            func(childComplexity int, id string) int
 		DeleteTopic          func(childComplexity int, id string) int
 		PublishLesson        func(childComplexity int, id string) int
@@ -222,6 +221,7 @@ type ComplexityRoot struct {
 		UpdateLessonSection  func(childComplexity int, id string, input model.UpdateLessonSectionInput) int
 		UpdateLevel          func(childComplexity int, id string, input model.UpdateLevelInput) int
 		UpdateQuestionOption func(childComplexity int, id string, input model.UpdateQuestionOptionInput) int
+		UpdateQuiz           func(childComplexity int, id string, input model.UpdateQuizInput) int
 		UpdateTag            func(childComplexity int, id string, input model.UpdateTagInput) int
 		UpdateTopic          func(childComplexity int, id string, input model.UpdateTopicInput) int
 		UploadMedia          func(childComplexity int, input model.UploadMediaInput) int
@@ -247,7 +247,7 @@ type ComplexityRoot struct {
 		MediaAssets          func(childComplexity int, ids []string) int
 		Quiz                 func(childComplexity int, id string) int
 		QuizQuestions        func(childComplexity int, quizID string, filter *model.QuizQuestionFilterInput, page *int, pageSize *int, orderBy *model.QuizQuestionOrderInput) int
-		Quizzes              func(childComplexity int, lessonID *string, search *string, page *int, pageSize *int, orderBy *model.QuizOrderInput) int
+		Quizzes              func(childComplexity int, lessonID *string, topicID *string, levelID *string, search *string, page *int, pageSize *int, orderBy *model.QuizOrderInput) int
 		RootFolders          func(childComplexity int) int
 		Tag                  func(childComplexity int, id *string, slug *string) int
 		Tags                 func(childComplexity int, search *string) int
@@ -269,10 +269,12 @@ type ComplexityRoot struct {
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		LessonID    func(childComplexity int) int
+		Level       func(childComplexity int) int
 		Questions   func(childComplexity int) int
 		Tags        func(childComplexity int) int
 		TimeLimitS  func(childComplexity int) int
 		Title       func(childComplexity int) int
+		Topic       func(childComplexity int) int
 		TotalPoints func(childComplexity int) int
 	}
 
@@ -387,7 +389,7 @@ type QueryResolver interface {
 	Lesson(ctx context.Context, id string) (*model.Lesson, error)
 	LessonByCode(ctx context.Context, code string) (*model.Lesson, error)
 	Quiz(ctx context.Context, id string) (*model.Quiz, error)
-	Quizzes(ctx context.Context, lessonID *string, search *string, page *int, pageSize *int, orderBy *model.QuizOrderInput) (*model.QuizCollection, error)
+	Quizzes(ctx context.Context, lessonID *string, topicID *string, levelID *string, search *string, page *int, pageSize *int, orderBy *model.QuizOrderInput) (*model.QuizCollection, error)
 	QuizQuestions(ctx context.Context, quizID string, filter *model.QuizQuestionFilterInput, page *int, pageSize *int, orderBy *model.QuizQuestionOrderInput) (*model.QuizQuestionCollection, error)
 	FlashcardSet(ctx context.Context, id string) (*model.FlashcardSet, error)
 	FlashcardSets(ctx context.Context, filter *model.FlashcardSetFilterInput, page *int, pageSize *int, orderBy *model.FlashcardSetOrderInput) (*model.FlashcardSetList, error)
@@ -1111,28 +1113,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateQuiz(childComplexity, args["input"].(model.CreateQuizInput)), true
-	case "Mutation.updateQuiz":
-		if e.complexity.Mutation.UpdateQuiz == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateQuiz_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateQuiz(childComplexity, args["id"].(string), args["input"].(model.UpdateQuizInput)), true
-	case "Mutation.deleteQuiz":
-		if e.complexity.Mutation.DeleteQuiz == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteQuiz_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteQuiz(childComplexity, args["id"].(string)), true
 	case "Mutation.createTag":
 		if e.complexity.Mutation.CreateTag == nil {
 			break
@@ -1221,6 +1201,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteQuestionOption(childComplexity, args["id"].(string)), true
+	case "Mutation.deleteQuiz":
+		if e.complexity.Mutation.DeleteQuiz == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteQuiz_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteQuiz(childComplexity, args["id"].(string)), true
 	case "Mutation.deleteTag":
 		if e.complexity.Mutation.DeleteTag == nil {
 			break
@@ -1331,6 +1322,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateQuestionOption(childComplexity, args["id"].(string), args["input"].(model.UpdateQuestionOptionInput)), true
+	case "Mutation.updateQuiz":
+		if e.complexity.Mutation.UpdateQuiz == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateQuiz_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateQuiz(childComplexity, args["id"].(string), args["input"].(model.UpdateQuizInput)), true
 	case "Mutation.updateTag":
 		if e.complexity.Mutation.UpdateTag == nil {
 			break
@@ -1579,7 +1581,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Quizzes(childComplexity, args["lessonId"].(*string), args["search"].(*string), args["page"].(*int), args["pageSize"].(*int), args["orderBy"].(*model.QuizOrderInput)), true
+		return e.complexity.Query.Quizzes(childComplexity, args["lessonId"].(*string), args["topicId"].(*string), args["levelId"].(*string), args["search"].(*string), args["page"].(*int), args["pageSize"].(*int), args["orderBy"].(*model.QuizOrderInput)), true
 	case "Query.rootFolders":
 		if e.complexity.Query.RootFolders == nil {
 			break
@@ -1692,6 +1694,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Quiz.LessonID(childComplexity), true
+	case "Quiz.level":
+		if e.complexity.Quiz.Level == nil {
+			break
+		}
+
+		return e.complexity.Quiz.Level(childComplexity), true
 	case "Quiz.questions":
 		if e.complexity.Quiz.Questions == nil {
 			break
@@ -1716,6 +1724,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Quiz.Title(childComplexity), true
+	case "Quiz.topic":
+		if e.complexity.Quiz.Topic == nil {
+			break
+		}
+
+		return e.complexity.Quiz.Topic(childComplexity), true
 	case "Quiz.totalPoints":
 		if e.complexity.Quiz.TotalPoints == nil {
 			break
@@ -1912,6 +1926,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateLessonSectionInput,
 		ec.unmarshalInputUpdateLevelInput,
 		ec.unmarshalInputUpdateQuestionOptionInput,
+		ec.unmarshalInputUpdateQuizInput,
 		ec.unmarshalInputUpdateTagInput,
 		ec.unmarshalInputUpdateTopicInput,
 		ec.unmarshalInputUploadMediaInput,
@@ -2043,7 +2058,7 @@ type Query {
   lessonByCode(code: String!): Lesson
 
   quiz(id: ID!): Quiz
-  quizzes(lessonId: ID, search: String, page: Int = 1, pageSize: Int = 20, orderBy: QuizOrderInput): QuizCollection!
+  quizzes(lessonId: ID, topicId: ID, levelId: ID, search: String, page: Int = 1, pageSize: Int = 20, orderBy: QuizOrderInput): QuizCollection!
   quizQuestions(quizId: ID!, filter: QuizQuestionFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: QuizQuestionOrderInput): QuizQuestionCollection!
   flashcardSet(id: ID!): FlashcardSet
   flashcardSets(filter: FlashcardSetFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: FlashcardSetOrderInput): FlashcardSetList!
@@ -2238,6 +2253,8 @@ type Quiz {
   totalPoints: Int!
   timeLimitS: Int
   createdAt: Time!
+  topic: Topic
+  level: Level
   tags: [Tag!]!
   questions: [QuizQuestion!]!
 }
@@ -2294,6 +2311,8 @@ type QuizQuestionCollection {
 
 input CreateQuizInput {
   lessonId: ID
+  topicId: ID
+  levelId: ID
   title: String!
   description: String
   timeLimitS: Int
@@ -2301,6 +2320,8 @@ input CreateQuizInput {
 
 input UpdateQuizInput {
   lessonId: ID
+  topicId: ID
+  levelId: ID
   title: String
   description: String
   timeLimitS: Int
@@ -2718,33 +2739,6 @@ func (ec *executionContext) field_Mutation_createQuiz_args(ctx context.Context, 
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateQuiz_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateQuizInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateQuizInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteQuiz_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_createTag_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2823,6 +2817,17 @@ func (ec *executionContext) field_Mutation_deleteMedia_args(ctx context.Context,
 }
 
 func (ec *executionContext) field_Mutation_deleteQuestionOption_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteQuiz_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
@@ -2961,6 +2966,22 @@ func (ec *executionContext) field_Mutation_updateQuestionOption_args(ctx context
 	}
 	args["id"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateQuestionOptionInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateQuestionOptionInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateQuiz_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateQuizInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateQuizInput)
 	if err != nil {
 		return nil, err
 	}
@@ -3353,26 +3374,36 @@ func (ec *executionContext) field_Query_quizzes_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["lessonId"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "search", ec.unmarshalOString2ᚖstring)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "topicId", ec.unmarshalOID2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
-	args["search"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalOInt2ᚖint)
+	args["topicId"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "levelId", ec.unmarshalOID2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
-	args["page"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalOInt2ᚖint)
+	args["levelId"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "search", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
-	args["pageSize"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOQuizOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizOrderInput)
+	args["search"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalOInt2ᚖint)
 	if err != nil {
 		return nil, err
 	}
-	args["orderBy"] = arg4
+	args["page"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["pageSize"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOQuizOrderInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizOrderInput)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg6
 	return args, nil
 }
 
@@ -7825,6 +7856,10 @@ func (ec *executionContext) fieldContext_Mutation_createQuiz(ctx context.Context
 				return ec.fieldContext_Quiz_timeLimitS(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Quiz_createdAt(ctx, field)
+			case "topic":
+				return ec.fieldContext_Quiz_topic(ctx, field)
+			case "level":
+				return ec.fieldContext_Quiz_level(ctx, field)
 			case "tags":
 				return ec.fieldContext_Quiz_tags(ctx, field)
 			case "questions":
@@ -7886,6 +7921,10 @@ func (ec *executionContext) fieldContext_Mutation_updateQuiz(ctx context.Context
 				return ec.fieldContext_Quiz_timeLimitS(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Quiz_createdAt(ctx, field)
+			case "topic":
+				return ec.fieldContext_Quiz_topic(ctx, field)
+			case "level":
+				return ec.fieldContext_Quiz_level(ctx, field)
 			case "tags":
 				return ec.fieldContext_Quiz_tags(ctx, field)
 			case "questions":
@@ -7931,6 +7970,9 @@ func (ec *executionContext) fieldContext_Mutation_deleteQuiz(ctx context.Context
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
 	}
 	defer func() {
 		if r := recover(); r != nil {
@@ -9222,6 +9264,10 @@ func (ec *executionContext) fieldContext_Query_quiz(ctx context.Context, field g
 				return ec.fieldContext_Quiz_timeLimitS(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Quiz_createdAt(ctx, field)
+			case "topic":
+				return ec.fieldContext_Quiz_topic(ctx, field)
+			case "level":
+				return ec.fieldContext_Quiz_level(ctx, field)
 			case "tags":
 				return ec.fieldContext_Quiz_tags(ctx, field)
 			case "questions":
@@ -9252,7 +9298,7 @@ func (ec *executionContext) _Query_quizzes(ctx context.Context, field graphql.Co
 		ec.fieldContext_Query_quizzes,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Quizzes(ctx, fc.Args["lessonId"].(*string), fc.Args["search"].(*string), fc.Args["page"].(*int), fc.Args["pageSize"].(*int), fc.Args["orderBy"].(*model.QuizOrderInput))
+			return ec.resolvers.Query().Quizzes(ctx, fc.Args["lessonId"].(*string), fc.Args["topicId"].(*string), fc.Args["levelId"].(*string), fc.Args["search"].(*string), fc.Args["page"].(*int), fc.Args["pageSize"].(*int), fc.Args["orderBy"].(*model.QuizOrderInput))
 		},
 		nil,
 		ec.marshalNQuizCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐQuizCollection,
@@ -10096,6 +10142,82 @@ func (ec *executionContext) fieldContext_Quiz_createdAt(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Quiz_topic(ctx context.Context, field graphql.CollectedField, obj *model.Quiz) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Quiz_topic,
+		func(ctx context.Context) (any, error) {
+			return obj.Topic, nil
+		},
+		nil,
+		ec.marshalOTopic2ᚖcontentᚑservicesᚋgraphᚋmodelᚐTopic,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Quiz_topic(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Quiz",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Topic_id(ctx, field)
+			case "slug":
+				return ec.fieldContext_Topic_slug(ctx, field)
+			case "name":
+				return ec.fieldContext_Topic_name(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Topic_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Topic", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Quiz_level(ctx context.Context, field graphql.CollectedField, obj *model.Quiz) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Quiz_level,
+		func(ctx context.Context) (any, error) {
+			return obj.Level, nil
+		},
+		nil,
+		ec.marshalOLevel2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLevel,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Quiz_level(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Quiz",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Level_id(ctx, field)
+			case "code":
+				return ec.fieldContext_Level_code(ctx, field)
+			case "name":
+				return ec.fieldContext_Level_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Level", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Quiz_tags(ctx context.Context, field graphql.CollectedField, obj *model.Quiz) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10220,6 +10342,10 @@ func (ec *executionContext) fieldContext_QuizCollection_items(_ context.Context,
 				return ec.fieldContext_Quiz_timeLimitS(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Quiz_createdAt(ctx, field)
+			case "topic":
+				return ec.fieldContext_Quiz_topic(ctx, field)
+			case "level":
+				return ec.fieldContext_Quiz_level(ctx, field)
 			case "tags":
 				return ec.fieldContext_Quiz_tags(ctx, field)
 			case "questions":
@@ -12755,7 +12881,7 @@ func (ec *executionContext) unmarshalInputCreateQuizInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"lessonId", "title", "description", "timeLimitS"}
+	fieldsInOrder := [...]string{"lessonId", "topicId", "levelId", "title", "description", "timeLimitS"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12769,57 +12895,23 @@ func (ec *executionContext) unmarshalInputCreateQuizInput(ctx context.Context, o
 				return it, err
 			}
 			it.LessonID = data
+		case "topicId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("topicId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TopicID = data
+		case "levelId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("levelId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LevelID = data
 		case "title":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
 			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Title = data
-		case "description":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Description = data
-		case "timeLimitS":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timeLimitS"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TimeLimitS = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUpdateQuizInput(ctx context.Context, obj any) (model.UpdateQuizInput, error) {
-	var it model.UpdateQuizInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"lessonId", "title", "description", "timeLimitS"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "lessonId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lessonId"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.LessonID = data
-		case "title":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13764,6 +13856,68 @@ func (ec *executionContext) unmarshalInputUpdateQuestionOptionInput(ctx context.
 				return it, err
 			}
 			it.Feedback = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateQuizInput(ctx context.Context, obj any) (model.UpdateQuizInput, error) {
+	var it model.UpdateQuizInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"lessonId", "topicId", "levelId", "title", "description", "timeLimitS"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "lessonId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lessonId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LessonID = data
+		case "topicId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("topicId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TopicID = data
+		case "levelId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("levelId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LevelID = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "timeLimitS":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timeLimitS"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TimeLimitS = data
 		}
 	}
 
@@ -16048,6 +16202,10 @@ func (ec *executionContext) _Quiz(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "topic":
+			out.Values[i] = ec._Quiz_topic(ctx, field, obj)
+		case "level":
+			out.Values[i] = ec._Quiz_level(ctx, field, obj)
 		case "tags":
 			field := field
 
@@ -16878,11 +17036,6 @@ func (ec *executionContext) unmarshalNCreateQuestionOptionInput2contentᚑservic
 
 func (ec *executionContext) unmarshalNCreateQuizInput2contentᚑservicesᚋgraphᚋmodelᚐCreateQuizInput(ctx context.Context, v any) (model.CreateQuizInput, error) {
 	res, err := ec.unmarshalInputCreateQuizInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNUpdateQuizInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateQuizInput(ctx context.Context, v any) (model.UpdateQuizInput, error) {
-	res, err := ec.unmarshalInputUpdateQuizInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -18030,6 +18183,11 @@ func (ec *executionContext) unmarshalNUpdateLevelInput2contentᚑservicesᚋgrap
 
 func (ec *executionContext) unmarshalNUpdateQuestionOptionInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateQuestionOptionInput(ctx context.Context, v any) (model.UpdateQuestionOptionInput, error) {
 	res, err := ec.unmarshalInputUpdateQuestionOptionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateQuizInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateQuizInput(ctx context.Context, v any) (model.UpdateQuizInput, error) {
+	res, err := ec.unmarshalInputUpdateQuizInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

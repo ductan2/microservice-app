@@ -114,6 +114,8 @@ type Quiz struct {
 	TotalPoints int        `gorm:"default:0;not null" json:"total_points"`
 	TimeLimitS  int        `json:"time_limit_s,omitempty"`
 	CreatedAt   time.Time  `gorm:"default:now();not null" json:"created_at"`
+	TopicID     *uuid.UUID `gorm:"type:uuid;constraint:OnDelete:SET NULL;index:quizzes_topic_level_idx" json:"topic_id,omitempty"`
+	LevelID     *uuid.UUID `gorm:"type:uuid;constraint:OnDelete:SET NULL;index:quizzes_topic_level_idx" json:"level_id,omitempty"`
 }
 
 // QuizQuestion individual question in a quiz

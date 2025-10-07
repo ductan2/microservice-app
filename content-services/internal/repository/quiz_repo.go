@@ -31,6 +31,8 @@ type QuizQuestionRepository interface {
 
 type QuizFilter struct {
 	LessonID *uuid.UUID
+	TopicID  *uuid.UUID
+	LevelID  *uuid.UUID
 	Search   string
 }
 
@@ -78,6 +80,8 @@ type quizDoc struct {
 	TotalPoints int       `bson:"total_points"`
 	TimeLimitS  int       `bson:"time_limit_s,omitempty"`
 	CreatedAt   time.Time `bson:"created_at"`
+	TopicID     *string   `bson:"topic_id,omitempty"`
+	LevelID     *string   `bson:"level_id,omitempty"`
 }
 
 func quizDocFromModel(quiz *models.Quiz) *quizDoc {
@@ -93,6 +97,16 @@ func quizDocFromModel(quiz *models.Quiz) *quizDoc {
 	if quiz.LessonID != nil {
 		lessonID := quiz.LessonID.String()
 		doc.LessonID = &lessonID
+	}
+
+	if quiz.TopicID != nil {
+		topicID := quiz.TopicID.String()
+		doc.TopicID = &topicID
+	}
+
+	if quiz.LevelID != nil {
+		levelID := quiz.LevelID.String()
+		doc.LevelID = &levelID
 	}
 
 	return doc
@@ -112,6 +126,20 @@ func (d *quizDoc) toModel() *models.Quiz {
 		id, err := uuid.Parse(*d.LessonID)
 		if err == nil {
 			quiz.LessonID = &id
+		}
+	}
+
+	if d.TopicID != nil && *d.TopicID != "" {
+		id, err := uuid.Parse(*d.TopicID)
+		if err == nil {
+			quiz.TopicID = &id
+		}
+	}
+
+	if d.LevelID != nil && *d.LevelID != "" {
+		id, err := uuid.Parse(*d.LevelID)
+		if err == nil {
+			quiz.LevelID = &id
 		}
 	}
 
@@ -203,6 +231,12 @@ func (r *quizRepository) List(ctx context.Context, filter *QuizFilter, sort *Sor
 		if filter.LessonID != nil {
 			filterDoc["lesson_id"] = filter.LessonID.String()
 		}
+		if filter.TopicID != nil {
+			filterDoc["topic_id"] = filter.TopicID.String()
+		}
+		if filter.LevelID != nil {
+			filterDoc["level_id"] = filter.LevelID.String()
+		}
 		if filter.Search != "" {
 			regex := bson.M{"$regex": filter.Search, "$options": "i"}
 			filterDoc["$or"] = []bson.M{
@@ -268,6 +302,16 @@ func (r *quizRepository) Update(ctx context.Context, quiz *models.Quiz) error {
 		update["lesson_id"] = quiz.LessonID.String()
 	} else {
 		update["lesson_id"] = nil
+	}
+	if quiz.TopicID != nil {
+		update["topic_id"] = quiz.TopicID.String()
+	} else {
+		update["topic_id"] = nil
+	}
+	if quiz.LevelID != nil {
+		update["level_id"] = quiz.LevelID.String()
+	} else {
+		update["level_id"] = nil
 	}
 
 	_, err := r.collection.UpdateByID(ctx, quiz.ID.String(), bson.M{"$set": update})

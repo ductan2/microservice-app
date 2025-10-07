@@ -29,7 +29,7 @@ type Query {
   lessonByCode(code: String!): Lesson
 
   quiz(id: ID!): Quiz
-  quizzes(lessonId: ID, search: String, page: Int = 1, pageSize: Int = 20, orderBy: QuizOrderInput): QuizCollection!
+  quizzes(lessonId: ID, topicId: ID, levelId: ID, search: String, page: Int = 1, pageSize: Int = 20, orderBy: QuizOrderInput): QuizCollection!
   quizQuestions(quizId: ID!, filter: QuizQuestionFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: QuizQuestionOrderInput): QuizQuestionCollection!
   flashcardSet(id: ID!): FlashcardSet
   flashcardSets(filter: FlashcardSetFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: FlashcardSetOrderInput): FlashcardSetList!
@@ -224,6 +224,8 @@ type Quiz {
   totalPoints: Int!
   timeLimitS: Int
   createdAt: Time!
+  topic: Topic
+  level: Level
   tags: [Tag!]!
   questions: [QuizQuestion!]!
 }
@@ -280,6 +282,8 @@ type QuizQuestionCollection {
 
 input CreateQuizInput {
   lessonId: ID
+  topicId: ID
+  levelId: ID
   title: String!
   description: String
   timeLimitS: Int
@@ -287,6 +291,8 @@ input CreateQuizInput {
 
 input UpdateQuizInput {
   lessonId: ID
+  topicId: ID
+  levelId: ID
   title: String
   description: String
   timeLimitS: Int

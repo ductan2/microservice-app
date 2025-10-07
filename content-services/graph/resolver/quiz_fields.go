@@ -58,3 +58,71 @@ func (r *quizResolver) Tags(ctx context.Context, obj *model.Quiz) ([]*model.Tag,
 
 	return mapRepositoryTags(tags), nil
 }
+
+// Topic is the resolver for the topic field.
+func (r *quizResolver) Topic(ctx context.Context, obj *model.Quiz) (*model.Topic, error) {
+	if r.Taxonomy == nil {
+		return nil, nil
+	}
+
+	// Get the quiz to access TopicID
+	quizService := r.Resolver.QuizService
+	if quizService == nil {
+		return nil, nil
+	}
+
+	quizID, err := uuid.Parse(obj.ID)
+	if err != nil {
+		return nil, gqlerror.Errorf("invalid quiz ID: %v", err)
+	}
+
+	quiz, err := quizService.GetQuizByID(ctx, quizID)
+	if err != nil {
+		return nil, err
+	}
+
+	if quiz.TopicID == nil {
+		return nil, nil
+	}
+
+	topic, err := r.Taxonomy.GetTopicByID(ctx, quiz.TopicID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return mapTopic(topic), nil
+}
+
+// Level is the resolver for the level field.
+func (r *quizResolver) Level(ctx context.Context, obj *model.Quiz) (*model.Level, error) {
+	if r.Taxonomy == nil {
+		return nil, nil
+	}
+
+	// Get the quiz to access LevelID
+	quizService := r.Resolver.QuizService
+	if quizService == nil {
+		return nil, nil
+	}
+
+	quizID, err := uuid.Parse(obj.ID)
+	if err != nil {
+		return nil, gqlerror.Errorf("invalid quiz ID: %v", err)
+	}
+
+	quiz, err := quizService.GetQuizByID(ctx, quizID)
+	if err != nil {
+		return nil, err
+	}
+
+	if quiz.LevelID == nil {
+		return nil, nil
+	}
+
+	level, err := r.Taxonomy.GetLevelByID(ctx, quiz.LevelID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return mapLevel(level), nil
+}

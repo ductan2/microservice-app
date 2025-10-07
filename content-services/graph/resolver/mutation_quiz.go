@@ -34,6 +34,22 @@ func (r *mutationResolver) CreateQuiz(ctx context.Context, input model.CreateQui
 		quiz.LessonID = &lessonID
 	}
 
+	if input.TopicID != nil {
+		topicID, err := uuid.Parse(*input.TopicID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid topic ID: %v", err)
+		}
+		quiz.TopicID = &topicID
+	}
+
+	if input.LevelID != nil {
+		levelID, err := uuid.Parse(*input.LevelID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid level ID: %v", err)
+		}
+		quiz.LevelID = &levelID
+	}
+
 	if input.TimeLimitS != nil {
 		quiz.TimeLimitS = *input.TimeLimitS
 	}
@@ -78,6 +94,30 @@ func (r *mutationResolver) UpdateQuiz(ctx context.Context, id string, input mode
 				return nil, gqlerror.Errorf("invalid lesson ID: %v", err)
 			}
 			updates.LessonID = &lessonID
+		}
+	}
+
+	if input.TopicID != nil {
+		if *input.TopicID == "" {
+			updates.TopicID = nil
+		} else {
+			topicID, err := uuid.Parse(*input.TopicID)
+			if err != nil {
+				return nil, gqlerror.Errorf("invalid topic ID: %v", err)
+			}
+			updates.TopicID = &topicID
+		}
+	}
+
+	if input.LevelID != nil {
+		if *input.LevelID == "" {
+			updates.LevelID = nil
+		} else {
+			levelID, err := uuid.Parse(*input.LevelID)
+			if err != nil {
+				return nil, gqlerror.Errorf("invalid level ID: %v", err)
+			}
+			updates.LevelID = &levelID
 		}
 	}
 

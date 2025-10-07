@@ -75,6 +75,8 @@ type CreateQuestionOptionInput struct {
 
 type CreateQuizInput struct {
 	LessonID    *string `json:"lessonId,omitempty"`
+	TopicID     *string `json:"topicId,omitempty"`
+	LevelID     *string `json:"levelId,omitempty"`
 	Title       string  `json:"title"`
 	Description *string `json:"description,omitempty"`
 	TimeLimitS  *int    `json:"timeLimitS,omitempty"`
@@ -320,6 +322,8 @@ type Quiz struct {
 	TotalPoints int             `json:"totalPoints"`
 	TimeLimitS  *int            `json:"timeLimitS,omitempty"`
 	CreatedAt   time.Time       `json:"createdAt"`
+	Topic       *Topic          `json:"topic,omitempty"`
+	Level       *Level          `json:"level,omitempty"`
 	Tags        []*Tag          `json:"tags"`
 	Questions   []*QuizQuestion `json:"questions"`
 }
@@ -407,6 +411,8 @@ type UpdateQuestionOptionInput struct {
 
 type UpdateQuizInput struct {
 	LessonID    *string `json:"lessonId,omitempty"`
+	TopicID     *string `json:"topicId,omitempty"`
+	LevelID     *string `json:"levelId,omitempty"`
 	Title       *string `json:"title,omitempty"`
 	Description *string `json:"description,omitempty"`
 	TimeLimitS  *int    `json:"timeLimitS,omitempty"`
