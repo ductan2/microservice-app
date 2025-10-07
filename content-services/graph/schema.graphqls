@@ -73,6 +73,8 @@ type Mutation {
   addFlashcard(input: AddFlashcardInput!): Flashcard!
 
   createQuiz(input: CreateQuizInput!): Quiz!
+  updateQuiz(id: ID!, input: UpdateQuizInput!): Quiz!
+  deleteQuiz(id: ID!): Boolean!
   addQuizQuestion(quizId: ID!, input: CreateQuizQuestionInput!): QuizQuestion!
   addQuestionOption(questionId: ID!, input: CreateQuestionOptionInput!): QuestionOption!
   updateQuestionOption(id: ID!, input: UpdateQuestionOptionInput!): QuestionOption!
@@ -279,6 +281,13 @@ type QuizQuestionCollection {
 input CreateQuizInput {
   lessonId: ID
   title: String!
+  description: String
+  timeLimitS: Int
+}
+
+input UpdateQuizInput {
+  lessonId: ID
+  title: String
   description: String
   timeLimitS: Int
 }
