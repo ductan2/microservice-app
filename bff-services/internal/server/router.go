@@ -103,11 +103,6 @@ func NewRouter(deps Deps) *gin.Engine {
 			content := api.Group("/content")
 			{
 				content.POST("/graphql", contentCtrl.ProxyGraphQL)
-				content.GET("/metadata", contentCtrl.GetTopicsLevelsTags)
-				content.GET("/lessons", contentCtrl.GetLessons)
-				content.POST("/lessons", contentCtrl.CreateLesson)
-				content.GET("/flashcards", contentCtrl.GetFlashcardSets)
-				content.GET("/quizzes", contentCtrl.GetQuizzes)
 			}
 		}
 		if usersCtrl != nil {

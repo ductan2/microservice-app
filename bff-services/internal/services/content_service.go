@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -131,6 +132,7 @@ const (
 
 // ExecuteGraphQL forwards raw GraphQL operations to the content service.
 func (c *ContentServiceClient) ExecuteGraphQL(ctx context.Context, token string, payload dto.GraphQLRequest) (*HTTPResponse, error) {
+	log.Println("query", payload.Query)
 	query := strings.TrimSpace(payload.Query)
 	if query == "" {
 		return nil, fmt.Errorf("graphql query is required")

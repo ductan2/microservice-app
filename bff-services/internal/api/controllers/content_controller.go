@@ -1,9 +1,14 @@
 package controllers
 
 import (
+	"fmt"
+	"io"
 	"net/http"
+	"strings"
+	"time"
 
 	"bff-services/internal/api/dto"
+	"bff-services/internal/config"
 	"bff-services/internal/services"
 	"bff-services/internal/utils"
 
@@ -20,113 +25,80 @@ func NewContentController(contentService services.ContentService) *ContentContro
 	return &ContentController{contentService: contentService}
 }
 
-// GetTopicsLevelsTags fetches topics, levels and tags metadata.
-func (c *ContentController) GetTopicsLevelsTags(ctx *gin.Context) {
-	token := getOptionalBearerToken(ctx)
-
-	resp, err := c.contentService.GetTopicsLevelsTags(ctx.Request.Context(), token)
-	if err != nil {
-		utils.Fail(ctx, "Unable to fetch content metadata", http.StatusBadGateway, err.Error())
-		return
-	}
-
-	respondWithServiceResponse(ctx, resp)
-}
-
-// GetLessons fetches lessons using the provided query parameters.
-func (c *ContentController) GetLessons(ctx *gin.Context) {
-	token := getOptionalBearerToken(ctx)
-
-	var params dto.LessonQueryParams
-	if err := ctx.ShouldBindQuery(&params); err != nil {
-		utils.Fail(ctx, "Invalid query parameters", http.StatusBadRequest, err.Error())
-		return
-	}
-
-	resp, err := c.contentService.GetLessons(ctx.Request.Context(), token, params)
-	if err != nil {
-		utils.Fail(ctx, "Unable to fetch lessons", http.StatusBadGateway, err.Error())
-		return
-	}
-
-	respondWithServiceResponse(ctx, resp)
-}
-
-// CreateLesson proxies lesson creation to the content service.
-func (c *ContentController) CreateLesson(ctx *gin.Context) {
-	token, ok := requireBearerToken(ctx)
-	if !ok {
-		return
-	}
-
-	var payload dto.CreateLessonRequest
-	if err := ctx.ShouldBindJSON(&payload); err != nil {
-		utils.Fail(ctx, "Invalid request payload", http.StatusBadRequest, err.Error())
-		return
-	}
-
-	resp, err := c.contentService.CreateLesson(ctx.Request.Context(), token, payload)
-	if err != nil {
-		utils.Fail(ctx, "Unable to create lesson", http.StatusBadGateway, err.Error())
-		return
-	}
-
-	respondWithServiceResponse(ctx, resp)
-}
-
-// GetFlashcardSets fetches flashcard sets from the content service.
-func (c *ContentController) GetFlashcardSets(ctx *gin.Context) {
-	token := getOptionalBearerToken(ctx)
-
-	var params dto.FlashcardQueryParams
-	if err := ctx.ShouldBindQuery(&params); err != nil {
-		utils.Fail(ctx, "Invalid query parameters", http.StatusBadRequest, err.Error())
-		return
-	}
-
-	resp, err := c.contentService.GetFlashcardSets(ctx.Request.Context(), token, params)
-	if err != nil {
-		utils.Fail(ctx, "Unable to fetch flashcard sets", http.StatusBadGateway, err.Error())
-		return
-	}
-
-	respondWithServiceResponse(ctx, resp)
-}
-
-// GetQuizzes fetches quizzes for a specific lesson.
-func (c *ContentController) GetQuizzes(ctx *gin.Context) {
-	token := getOptionalBearerToken(ctx)
-
-	var params dto.QuizQueryParams
-	if err := ctx.ShouldBindQuery(&params); err != nil {
-		utils.Fail(ctx, "Invalid query parameters", http.StatusBadRequest, err.Error())
-		return
-	}
-
-	resp, err := c.contentService.GetQuizzes(ctx.Request.Context(), token, params)
-	if err != nil {
-		utils.Fail(ctx, "Unable to fetch quizzes", http.StatusBadGateway, err.Error())
-		return
-	}
-
-	respondWithServiceResponse(ctx, resp)
-}
 
 // ProxyGraphQL forwards arbitrary GraphQL requests to the content service.
 func (c *ContentController) ProxyGraphQL(ctx *gin.Context) {
 	token := getOptionalBearerToken(ctx)
-
+	contentType := ctx.GetHeader("Content-Type")
+	
+	// Auto-detect multipart requests (file uploads)
+	if strings.HasPrefix(contentType, "multipart/form-data") {
+		c.proxyMultipart(ctx, token)
+		return
+	}
+	
+	// Handle regular JSON GraphQL
 	var payload dto.GraphQLRequest
 	if err := ctx.ShouldBindJSON(&payload); err != nil {
 		utils.Fail(ctx, "Invalid GraphQL request", http.StatusBadRequest, err.Error())
 		return
 	}
-
+	
 	resp, err := c.contentService.ExecuteGraphQL(ctx.Request.Context(), token, payload)
 	if err != nil {
 		utils.Fail(ctx, "Unable to execute GraphQL request", http.StatusBadGateway, err.Error())
 		return
 	}
-
 	respondWithServiceResponse(ctx, resp)
+}
+
+// Private helper method
+func (c *ContentController) proxyMultipart(ctx *gin.Context, token string) {
+	targetURL := fmt.Sprintf("%s/graphql", config.GetContentServiceURL())
+	
+	proxyReq, err := http.NewRequestWithContext(
+		ctx.Request.Context(),
+		"POST",
+		targetURL,
+		ctx.Request.Body,
+	)
+	if err != nil {
+		utils.Fail(ctx, "Failed to create proxy request", http.StatusInternalServerError, err.Error())
+		return
+	}
+	
+	// Copy headers
+	proxyReq.Header = ctx.Request.Header.Clone()
+	if token != "" {
+		proxyReq.Header.Set("Authorization", "Bearer "+token)
+	}
+	
+	// Execute request
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(proxyReq)
+	if err != nil {
+		utils.Fail(ctx, "Failed to proxy request", http.StatusBadGateway, err.Error())
+		return
+	}
+	defer resp.Body.Close()
+	
+	// Copy response headers
+	for key, values := range resp.Header {
+		if strings.EqualFold(key, "Connection") || strings.EqualFold(key, "Keep-Alive") ||
+			strings.EqualFold(key, "Transfer-Encoding") || strings.EqualFold(key, "Upgrade") {
+			continue
+		}
+		for _, value := range values {
+			ctx.Header(key, value)
+		}
+	}
+	
+	// Copy response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		utils.Fail(ctx, "Failed to read response", http.StatusInternalServerError, err.Error())
+		return
+	}
+	
+	ctx.Data(resp.StatusCode, resp.Header.Get("Content-Type"), body)
 }
