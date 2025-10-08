@@ -1,11 +1,28 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { EmailService } from '../email/EmailService';
+import { NotificationTemplateService } from '../services/notificationTemplates';
 
 export const router = Router();
 
 router.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
+});
+
+const templateService = new NotificationTemplateService();
+
+router.get('/notification-templates', async (_req, res) => {
+  const templates = await templateService.listTemplates();
+  res.json({ data: templates });
+});
+
+router.get('/notification-templates/:id', async (req, res) => {
+  const template = await templateService.getTemplateById(req.params.id);
+  if (!template) {
+    return res.status(404).json({ error: 'Template not found' });
+  }
+
+  res.json({ data: template });
 });
 
 const EmailSchema = z.object({
