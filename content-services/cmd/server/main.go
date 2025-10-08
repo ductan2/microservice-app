@@ -49,6 +49,8 @@ func main() {
 	folderRepo := repository.NewFolderRepository(database)
 	lessonRepo := repository.NewLessonRepository(database)
 	sectionRepo := repository.NewLessonSectionRepository(database)
+	courseRepo := repository.NewCourseRepository(database)
+	courseLessonRepo := repository.NewCourseLessonRepository(database)
 	quizRepo := repository.NewQuizRepository(database)
 	quizQuestionRepo := repository.NewQuizQuestionRepository(database)
 	flashcardSetRepo := repository.NewFlashcardSetRepository(database)
@@ -73,6 +75,7 @@ func main() {
 	mediaService := service.NewMediaService(mediaRepo, s3Client, config.GetS3PresignTTL())
 	folderService := service.NewFolderService(folderRepo)
 	lessonService := service.NewLessonService(lessonRepo, sectionRepo, outboxRepo)
+	courseService := service.NewCourseService(courseRepo, courseLessonRepo, lessonRepo)
 	quizService := service.NewQuizService(quizRepo, quizQuestionRepo, nil, tagRepo, outboxRepo)
 	flashcardService := service.NewFlashcardService(flashcardSetRepo, flashcardRepo, tagRepo)
 
@@ -82,6 +85,7 @@ func main() {
 		Media:            mediaService,
 		FolderService:    folderService,
 		LessonService:    lessonService,
+		CourseService:    courseService,
 		QuizService:      quizService,
 		FlashcardService: flashcardService,
 		TagRepo:          tagRepo,
