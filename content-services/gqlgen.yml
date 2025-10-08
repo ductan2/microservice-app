@@ -33,6 +33,18 @@ models:
         resolver: true
       tags:
         resolver: true
+  Course:
+    fields:
+      topic:
+        resolver: true
+      level:
+        resolver: true
+      lessons:
+        resolver: true
+  CourseLesson:
+    fields:
+      lesson:
+        resolver: true
   Quiz:
     fields:
       topic:

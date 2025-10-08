@@ -12,6 +12,12 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
+type AddCourseLessonInput struct {
+	LessonID   string `json:"lessonId"`
+	Ord        int    `json:"ord"`
+	IsRequired *bool  `json:"isRequired,omitempty"`
+}
+
 type AddFlashcardInput struct {
 	SetID        string   `json:"setId"`
 	FrontText    string   `json:"frontText"`
@@ -32,6 +38,85 @@ type ContentTagInput struct {
 	TagID    string         `json:"tagId"`
 	Kind     ContentTagKind `json:"kind"`
 	ObjectID string         `json:"objectId"`
+}
+
+type Course struct {
+	ID            string          `json:"id"`
+	Title         string          `json:"title"`
+	Description   *string         `json:"description,omitempty"`
+	TopicID       *string         `json:"topicId,omitempty"`
+	LevelID       *string         `json:"levelId,omitempty"`
+	InstructorID  *string         `json:"instructorId,omitempty"`
+	ThumbnailURL  *string         `json:"thumbnailURL,omitempty"`
+	IsPublished   bool            `json:"isPublished"`
+	IsFeatured    bool            `json:"isFeatured"`
+	Price         *float64        `json:"price,omitempty"`
+	DurationHours *int            `json:"durationHours,omitempty"`
+	CreatedAt     time.Time       `json:"createdAt"`
+	UpdatedAt     time.Time       `json:"updatedAt"`
+	PublishedAt   *time.Time      `json:"publishedAt,omitempty"`
+	Topic         *Topic          `json:"topic,omitempty"`
+	Level         *Level          `json:"level,omitempty"`
+	Lessons       []*CourseLesson `json:"lessons"`
+}
+
+type CourseCollection struct {
+	Items      []*Course `json:"items"`
+	TotalCount int       `json:"totalCount"`
+	Page       int       `json:"page"`
+	PageSize   int       `json:"pageSize"`
+}
+
+type CourseFilterInput struct {
+	TopicID      *string `json:"topicId,omitempty"`
+	LevelID      *string `json:"levelId,omitempty"`
+	InstructorID *string `json:"instructorId,omitempty"`
+	IsPublished  *bool   `json:"isPublished,omitempty"`
+	IsFeatured   *bool   `json:"isFeatured,omitempty"`
+	Search       *string `json:"search,omitempty"`
+}
+
+type CourseLesson struct {
+	ID         string    `json:"id"`
+	CourseID   string    `json:"courseId"`
+	LessonID   string    `json:"lessonId"`
+	Ord        int       `json:"ord"`
+	IsRequired bool      `json:"isRequired"`
+	CreatedAt  time.Time `json:"createdAt"`
+	Lesson     *Lesson   `json:"lesson,omitempty"`
+}
+
+type CourseLessonCollection struct {
+	Items      []*CourseLesson `json:"items"`
+	TotalCount int             `json:"totalCount"`
+	Page       int             `json:"page"`
+	PageSize   int             `json:"pageSize"`
+}
+
+type CourseLessonFilterInput struct {
+	IsRequired *bool `json:"isRequired,omitempty"`
+}
+
+type CourseLessonOrderInput struct {
+	Field     CourseLessonOrderField `json:"field"`
+	Direction OrderDirection         `json:"direction"`
+}
+
+type CourseOrderInput struct {
+	Field     CourseOrderField `json:"field"`
+	Direction OrderDirection   `json:"direction"`
+}
+
+type CreateCourseInput struct {
+	Title         string   `json:"title"`
+	Description   *string  `json:"description,omitempty"`
+	TopicID       *string  `json:"topicId,omitempty"`
+	LevelID       *string  `json:"levelId,omitempty"`
+	InstructorID  *string  `json:"instructorId,omitempty"`
+	ThumbnailURL  *string  `json:"thumbnailURL,omitempty"`
+	IsFeatured    *bool    `json:"isFeatured,omitempty"`
+	Price         *float64 `json:"price,omitempty"`
+	DurationHours *int     `json:"durationHours,omitempty"`
 }
 
 type CreateFlashcardSetInput struct {
@@ -381,6 +466,23 @@ type Topic struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+type UpdateCourseInput struct {
+	Title         *string  `json:"title,omitempty"`
+	Description   *string  `json:"description,omitempty"`
+	TopicID       *string  `json:"topicId,omitempty"`
+	LevelID       *string  `json:"levelId,omitempty"`
+	InstructorID  *string  `json:"instructorId,omitempty"`
+	ThumbnailURL  *string  `json:"thumbnailURL,omitempty"`
+	IsFeatured    *bool    `json:"isFeatured,omitempty"`
+	Price         *float64 `json:"price,omitempty"`
+	DurationHours *int     `json:"durationHours,omitempty"`
+}
+
+type UpdateCourseLessonInput struct {
+	Ord        *int  `json:"ord,omitempty"`
+	IsRequired *bool `json:"isRequired,omitempty"`
+}
+
 type UpdateFolderInput struct {
 	Name string `json:"name"`
 }
@@ -489,6 +591,122 @@ func (e *ContentTagKind) UnmarshalJSON(b []byte) error {
 }
 
 func (e ContentTagKind) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type CourseLessonOrderField string
+
+const (
+	CourseLessonOrderFieldOrd       CourseLessonOrderField = "ORD"
+	CourseLessonOrderFieldCreatedAt CourseLessonOrderField = "CREATED_AT"
+)
+
+var AllCourseLessonOrderField = []CourseLessonOrderField{
+	CourseLessonOrderFieldOrd,
+	CourseLessonOrderFieldCreatedAt,
+}
+
+func (e CourseLessonOrderField) IsValid() bool {
+	switch e {
+	case CourseLessonOrderFieldOrd, CourseLessonOrderFieldCreatedAt:
+		return true
+	}
+	return false
+}
+
+func (e CourseLessonOrderField) String() string {
+	return string(e)
+}
+
+func (e *CourseLessonOrderField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CourseLessonOrderField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CourseLessonOrderField", str)
+	}
+	return nil
+}
+
+func (e CourseLessonOrderField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CourseLessonOrderField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CourseLessonOrderField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type CourseOrderField string
+
+const (
+	CourseOrderFieldCreatedAt   CourseOrderField = "CREATED_AT"
+	CourseOrderFieldUpdatedAt   CourseOrderField = "UPDATED_AT"
+	CourseOrderFieldPublishedAt CourseOrderField = "PUBLISHED_AT"
+	CourseOrderFieldTitle       CourseOrderField = "TITLE"
+	CourseOrderFieldPrice       CourseOrderField = "PRICE"
+)
+
+var AllCourseOrderField = []CourseOrderField{
+	CourseOrderFieldCreatedAt,
+	CourseOrderFieldUpdatedAt,
+	CourseOrderFieldPublishedAt,
+	CourseOrderFieldTitle,
+	CourseOrderFieldPrice,
+}
+
+func (e CourseOrderField) IsValid() bool {
+	switch e {
+	case CourseOrderFieldCreatedAt, CourseOrderFieldUpdatedAt, CourseOrderFieldPublishedAt, CourseOrderFieldTitle, CourseOrderFieldPrice:
+		return true
+	}
+	return false
+}
+
+func (e CourseOrderField) String() string {
+	return string(e)
+}
+
+func (e *CourseOrderField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CourseOrderField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CourseOrderField", str)
+	}
+	return nil
+}
+
+func (e CourseOrderField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CourseOrderField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CourseOrderField) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

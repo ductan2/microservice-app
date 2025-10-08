@@ -15,6 +15,7 @@ type Resolver struct {
 	Media            service.MediaService
 	FolderService    service.FolderService
 	LessonService    service.LessonService
+	CourseService    service.CourseService
 	QuizService      service.QuizService
 	FlashcardService service.FlashcardService
 	TagRepo          repository.TagRepository

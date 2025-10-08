@@ -28,6 +28,10 @@ type Query {
   lesson(id: ID!): Lesson
   lessonByCode(code: String!): Lesson
 
+  course(id: ID!): Course
+  courses(filter: CourseFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: CourseOrderInput): CourseCollection!
+  courseLessons(courseId: ID!, filter: CourseLessonFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: CourseLessonOrderInput): CourseLessonCollection!
+
   quiz(id: ID!): Quiz
   quizzes(lessonId: ID, topicId: ID, levelId: ID, search: String, page: Int = 1, pageSize: Int = 20, orderBy: QuizOrderInput): QuizCollection!
   quizQuestions(quizId: ID!, filter: QuizQuestionFilterInput, page: Int = 1, pageSize: Int = 20, orderBy: QuizQuestionOrderInput): QuizQuestionCollection!
@@ -64,6 +68,17 @@ type Mutation {
   deleteLesson(id: ID!): Boolean!
   publishLesson(id: ID!): Lesson!
   unpublishLesson(id: ID!): Lesson!
+
+  createCourse(input: CreateCourseInput!): Course!
+  updateCourse(id: ID!, input: UpdateCourseInput!): Course!
+  deleteCourse(id: ID!): Boolean!
+  publishCourse(id: ID!): Course!
+  unpublishCourse(id: ID!): Course!
+
+  addCourseLesson(courseId: ID!, input: AddCourseLessonInput!): CourseLesson!
+  updateCourseLesson(id: ID!, input: UpdateCourseLessonInput!): CourseLesson!
+  reorderCourseLessons(courseId: ID!, lessonIds: [ID!]!): [CourseLesson!]!
+  removeCourseLesson(id: ID!): Boolean!
 
   createLessonSection(lessonId: ID!, input: CreateLessonSectionInput!): LessonSection!
   updateLessonSection(id: ID!, input: UpdateLessonSectionInput!): LessonSection!
@@ -380,6 +395,121 @@ type LessonSectionCollection {
   totalCount: Int!
   page: Int!
   pageSize: Int!
+}
+
+type Course {
+  id: ID!
+  title: String!
+  description: String
+  topicId: ID
+  levelId: ID
+  instructorId: ID
+  thumbnailURL: String
+  isPublished: Boolean!
+  isFeatured: Boolean!
+  price: Float
+  durationHours: Int
+  createdAt: Time!
+  updatedAt: Time!
+  publishedAt: Time
+  topic: Topic
+  level: Level
+  lessons: [CourseLesson!]!
+}
+
+type CourseCollection {
+  items: [Course!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+input CreateCourseInput {
+  title: String!
+  description: String
+  topicId: ID
+  levelId: ID
+  instructorId: ID
+  thumbnailURL: String
+  isFeatured: Boolean
+  price: Float
+  durationHours: Int
+}
+
+input UpdateCourseInput {
+  title: String
+  description: String
+  topicId: ID
+  levelId: ID
+  instructorId: ID
+  thumbnailURL: String
+  isFeatured: Boolean
+  price: Float
+  durationHours: Int
+}
+
+input CourseFilterInput {
+  topicId: ID
+  levelId: ID
+  instructorId: ID
+  isPublished: Boolean
+  isFeatured: Boolean
+  search: String
+}
+
+enum CourseOrderField {
+  CREATED_AT
+  UPDATED_AT
+  PUBLISHED_AT
+  TITLE
+  PRICE
+}
+
+input CourseOrderInput {
+  field: CourseOrderField! = CREATED_AT
+  direction: OrderDirection! = DESC
+}
+
+type CourseLesson {
+  id: ID!
+  courseId: ID!
+  lessonId: ID!
+  ord: Int!
+  isRequired: Boolean!
+  createdAt: Time!
+  lesson: Lesson
+}
+
+type CourseLessonCollection {
+  items: [CourseLesson!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+input AddCourseLessonInput {
+  lessonId: ID!
+  ord: Int!
+  isRequired: Boolean = true
+}
+
+input UpdateCourseLessonInput {
+  ord: Int
+  isRequired: Boolean
+}
+
+input CourseLessonFilterInput {
+  isRequired: Boolean
+}
+
+enum CourseLessonOrderField {
+  ORD
+  CREATED_AT
+}
+
+input CourseLessonOrderInput {
+  field: CourseLessonOrderField! = ORD
+  direction: OrderDirection! = ASC
 }
 
 enum LessonSectionType {

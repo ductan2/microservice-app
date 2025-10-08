@@ -46,6 +46,11 @@ func toIntPtr(i int) *int {
 	return &i
 }
 
+// toFloat64Ptr returns a pointer to the provided float64 value.
+func toFloat64Ptr(f float64) *float64 {
+	return &f
+}
+
 // mapTaxonomyError maps taxonomy store errors to GraphQL errors
 func mapTaxonomyError(resource string, err error) error {
 	if err == nil {
@@ -202,6 +207,107 @@ func mapLessonSection(section *models.LessonSection) *model.LessonSection {
 	}
 }
 
+// ============= COURSE MAPPERS =============
+
+func mapCourseError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	switch {
+	case errors.Is(err, types.ErrCourseNotFound):
+		return gqlerror.Errorf("course not found")
+	default:
+		return err
+	}
+}
+
+func mapCourseLessonError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	switch {
+	case errors.Is(err, types.ErrCourseLessonNotFound):
+		return gqlerror.Errorf("course lesson not found")
+	case errors.Is(err, types.ErrCourseLessonExists):
+		return gqlerror.Errorf("course lesson already exists")
+	case errors.Is(err, types.ErrLessonNotFound):
+		return gqlerror.Errorf("lesson not found")
+	default:
+		return mapCourseError(err)
+	}
+}
+
+func mapCourse(course *models.Course) *model.Course {
+	if course == nil {
+		return nil
+	}
+
+	var topicID *string
+	if course.TopicID != nil {
+		id := course.TopicID.String()
+		topicID = &id
+	}
+
+	var levelID *string
+	if course.LevelID != nil {
+		id := course.LevelID.String()
+		levelID = &id
+	}
+
+	var instructorID *string
+	if course.InstructorID != nil {
+		id := course.InstructorID.String()
+		instructorID = &id
+	}
+
+	mapped := &model.Course{
+		ID:            course.ID.String(),
+		Title:         course.Title,
+		Description:   toStringPtr(course.Description),
+		TopicID:       topicID,
+		LevelID:       levelID,
+		InstructorID:  instructorID,
+		ThumbnailURL:  toStringPtr(course.ThumbnailURL),
+		IsPublished:   course.IsPublished,
+		IsFeatured:    course.IsFeatured,
+		Price:         toFloat64Ptr(course.Price),
+		DurationHours: toIntPtr(course.DurationHours),
+		CreatedAt:     course.CreatedAt,
+		UpdatedAt:     course.UpdatedAt,
+	}
+
+	if course.PublishedAt.Valid {
+		mapped.PublishedAt = &course.PublishedAt.Time
+	}
+
+	return mapped
+}
+
+func mapCourseLesson(lesson *models.CourseLesson) *model.CourseLesson {
+	if lesson == nil {
+		return nil
+	}
+
+	return &model.CourseLesson{
+		ID:         lesson.ID.String(),
+		CourseID:   lesson.CourseID.String(),
+		LessonID:   lesson.LessonID.String(),
+		Ord:        lesson.Ord,
+		IsRequired: lesson.IsRequired,
+		CreatedAt:  lesson.CreatedAt,
+	}
+}
+
+func mapCourseLessons(lessons []models.CourseLesson) []*model.CourseLesson {
+	items := make([]*model.CourseLesson, 0, len(lessons))
+	for i := range lessons {
+		items = append(items, mapCourseLesson(&lessons[i]))
+	}
+	return items
+}
+
 // mapLessonSections converts a slice of models.LessonSection to GraphQL model.
 func mapLessonSections(sections []models.LessonSection) []*model.LessonSection {
 	if len(sections) == 0 {
@@ -326,6 +432,97 @@ func buildLessonSectionOrder(input *model.LessonSectionOrderInput) *repository.S
 	option := &repository.SortOption{Direction: mapOrderDirection(input.Direction)}
 	switch input.Field {
 	case model.LessonSectionOrderFieldCreatedAt:
+		option.Field = "created_at"
+	default:
+		option.Field = "ord"
+	}
+	return option
+}
+
+func buildCourseFilter(input *model.CourseFilterInput) (*repository.CourseFilter, error) {
+	if input == nil {
+		return nil, nil
+	}
+
+	filter := &repository.CourseFilter{}
+
+	if input.TopicID != nil && *input.TopicID != "" {
+		id, err := uuid.Parse(*input.TopicID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid topicId: %v", err)
+		}
+		filter.TopicID = &id
+	}
+
+	if input.LevelID != nil && *input.LevelID != "" {
+		id, err := uuid.Parse(*input.LevelID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid levelId: %v", err)
+		}
+		filter.LevelID = &id
+	}
+
+	if input.InstructorID != nil && *input.InstructorID != "" {
+		id, err := uuid.Parse(*input.InstructorID)
+		if err != nil {
+			return nil, gqlerror.Errorf("invalid instructorId: %v", err)
+		}
+		filter.InstructorID = &id
+	}
+
+	if input.IsPublished != nil {
+		filter.IsPublished = input.IsPublished
+	}
+
+	if input.IsFeatured != nil {
+		filter.IsFeatured = input.IsFeatured
+	}
+
+	if input.Search != nil {
+		filter.Search = strings.TrimSpace(*input.Search)
+	}
+
+	return filter, nil
+}
+
+func buildCourseOrder(input *model.CourseOrderInput) *repository.SortOption {
+	if input == nil {
+		return nil
+	}
+	option := &repository.SortOption{Direction: mapOrderDirection(input.Direction)}
+	switch input.Field {
+	case model.CourseOrderFieldUpdatedAt:
+		option.Field = "updated_at"
+	case model.CourseOrderFieldPublishedAt:
+		option.Field = "published_at"
+	case model.CourseOrderFieldTitle:
+		option.Field = "title"
+	case model.CourseOrderFieldPrice:
+		option.Field = "price"
+	default:
+		option.Field = "created_at"
+	}
+	return option
+}
+
+func buildCourseLessonFilter(input *model.CourseLessonFilterInput) *repository.CourseLessonFilter {
+	if input == nil {
+		return nil
+	}
+	filter := &repository.CourseLessonFilter{}
+	if input.IsRequired != nil {
+		filter.IsRequired = input.IsRequired
+	}
+	return filter
+}
+
+func buildCourseLessonOrder(input *model.CourseLessonOrderInput) *repository.SortOption {
+	if input == nil {
+		return nil
+	}
+	option := &repository.SortOption{Direction: mapOrderDirection(input.Direction)}
+	switch input.Field {
+	case model.CourseLessonOrderFieldCreatedAt:
 		option.Field = "created_at"
 	default:
 		option.Field = "ord"

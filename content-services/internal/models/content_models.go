@@ -71,6 +71,34 @@ type Lesson struct {
 	PublishedAt sql.NullTime `json:"published_at,omitempty"`
 }
 
+// Course bundles lessons into a structured learning path
+type Course struct {
+	ID            uuid.UUID    `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Title         string       `gorm:"type:text;not null" json:"title"`
+	Description   string       `gorm:"type:text" json:"description,omitempty"`
+	TopicID       *uuid.UUID   `gorm:"type:uuid;index:courses_topic_level_idx" json:"topic_id,omitempty"`
+	LevelID       *uuid.UUID   `gorm:"type:uuid;index:courses_topic_level_idx" json:"level_id,omitempty"`
+	InstructorID  *uuid.UUID   `gorm:"type:uuid;index:courses_instructor_idx" json:"instructor_id,omitempty"`
+	ThumbnailURL  string       `gorm:"type:text" json:"thumbnail_url,omitempty"`
+	IsPublished   bool         `gorm:"default:false;not null;index:courses_published_idx" json:"is_published"`
+	IsFeatured    bool         `gorm:"default:false;not null;index:courses_featured_idx" json:"is_featured"`
+	Price         float64      `gorm:"type:numeric(10,2)" json:"price,omitempty"`
+	DurationHours int          `gorm:"type:int" json:"duration_hours,omitempty"`
+	CreatedAt     time.Time    `gorm:"default:now();not null" json:"created_at"`
+	UpdatedAt     time.Time    `gorm:"default:now();not null" json:"updated_at"`
+	PublishedAt   sql.NullTime `json:"published_at,omitempty"`
+}
+
+// CourseLesson associates lessons to a course with ordering metadata
+type CourseLesson struct {
+	ID         uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	CourseID   uuid.UUID `gorm:"type:uuid;not null;index:course_lessons_course_idx" json:"course_id"`
+	LessonID   uuid.UUID `gorm:"type:uuid;not null;index:course_lessons_lesson_idx" json:"lesson_id"`
+	Ord        int       `gorm:"not null" json:"ord"`
+	IsRequired bool      `gorm:"default:true;not null" json:"is_required"`
+	CreatedAt  time.Time `gorm:"default:now();not null" json:"created_at"`
+}
+
 // LessonSection content blocks within a lesson
 type LessonSection struct {
 	ID        uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
@@ -132,12 +160,12 @@ type QuizQuestion struct {
 
 // QuestionOption answer options for questions
 type QuestionOption struct {
-        ID         uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-        QuestionID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:question_options_ord;constraint:OnDelete:CASCADE" json:"question_id"`
-        Ord        int       `gorm:"not null;uniqueIndex:question_options_ord" json:"ord"`
-        Label      string    `gorm:"type:text;not null" json:"label"`
-        IsCorrect  bool      `gorm:"default:false;not null" json:"is_correct"`
-        Feedback   string    `gorm:"type:text" json:"feedback,omitempty"`
+	ID         uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	QuestionID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:question_options_ord;constraint:OnDelete:CASCADE" json:"question_id"`
+	Ord        int       `gorm:"not null;uniqueIndex:question_options_ord" json:"ord"`
+	Label      string    `gorm:"type:text;not null" json:"label"`
+	IsCorrect  bool      `gorm:"default:false;not null" json:"is_correct"`
+	Feedback   string    `gorm:"type:text" json:"feedback,omitempty"`
 }
 
 // ContentTag junction table for tagging
