@@ -46,13 +46,15 @@ func main() {
 	userService := services.NewUserServiceClient(config.GetUserServiceURL(), nil)
 	contentService := services.NewContentServiceClient(config.GetContentServiceURL(), nil)
 	lessonService := services.NewLessonServiceClient(config.GetLessonServiceURL(), nil)
+	notificationService := services.NewNotificationServiceClient(config.GetNotificationServiceURL(), nil)
 
 	addr := ":" + port
 	r := server.NewRouter(server.Deps{
-		UserService:    userService,
-		ContentService: contentService,
-		LessonService:  lessonService,
-		SessionCache:   sessionCache,
+		UserService:         userService,
+		ContentService:      contentService,
+		LessonService:       lessonService,
+		NotificationService: notificationService,
+		SessionCache:        sessionCache,
 	})
 
 	srv := &http.Server{

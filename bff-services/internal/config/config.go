@@ -45,6 +45,13 @@ func GetLessonServiceURL() string {
 	return "http://localhost:8005"
 }
 
+func GetNotificationServiceURL() string {
+	if v := os.Getenv("NOTIFICATION_SERVICE_URL"); v != "" {
+		return v
+	}
+	return "http://localhost:8003"
+}
+
 // GetCORSOrigin returns allowed CORS origin from env CORS_URL; default http://localhost:3000
 func GetCORSOrigin() string {
 	if v := os.Getenv("CORS_URL"); v != "" {

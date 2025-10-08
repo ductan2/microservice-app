@@ -281,12 +281,20 @@ services:
     ports:
       - "${NOTIFICATION_SERVICES_PORT:-8003}:8003"
     environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - POSTGRES_DB=${POSTGRES_DB:-english_app}
+      - POSTGRES_SSLMODE=disable
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=${RABBITMQ_USER:-user}
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password}
       - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
     depends_on:
+      postgres:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
 

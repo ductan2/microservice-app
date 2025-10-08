@@ -11,10 +11,11 @@ import (
 )
 
 type Deps struct {
-	UserService    services.UserService
-	ContentService services.ContentService
-	LessonService  services.LessonService
-	SessionCache   *cache.SessionCache
+	UserService         services.UserService
+	ContentService      services.ContentService
+	LessonService       services.LessonService
+	NotificationService services.NotificationService
+	SessionCache        *cache.SessionCache
 }
 
 func NewRouter(deps Deps) *gin.Engine {
@@ -40,13 +41,14 @@ func NewRouter(deps Deps) *gin.Engine {
 	r.GET("/health", controllers.Health)
 
 	var (
-		authCtrl     *controllers.AuthController
-		profileCtrl  *controllers.ProfileController
-		passwordCtrl *controllers.PasswordController
-		mfaCtrl      *controllers.MFAController
-		sessionCtrl  *controllers.SessionController
-		contentCtrl  *controllers.ContentController
-		usersCtrl    *controllers.UsersController
+		authCtrl         *controllers.AuthController
+		profileCtrl      *controllers.ProfileController
+		passwordCtrl     *controllers.PasswordController
+		mfaCtrl          *controllers.MFAController
+		sessionCtrl      *controllers.SessionController
+		contentCtrl      *controllers.ContentController
+		usersCtrl        *controllers.UsersController
+		notificationCtrl *controllers.NotificationController
 	)
 	if deps.UserService != nil {
 		authCtrl = controllers.NewAuthController(deps.UserService)
@@ -60,6 +62,9 @@ func NewRouter(deps Deps) *gin.Engine {
 	}
 	if deps.UserService != nil && deps.LessonService != nil {
 		usersCtrl = controllers.NewUsersController(deps.UserService, deps.LessonService)
+	}
+	if deps.NotificationService != nil {
+		notificationCtrl = controllers.NewNotificationController(deps.NotificationService)
 	}
 
 	api := r.Group("/api/v1")
@@ -107,6 +112,24 @@ func NewRouter(deps Deps) *gin.Engine {
 		}
 		if usersCtrl != nil {
 			api.GET("/users", usersCtrl.ListUsersWithProgress)
+		}
+		if notificationCtrl != nil {
+			// Notification template routes
+			api.POST("/notifications/templates", notificationCtrl.CreateTemplate)
+			api.GET("/notifications/templates", notificationCtrl.GetAllTemplates)
+			api.GET("/notifications/templates/:id", notificationCtrl.GetTemplateById)
+			api.PUT("/notifications/templates/:id", notificationCtrl.UpdateTemplate)
+			api.DELETE("/notifications/templates/:id", notificationCtrl.DeleteTemplate)
+
+			// User notification routes
+			api.POST("/notifications/users/:userId/notifications", notificationCtrl.CreateUserNotification)
+			api.GET("/notifications/users/:userId/notifications", notificationCtrl.GetUserNotifications)
+			api.PUT("/notifications/users/:userId/notifications/read", notificationCtrl.MarkNotificationsAsRead)
+			api.GET("/notifications/users/:userId/notifications/unread-count", notificationCtrl.GetUnreadCount)
+			api.DELETE("/notifications/users/:userId/notifications/:notificationId", notificationCtrl.DeleteUserNotification)
+
+			// Bulk operations
+			api.POST("/notifications/templates/:templateId/send", notificationCtrl.SendNotificationToUsers)
 		}
 	}
 
