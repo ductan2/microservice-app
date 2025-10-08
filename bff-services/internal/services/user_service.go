@@ -19,8 +19,6 @@ type UserService interface {
 	Login(ctx context.Context, payload dto.LoginRequest, userAgent, clientIP string) (*HTTPResponse, error)
 	Logout(ctx context.Context, token string) (*HTTPResponse, error)
 	VerifyEmail(ctx context.Context, token string) (*HTTPResponse, error)
-	GetProfile(ctx context.Context, token string) (*HTTPResponse, error)
-	UpdateProfile(ctx context.Context, token string, payload dto.UpdateProfileRequest) (*HTTPResponse, error)
 	CheckAuth(ctx context.Context, token string) (*HTTPResponse, error)
 	RequestPasswordReset(ctx context.Context, payload dto.PasswordResetRequest) (*HTTPResponse, error)
 	ConfirmPasswordReset(ctx context.Context, payload dto.PasswordResetConfirmRequest) (*HTTPResponse, error)
@@ -86,14 +84,6 @@ func (c *UserServiceClient) VerifyEmail(ctx context.Context, token string) (*HTT
 
 	path := "/api/v1/verify-email?token=" + url.QueryEscape(token)
 	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
-}
-
-func (c *UserServiceClient) GetProfile(ctx context.Context, token string) (*HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodGet, "/api/v1/profile", nil, authHeader(token))
-}
-
-func (c *UserServiceClient) UpdateProfile(ctx context.Context, token string, payload dto.UpdateProfileRequest) (*HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPut, "/api/v1/profile", payload, authHeader(token))
 }
 
 func (c *UserServiceClient) CheckAuth(ctx context.Context, token string) (*HTTPResponse, error) {

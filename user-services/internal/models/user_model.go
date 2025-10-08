@@ -20,6 +20,10 @@ type User struct {
 	CreatedAt               time.Time    `json:"created_at"`
 	UpdatedAt               time.Time    `json:"updated_at"`
 	Profile                 UserProfile  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:UserID;references:ID" json:"profile"`
+	DeletedAt               sql.NullTime `gorm:"type:timestamptz" json:"deleted_at,omitempty"`
+	LastLoginAt             sql.NullTime `gorm:"type:timestamptz" json:"last_login_at,omitempty"`
+	LastLoginIP             string       `gorm:"type:inet" json:"last_login_ip,omitempty"`
+	LockoutUntil            sql.NullTime `gorm:"type:timestamptz" json:"lockout_until,omitempty"`
 }
 
 // UserProfile stores non-auth PII

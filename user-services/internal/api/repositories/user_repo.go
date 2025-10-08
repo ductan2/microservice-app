@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"time"
 
 	"user-services/internal/models"
 
@@ -19,6 +20,7 @@ type UserRepository interface {
 	GetUserByID(ctx context.Context, userID string) (models.User, error)
 	UpdateUser(ctx context.Context, user *models.User) error
 	UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error
+	UpdateLastLogin(ctx context.Context, userID uuid.UUID, at time.Time, ip string) error
 	GetByVerificationToken(ctx context.Context, tokenHash string) (*models.User, error)
 	DeleteUser(ctx context.Context, userID string) error
 	ListUsers(ctx context.Context, page, pageSize int, status, search string) ([]models.User, int64, error)
@@ -116,6 +118,17 @@ func (r *userRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, p
 		Model(&models.User{}).
 		Where("id = ?", userID).
 		Update("password_hash", passwordHash).Error
+}
+
+// UpdateLastLogin updates last login timestamp and ip
+func (r *userRepository) UpdateLastLogin(ctx context.Context, userID uuid.UUID, at time.Time, ip string) error {
+	return r.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("id = ?", userID).
+		Updates(map[string]any{
+			"last_login_at": at,
+			"last_login_ip": ip,
+		}).Error
 }
 
 // GetByVerificationToken retrieves a user by their email verification token

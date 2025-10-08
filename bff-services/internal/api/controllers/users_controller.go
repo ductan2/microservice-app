@@ -3,13 +3,16 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"sync"
 
 	"bff-services/internal/api/dto"
+	middleware "bff-services/internal/middlewares"
 	"bff-services/internal/services"
 	"bff-services/internal/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type UsersController struct {
@@ -23,7 +26,6 @@ func NewUsersController(userService services.UserService, lessonService services
 		lessonService: lessonService,
 	}
 }
-
 
 // ListUsersWithProgress returns list of users with their points and streak
 func (c *UsersController) ListUsersWithProgress(ctx *gin.Context) {
@@ -50,10 +52,10 @@ func (c *UsersController) ListUsersWithProgress(ctx *gin.Context) {
 		Status string `json:"status"`
 		Data   struct {
 			Data       []dto.UserData `json:"data"`
-			Page       int        `json:"page"`
-			PageSize   int        `json:"page_size"`
-			Total      int        `json:"total"`
-			TotalPages int        `json:"total_pages"`
+			Page       int            `json:"page"`
+			PageSize   int            `json:"page_size"`
+			Total      int            `json:"total"`
+			TotalPages int            `json:"total_pages"`
 		} `json:"data"`
 	}
 
@@ -126,4 +128,137 @@ func (c *UsersController) ListUsersWithProgress(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, response)
+}
+
+// MyProfile returns the authenticated user's profile aggregated with points and streak
+func (c *UsersController) MyProfile(ctx *gin.Context) {
+	// Extract user context from middleware
+	userIDValue, exists := ctx.Get(middleware.ContextUserIDKey())
+	if !exists {
+		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, "user context not found")
+		return
+	}
+	emailValue, exists := ctx.Get(middleware.ContextUserEmailKey())
+	if !exists {
+		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, "email context not found")
+		return
+	}
+	sessionIDValue, exists := ctx.Get(middleware.ContextSessionIDKey())
+	if !exists {
+		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, "session context not found")
+		return
+	}
+
+	userID := normalizeUUIDOrString(userIDValue)
+	email := normalizeString(emailValue)
+	sessionID := normalizeUUIDOrString(sessionIDValue)
+
+	// Call user service using internal headers
+	userResp, err := c.userService.GetProfileWithContext(ctx.Request.Context(), userID, email, sessionID)
+	if err != nil || userResp == nil {
+		utils.Fail(ctx, "Failed to fetch profile", http.StatusBadGateway, errString(err))
+		return
+	}
+	if userResp.StatusCode != http.StatusOK {
+		ctx.Data(userResp.StatusCode, "application/json", userResp.Body)
+		return
+	}
+	// Fetch points and streak concurrently, but don't reshape; return raw bodies
+	var (
+		pointsBody json.RawMessage
+		streakBody json.RawMessage
+	)
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		if resp, err := c.lessonService.GetUserPoints(ctx.Request.Context(), userID); err == nil && resp.StatusCode == http.StatusOK {
+			pointsBody = json.RawMessage(resp.Body)
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		if resp, err := c.lessonService.GetUserStreak(ctx.Request.Context(), userID); err == nil && resp.StatusCode == http.StatusOK {
+			streakBody = json.RawMessage(resp.Body)
+		}
+	}()
+	wg.Wait()
+
+	// Extract only inner data from user-service envelope {status,data}
+	var userEnvelope map[string]interface{}
+	_ = json.Unmarshal(userResp.Body, &userEnvelope)
+	userInner := userEnvelope["data"]
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"data": gin.H{
+			"user":   userInner,
+			"points": pointsBody,
+			"streak": streakBody,
+		},
+	})
+}
+
+func deriveUsername(email string) string {
+	if email == "" {
+		return ""
+	}
+	parts := strings.SplitN(email, "@", 2)
+	return parts[0]
+}
+
+func nestedString(m map[string]interface{}, path []string) (string, bool) {
+	cur := interface{}(m)
+	for _, key := range path {
+		asMap, ok := cur.(map[string]interface{})
+		if !ok {
+			return "", false
+		}
+		cur, ok = asMap[key]
+		if !ok {
+			return "", false
+		}
+	}
+	return toString(cur)
+}
+
+func toString(v interface{}) (string, bool) {
+	switch t := v.(type) {
+	case string:
+		return t, true
+	default:
+		return "", false
+	}
+}
+
+func nullIfEmpty(s string, _ bool) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
+}
+
+func errString(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
+}
+
+func normalizeUUIDOrString(v interface{}) string {
+	switch t := v.(type) {
+	case string:
+		return t
+	case uuid.UUID:
+		return t.String()
+	default:
+		return ""
+	}
+}
+
+func normalizeString(v interface{}) string {
+	if s, ok := v.(string); ok {
+		return s
+	}
+	return ""
 }

@@ -65,6 +65,10 @@ func toPublicUser(user models.User) dto.PublicUser {
 		Email:         user.Email,
 		EmailVerified: user.EmailVerified,
 		Status:        user.Status,
+		LastLoginAt:   user.LastLoginAt.Time,
+		LastLoginIP:   user.LastLoginIP,
+		LockoutUntil:  user.LockoutUntil.Time,
+		DeletedAt:     user.DeletedAt.Time,
 		CreatedAt:     user.CreatedAt,
 		UpdatedAt:     user.UpdatedAt,
 	}

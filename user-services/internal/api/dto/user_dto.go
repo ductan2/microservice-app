@@ -12,6 +12,10 @@ type PublicUser struct {
 	Email         string       `json:"email"`
 	EmailVerified bool         `json:"email_verified"`
 	Status        string       `json:"status"`
+	LastLoginAt   time.Time    `json:"last_login_at,omitempty"`
+	LastLoginIP   string       `json:"last_login_ip,omitempty"`
+	LockoutUntil  time.Time    `json:"lockout_until,omitempty"`
+	DeletedAt     time.Time    `json:"deleted_at,omitempty"`
 	Profile       *UserProfile `json:"profile,omitempty"`
 	Roles         []string     `json:"roles,omitempty"`
 	CreatedAt     time.Time    `json:"created_at"`

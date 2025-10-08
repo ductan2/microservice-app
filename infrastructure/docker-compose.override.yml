@@ -131,6 +131,9 @@ services:
       dockerfile: Dockerfile.dev
     container_name: bff-services
     restart: always
+    volumes:
+      - ../bff-services:/app
+      - /app/vendor
 
   # Development database with more verbose logging
   postgres:

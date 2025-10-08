@@ -113,6 +113,12 @@ func NewRouter(deps Deps) *gin.Engine {
 		if usersCtrl != nil {
 			api.GET("/users", usersCtrl.ListUsersWithProgress)
 		}
+		// Authenticated user profile alias (requires authentication)
+		if usersCtrl != nil && deps.SessionCache != nil {
+			usersAuth := api.Group("/users")
+			usersAuth.Use(middleware.AuthRequired(deps.SessionCache))
+			usersAuth.GET("/my-profile", usersCtrl.MyProfile)
+		}
 		if notificationCtrl != nil {
 			// Notification template routes
 			api.POST("/notifications/templates", notificationCtrl.CreateTemplate)

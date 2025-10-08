@@ -43,6 +43,7 @@ func NewRouter(deps Deps) *gin.Engine {
 	// Initialize services
 	authService := services.NewAuthService(userRepo, userProfileRepo, auditLogRepo, outboxRepo, sessionRepo, refreshTokenRepo, mfaRepo, loginAttemptRepo, sessionCache)
 	profileService := services.NewUserProfileService(userProfileRepo)
+	currentUserService := services.NewCurrentUserService(userRepo)
 	passwordService := services.NewPasswordService(userRepo, passwordResetRepo, auditLogRepo, outboxRepo, userProfileRepo)
 	mfaService := services.NewMFAService(mfaRepo, userRepo)
 	sessionService := services.NewSessionService(sessionRepo, sessionCache)
@@ -50,7 +51,7 @@ func NewRouter(deps Deps) *gin.Engine {
 
 	// Initialize controllers
 	authCtrl := controllers.NewAuthController(authService)
-	profileCtrl := controllers.NewProfileController(profileService)
+	profileCtrl := controllers.NewProfileController(profileService, currentUserService)
 	passwordCtrl := controllers.NewPasswordController(passwordService)
 	mfaCtrl := controllers.NewMFAController(mfaService)
 	sessionCtrl := controllers.NewSessionController(sessionService)

@@ -265,6 +265,9 @@ func (s *AuthService) Login(ctx context.Context, email, password, mfaCode, userA
 	// 7) Log success attempt
 	_ = s.logLoginAttempt(ctx, &user.ID, email, ipAddr, true, "success")
 
+	// 7.1) Update user's last login timestamp and IP
+	_ = s.UserRepo.UpdateLastLogin(ctx, user.ID, time.Now(), ipAddr)
+
 	// Build response
 	return AuthResult{
 		User:         user,

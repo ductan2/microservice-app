@@ -14,12 +14,14 @@ import (
 )
 
 type ProfileController struct {
-	profileService services.UserProfileService
+	profileService     services.UserProfileService
+	currentUserService services.CurrentUserService
 }
 
-func NewProfileController(profileService services.UserProfileService) *ProfileController {
+func NewProfileController(profileService services.UserProfileService, currentUserService services.CurrentUserService) *ProfileController {
 	return &ProfileController{
-		profileService: profileService,
+		profileService:     profileService,
+		currentUserService: currentUserService,
 	}
 }
 
@@ -42,14 +44,10 @@ func (c *ProfileController) GetProfile(ctx *gin.Context) {
 		return
 	}
 
-	profile, err := c.profileService.GetProfile(ctx.Request.Context(), userID)
+	// Return combined {user + profile} from users table with preload
+	profile, err := c.currentUserService.GetPublicUserByID(ctx.Request.Context(), userID.String())
 	if err != nil {
-		if errors.Is(err, services.ErrProfileNotFound) {
-			utils.Fail(ctx, "Profile not found", http.StatusNotFound, nil)
-			return
-		}
-
-		utils.Fail(ctx, "Failed to retrieve profile", http.StatusInternalServerError, err.Error())
+		utils.Fail(ctx, "Failed to retrieve user", http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -93,9 +91,10 @@ func (c *ProfileController) UpdateProfile(ctx *gin.Context) {
 		return
 	}
 
-	profile, err := c.profileService.GetProfile(ctx.Request.Context(), userID)
+	// Return combined {user + profile}
+	profile, err := c.currentUserService.GetPublicUserByID(ctx.Request.Context(), userID.String())
 	if err != nil {
-		utils.Fail(ctx, "Failed to retrieve profile", http.StatusInternalServerError, err.Error())
+		utils.Fail(ctx, "Failed to retrieve user", http.StatusInternalServerError, err.Error())
 		return
 	}
 
