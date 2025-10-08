@@ -3,6 +3,7 @@ package resolver
 import (
 	"content-services/graph/model"
 	"content-services/internal/models"
+	"content-services/internal/service"
 	"context"
 	"errors"
 
@@ -242,22 +243,22 @@ func (r *mutationResolver) UpdateQuestionOption(ctx context.Context, id string, 
 		return nil, gqlerror.Errorf("invalid option ID: %v", err)
 	}
 
-	updates := &models.QuestionOption{}
+	updates := &service.QuestionOptionUpdate{}
 
 	if input.Ord != nil {
-		updates.Ord = *input.Ord
+		updates.Ord = input.Ord
 	}
 
 	if input.Label != nil {
-		updates.Label = *input.Label
+		updates.Label = input.Label
 	}
 
 	if input.IsCorrect != nil {
-		updates.IsCorrect = *input.IsCorrect
+		updates.IsCorrect = input.IsCorrect
 	}
 
 	if input.Feedback != nil {
-		updates.Feedback = *input.Feedback
+		updates.Feedback = input.Feedback
 	}
 
 	updated, err := quizService.UpdateOption(ctx, optionID, updates)

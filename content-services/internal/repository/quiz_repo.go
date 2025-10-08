@@ -157,6 +157,15 @@ type quizQuestionDoc struct {
 	Metadata    map[string]any `bson:"metadata"`
 }
 
+type questionOptionDoc struct {
+	ID         string  `bson:"_id"`
+	QuestionID string  `bson:"question_id"`
+	Ord        int     `bson:"ord"`
+	Label      string  `bson:"label"`
+	IsCorrect  bool    `bson:"is_correct"`
+	Feedback   *string `bson:"feedback,omitempty"`
+}
+
 func quizQuestionDocFromModel(question *models.QuizQuestion) *quizQuestionDoc {
 	doc := &quizQuestionDoc{
 		ID:       question.ID.String(),
@@ -195,6 +204,39 @@ func (d *quizQuestionDoc) toModel() *models.QuizQuestion {
 	}
 
 	return question
+}
+
+func questionOptionDocFromModel(option *models.QuestionOption) *questionOptionDoc {
+	doc := &questionOptionDoc{
+		ID:         option.ID.String(),
+		QuestionID: option.QuestionID.String(),
+		Ord:        option.Ord,
+		Label:      option.Label,
+		IsCorrect:  option.IsCorrect,
+	}
+
+	if option.Feedback != "" {
+		feedback := option.Feedback
+		doc.Feedback = &feedback
+	}
+
+	return doc
+}
+
+func (d *questionOptionDoc) toModel() *models.QuestionOption {
+	option := &models.QuestionOption{
+		ID:         uuid.MustParse(d.ID),
+		QuestionID: uuid.MustParse(d.QuestionID),
+		Ord:        d.Ord,
+		Label:      d.Label,
+		IsCorrect:  d.IsCorrect,
+	}
+
+	if d.Feedback != nil {
+		option.Feedback = *d.Feedback
+	}
+
+	return option
 }
 
 // Quiz implementations
@@ -470,21 +512,102 @@ func (r *quizQuestionRepository) Delete(ctx context.Context, id uuid.UUID) error
 
 // QuestionOption implementations
 func (r *questionOptionRepository) Create(ctx context.Context, option *models.QuestionOption) error {
-	return errors.New("question options not implemented")
+	if option == nil {
+		return errors.New("question option: nil option")
+	}
+	if option.ID == uuid.Nil {
+		option.ID = uuid.New()
+	}
+
+	if option.Ord == 0 {
+		opts := options.FindOne().SetSort(bson.D{{Key: "ord", Value: -1}})
+		var last questionOptionDoc
+		err := r.collection.FindOne(ctx, bson.M{"question_id": option.QuestionID.String()}, opts).Decode(&last)
+		if err != nil {
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				option.Ord = 1
+			} else {
+				return err
+			}
+		} else {
+			option.Ord = last.Ord + 1
+		}
+	}
+
+	_, err := r.collection.InsertOne(ctx, questionOptionDocFromModel(option))
+	return err
 }
 
 func (r *questionOptionRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.QuestionOption, error) {
-	return nil, errors.New("question options not implemented")
+	var doc questionOptionDoc
+	err := r.collection.FindOne(ctx, bson.M{"_id": id.String()}).Decode(&doc)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, mongo.ErrNoDocuments
+		}
+		return nil, err
+	}
+
+	return doc.toModel(), nil
 }
 
 func (r *questionOptionRepository) GetByQuestionID(ctx context.Context, questionID uuid.UUID) ([]models.QuestionOption, error) {
-	return nil, errors.New("question options not implemented")
+	filter := bson.M{"question_id": questionID.String()}
+	opts := options.Find().SetSort(bson.D{{Key: "ord", Value: 1}})
+
+	cursor, err := r.collection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var optionsList []models.QuestionOption
+	for cursor.Next(ctx) {
+		var doc questionOptionDoc
+		if err := cursor.Decode(&doc); err != nil {
+			return nil, err
+		}
+		optionsList = append(optionsList, *doc.toModel())
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	if optionsList == nil {
+		optionsList = []models.QuestionOption{}
+	}
+
+	return optionsList, nil
 }
 
 func (r *questionOptionRepository) Update(ctx context.Context, option *models.QuestionOption) error {
-	return errors.New("question options not implemented")
+	if option == nil {
+		return errors.New("question option: nil option")
+	}
+
+	update := bson.M{
+		"ord":        option.Ord,
+		"label":      option.Label,
+		"is_correct": option.IsCorrect,
+	}
+
+	if option.Feedback != "" {
+		update["feedback"] = option.Feedback
+	} else {
+		update["feedback"] = nil
+	}
+
+	_, err := r.collection.UpdateByID(ctx, option.ID.String(), bson.M{"$set": update})
+	return err
 }
 
 func (r *questionOptionRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	return errors.New("question options not implemented")
+	res, err := r.collection.DeleteOne(ctx, bson.M{"_id": id.String()})
+	if err != nil {
+		return err
+	}
+	if res.DeletedCount == 0 {
+		return mongo.ErrNoDocuments
+	}
+	return nil
 }

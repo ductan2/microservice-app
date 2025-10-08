@@ -29,9 +29,17 @@ type QuizService interface {
 
 	// Options
 	AddOption(ctx context.Context, questionID uuid.UUID, option *models.QuestionOption) (*models.QuestionOption, error)
-	UpdateOption(ctx context.Context, id uuid.UUID, updates *models.QuestionOption) (*models.QuestionOption, error)
+	UpdateOption(ctx context.Context, id uuid.UUID, updates *QuestionOptionUpdate) (*models.QuestionOption, error)
 	DeleteOption(ctx context.Context, id uuid.UUID) error
 	GetQuestionOptions(ctx context.Context, questionID uuid.UUID) ([]models.QuestionOption, error)
+}
+
+// QuestionOptionUpdate represents partial updates for a question option.
+type QuestionOptionUpdate struct {
+	Ord       *int
+	Label     *string
+	IsCorrect *bool
+	Feedback  *string
 }
 
 type quizService struct {
@@ -268,17 +276,65 @@ func (s *quizService) ListQuizQuestions(ctx context.Context, quizID uuid.UUID, f
 }
 
 func (s *quizService) AddOption(ctx context.Context, questionID uuid.UUID, option *models.QuestionOption) (*models.QuestionOption, error) {
-	return nil, errors.New("question options not implemented")
+	if option == nil {
+		return nil, errors.New("question option: nil option")
+	}
+
+	if _, err := s.questionRepo.GetByID(ctx, questionID); err != nil {
+		return nil, err
+	}
+
+	option.QuestionID = questionID
+	if option.ID == uuid.Nil {
+		option.ID = uuid.New()
+	}
+
+	if err := s.optionRepo.Create(ctx, option); err != nil {
+		return nil, err
+	}
+
+	created, err := s.optionRepo.GetByID(ctx, option.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return created, nil
 }
 
-func (s *quizService) UpdateOption(ctx context.Context, id uuid.UUID, updates *models.QuestionOption) (*models.QuestionOption, error) {
-	return nil, errors.New("question options not implemented")
+func (s *quizService) UpdateOption(ctx context.Context, id uuid.UUID, updates *QuestionOptionUpdate) (*models.QuestionOption, error) {
+	if updates == nil {
+		return nil, errors.New("question option: nil updates")
+	}
+
+	existing, err := s.optionRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if updates.Ord != nil {
+		existing.Ord = *updates.Ord
+	}
+	if updates.Label != nil {
+		existing.Label = *updates.Label
+	}
+	if updates.IsCorrect != nil {
+		existing.IsCorrect = *updates.IsCorrect
+	}
+	if updates.Feedback != nil {
+		existing.Feedback = *updates.Feedback
+	}
+
+	if err := s.optionRepo.Update(ctx, existing); err != nil {
+		return nil, err
+	}
+
+	return existing, nil
 }
 
 func (s *quizService) DeleteOption(ctx context.Context, id uuid.UUID) error {
-	return errors.New("question options not implemented")
+	return s.optionRepo.Delete(ctx, id)
 }
 
 func (s *quizService) GetQuestionOptions(ctx context.Context, questionID uuid.UUID) ([]models.QuestionOption, error) {
-	return nil, errors.New("question options not implemented")
+	return s.optionRepo.GetByQuestionID(ctx, questionID)
 }

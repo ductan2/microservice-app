@@ -132,12 +132,12 @@ type QuizQuestion struct {
 
 // QuestionOption answer options for questions
 type QuestionOption struct {
-	ID         uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	QuestionID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:question_options_ord;constraint:OnDelete:CASCADE" json:"question_id"`
-	Ord        int       `gorm:"not null;uniqueIndex:question_options_ord" json:"ord"`
-	Label      string    `gorm:"type:text;not null" json:"label"`
-	IsCorrect  bool      `gorm:"default:false;not null" json:"is_correct"`
-	Feedback   string    `gorm:"type:text" json:"feedback,omitempty"`
+        ID         uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+        QuestionID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:question_options_ord;constraint:OnDelete:CASCADE" json:"question_id"`
+        Ord        int       `gorm:"not null;uniqueIndex:question_options_ord" json:"ord"`
+        Label      string    `gorm:"type:text;not null" json:"label"`
+        IsCorrect  bool      `gorm:"default:false;not null" json:"is_correct"`
+        Feedback   string    `gorm:"type:text" json:"feedback,omitempty"`
 }
 
 // ContentTag junction table for tagging
