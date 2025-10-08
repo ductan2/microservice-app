@@ -398,6 +398,8 @@ type QueryResolver interface {
 	LessonSections(ctx context.Context, lessonID string, filter *model.LessonSectionFilterInput, page *int, pageSize *int, orderBy *model.LessonSectionOrderInput) (*model.LessonSectionCollection, error)
 }
 type QuizResolver interface {
+	Topic(ctx context.Context, obj *model.Quiz) (*model.Topic, error)
+	Level(ctx context.Context, obj *model.Quiz) (*model.Level, error)
 	Tags(ctx context.Context, obj *model.Quiz) ([]*model.Tag, error)
 	Questions(ctx context.Context, obj *model.Quiz) ([]*model.QuizQuestion, error)
 }
@@ -10149,7 +10151,7 @@ func (ec *executionContext) _Quiz_topic(ctx context.Context, field graphql.Colle
 		field,
 		ec.fieldContext_Quiz_topic,
 		func(ctx context.Context) (any, error) {
-			return obj.Topic, nil
+			return ec.resolvers.Quiz().Topic(ctx, obj)
 		},
 		nil,
 		ec.marshalOTopic2ᚖcontentᚑservicesᚋgraphᚋmodelᚐTopic,
@@ -10162,8 +10164,8 @@ func (ec *executionContext) fieldContext_Quiz_topic(_ context.Context, field gra
 	fc = &graphql.FieldContext{
 		Object:     "Quiz",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -10188,7 +10190,7 @@ func (ec *executionContext) _Quiz_level(ctx context.Context, field graphql.Colle
 		field,
 		ec.fieldContext_Quiz_level,
 		func(ctx context.Context) (any, error) {
-			return obj.Level, nil
+			return ec.resolvers.Quiz().Level(ctx, obj)
 		},
 		nil,
 		ec.marshalOLevel2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLevel,
@@ -10201,8 +10203,8 @@ func (ec *executionContext) fieldContext_Quiz_level(_ context.Context, field gra
 	fc = &graphql.FieldContext{
 		Object:     "Quiz",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -16203,9 +16205,71 @@ func (ec *executionContext) _Quiz(ctx context.Context, sel ast.SelectionSet, obj
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "topic":
-			out.Values[i] = ec._Quiz_topic(ctx, field, obj)
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Quiz_topic(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "level":
-			out.Values[i] = ec._Quiz_level(ctx, field, obj)
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Quiz_level(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "tags":
 			field := field
 

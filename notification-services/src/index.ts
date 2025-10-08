@@ -2,15 +2,23 @@ import express from 'express';
 import { config } from './config';
 import { logger } from './logger';
 import { router } from './routes/emailRoutes';
+import { notificationRouter } from './routes/notificationRoutes';
 import { initRabbitEmailConsumer, closeRabbit } from './messaging/rabbitmq';
+import { initDatabase } from './database/connection';
 
 async function main() {
+  // Initialize database
+  await initDatabase();
+
+  // Initialize RabbitMQ
   await initRabbitEmailConsumer();
 
   const app = express();
   app.use(express.json());
 
-  app.use('/', router);
+  // Routes
+  app.use('/email', router);
+  app.use('/api/notifications', notificationRouter);
 
   const server = app.listen(config.PORT, () => {
     logger.info({ port: config.PORT }, 'Notification service listening');

@@ -1,0 +1,70 @@
+### Test Notification Service API
+
+### Health Check
+GET http://localhost:3000/health
+
+### Create Notification Template
+POST http://localhost:3000/api/notifications/templates
+Content-Type: application/json
+
+{
+  "type": "email",
+  "title": "Welcome to our app",
+  "body": "Thank you for joining us! We're excited to have you on board.",
+  "data": {
+    "priority": "high",
+    "category": "welcome"
+  }
+}
+
+### Get All Templates
+GET http://localhost:3000/api/notifications/templates
+
+### Create User Notification
+POST http://localhost:3000/api/notifications/users/123e4567-e89b-12d3-a456-426614174000/notifications
+Content-Type: application/json
+
+{
+  "notification_id": "{{template_id}}"
+}
+
+### Get User Notifications
+GET http://localhost:3000/api/notifications/users/123e4567-e89b-12d3-a456-426614174000/notifications?limit=10&offset=0
+
+### Get Unread Count
+GET http://localhost:3000/api/notifications/users/123e4567-e89b-12d3-a456-426614174000/notifications/unread-count
+
+### Mark Notifications as Read
+PUT http://localhost:3000/api/notifications/users/123e4567-e89b-12d3-a456-426614174000/notifications/read
+Content-Type: application/json
+
+{
+  "notification_ids": ["{{notification_id}}"]
+}
+
+### Send Bulk Notifications
+POST http://localhost:3000/api/notifications/templates/{{template_id}}/send
+Content-Type: application/json
+
+{
+  "user_ids": [
+    "123e4567-e89b-12d3-a456-426614174000",
+    "123e4567-e89b-12d3-a456-426614174001",
+    "123e4567-e89b-12d3-a456-426614174002"
+  ]
+}
+
+### Update Template
+PUT http://localhost:3000/api/notifications/templates/{{template_id}}
+Content-Type: application/json
+
+{
+  "title": "Updated Welcome Message",
+  "body": "Welcome to our amazing app! We're thrilled to have you here."
+}
+
+### Delete User Notification
+DELETE http://localhost:3000/api/notifications/users/123e4567-e89b-12d3-a456-426614174000/notifications/{{notification_id}}
+
+### Delete Template
+DELETE http://localhost:3000/api/notifications/templates/{{template_id}}

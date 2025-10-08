@@ -26,6 +26,14 @@ const EnvSchema = z.object({
   RABBITMQ_USER_EVENTS_QUEUE: z.string().default('notifications.user_events'),
   RABBITMQ_USER_EVENTS_ROUTING_KEY: z.string().default('user.created,user.password_reset,user.email_verification'),
   RABBITMQ_PREFETCH: z.coerce.number().int().positive().default(10),
+
+  // PostgreSQL
+  POSTGRES_USER: z.string().default('user'),
+  POSTGRES_PASSWORD: z.string().default('password'),
+  POSTGRES_DB: z.string().default('userdb'),
+  POSTGRES_HOST: z.string().default('localhost'),
+  POSTGRES_PORT: z.coerce.number().int().positive().default(5432),
+  POSTGRES_SSLMODE: z.string().default('disable'),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

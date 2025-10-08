@@ -35,6 +35,10 @@ models:
         resolver: true
   Quiz:
     fields:
+      topic:
+        resolver: true
+      level:
+        resolver: true
       questions:
         resolver: true
       tags:
