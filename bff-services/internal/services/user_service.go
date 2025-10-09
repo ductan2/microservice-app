@@ -29,12 +29,13 @@ type UserService interface {
 	GetSessions(ctx context.Context, token string) (*HTTPResponse, error)
 	DeleteSession(ctx context.Context, token, sessionID string) (*HTTPResponse, error)
 	RevokeAllSessions(ctx context.Context, token string) (*HTTPResponse, error)
-	GetUsers(ctx context.Context, page, pageSize, status, search string) (*HTTPResponse, error)
+	GetUsers(ctx context.Context, page, pageSize, status, search, userID, email, sessionID string) (*HTTPResponse, error)
+	GetUserById(ctx context.Context, userID, email, sessionID, UserFindID string) (*HTTPResponse, error)
 	// New methods for internal communication with user context
 	GetProfileWithContext(ctx context.Context, userID, email, sessionID string) (*HTTPResponse, error)
 	UpdateProfileWithContext(ctx context.Context, userID, email, sessionID string, payload dto.UpdateProfileRequest) (*HTTPResponse, error)
-	AssignRoleWithContext(ctx context.Context, actorUserID, actorEmail, actorSessionID, userID string, payload dto.UserRoleRequest) (*HTTPResponse, error)
-	RemoveRoleWithContext(ctx context.Context, actorUserID, actorEmail, actorSessionID, userID string, payload dto.UserRoleRequest) (*HTTPResponse, error)
+	AssignRoleWithContext(ctx context.Context, actorUserID, actorEmail, actorSessionID, userID string, roleName string) (*HTTPResponse, error)
+	RemoveRoleWithContext(ctx context.Context, actorUserID, actorEmail, actorSessionID, userID string, roleName string) (*HTTPResponse, error)
 }
 
 type UserServiceClient struct {
@@ -131,7 +132,7 @@ func (c *UserServiceClient) RevokeAllSessions(ctx context.Context, token string)
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/sessions/revoke-all", nil, authHeader(token))
 }
 
-func (c *UserServiceClient) GetUsers(ctx context.Context, page, pageSize, status, search string) (*HTTPResponse, error) {
+func (c *UserServiceClient) GetUsers(ctx context.Context, page, pageSize, status, search, userID, email, sessionID string) (*HTTPResponse, error) {
 	path := "/api/v1/users"
 	query := url.Values{}
 	if page != "" {
@@ -149,7 +150,12 @@ func (c *UserServiceClient) GetUsers(ctx context.Context, page, pageSize, status
 	if len(query) > 0 {
 		path += "?" + query.Encode()
 	}
-	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
+	return c.doRequest(ctx, http.MethodGet, path, nil, internalAuthHeaders(userID, email, sessionID))
+}
+
+func (c *UserServiceClient) GetUserById(ctx context.Context, userID, email, sessionID, UserFindID string) (*HTTPResponse, error) {
+	path := fmt.Sprintf("/api/v1/users/%s", UserFindID)
+	return c.doRequest(ctx, http.MethodGet, path, nil, internalAuthHeaders(userID, email, sessionID))
 }
 
 func (c *UserServiceClient) doRequest(ctx context.Context, method, path string, payload interface{}, headers http.Header) (*HTTPResponse, error) {
@@ -230,12 +236,14 @@ func (c *UserServiceClient) UpdateProfileWithContext(ctx context.Context, userID
 	return c.doRequest(ctx, http.MethodPut, "/api/v1/users/profile", payload, internalAuthHeaders(userID, email, sessionID))
 }
 
-func (c *UserServiceClient) AssignRoleWithContext(ctx context.Context, actorUserID, actorEmail, actorSessionID, userID string, payload dto.UserRoleRequest) (*HTTPResponse, error) {
+func (c *UserServiceClient) AssignRoleWithContext(ctx context.Context, actorUserID, actorEmail, actorSessionID, userID string, roleName string) (*HTTPResponse, error) {
 	path := fmt.Sprintf("/api/v1/users/%s/roles", userID)
+	payload := map[string]string{"role_name": roleName}
 	return c.doRequest(ctx, http.MethodPost, path, payload, internalAuthHeaders(actorUserID, actorEmail, actorSessionID))
 }
 
-func (c *UserServiceClient) RemoveRoleWithContext(ctx context.Context, actorUserID, actorEmail, actorSessionID, userID string, payload dto.UserRoleRequest) (*HTTPResponse, error) {
+func (c *UserServiceClient) RemoveRoleWithContext(ctx context.Context, actorUserID, actorEmail, actorSessionID, userID string, roleName string) (*HTTPResponse, error) {
 	path := fmt.Sprintf("/api/v1/users/%s/roles", userID)
+	payload := map[string]string{"role_name": roleName}
 	return c.doRequest(ctx, http.MethodDelete, path, payload, internalAuthHeaders(actorUserID, actorEmail, actorSessionID))
 }

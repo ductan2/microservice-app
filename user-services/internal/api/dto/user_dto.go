@@ -17,9 +17,14 @@ type PublicUser struct {
 	LockoutUntil  time.Time    `json:"lockout_until,omitempty"`
 	DeletedAt     time.Time    `json:"deleted_at,omitempty"`
 	Profile       *UserProfile `json:"profile,omitempty"`
-	Roles         []string     `json:"roles,omitempty"`
+	Roles         []Role       `json:"roles,omitempty"`
 	CreatedAt     time.Time    `json:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at"`
+}
+
+type Role struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 // UserProfile for non-auth data

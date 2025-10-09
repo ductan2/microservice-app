@@ -24,6 +24,7 @@ type User struct {
 	LastLoginAt             sql.NullTime `gorm:"type:timestamptz" json:"last_login_at,omitempty"`
 	LastLoginIP             *string      `gorm:"type:inet" json:"last_login_ip,omitempty"`
 	LockoutUntil            sql.NullTime `gorm:"type:timestamptz" json:"lockout_until,omitempty"`
+	Roles                   []Role       `gorm:"many2many:user_roles;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"roles"`
 }
 
 // UserProfile stores non-auth PII
@@ -94,6 +95,7 @@ type PasswordReset struct {
 type Role struct {
 	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
 	Name string    `gorm:"type:text;uniqueIndex;not null" json:"name"`
+	Users []User    `gorm:"many2many:user_roles;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"users"`
 }
 
 // UserRole junction table

@@ -156,7 +156,7 @@ func (u *UserController) AssignRoleToUser(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := u.userService.AssignRoleWithContext(ctx.Request.Context(), actorID, actorEmail, sessionID, targetUserID, req)
+	resp, err := u.userService.AssignRoleWithContext(ctx.Request.Context(), actorID, actorEmail, sessionID, targetUserID, req.RoleName)
 	if err != nil {
 		utils.Fail(ctx, "Failed to assign role", http.StatusBadGateway, err.Error())
 		return
@@ -192,7 +192,7 @@ func (u *UserController) RemoveRoleFromUser(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := u.userService.RemoveRoleWithContext(ctx.Request.Context(), actorID, actorEmail, sessionID, targetUserID, req)
+	resp, err := u.userService.RemoveRoleWithContext(ctx.Request.Context(), actorID, actorEmail, sessionID, targetUserID, req.RoleName)
 	if err != nil {
 		utils.Fail(ctx, "Failed to remove role", http.StatusBadGateway, err.Error())
 		return
@@ -207,9 +207,13 @@ func (u *UserController) ListUsersWithProgress(ctx *gin.Context) {
 	pageSize := ctx.DefaultQuery("page_size", "20")
 	status := ctx.Query("status")
 	search := ctx.Query("search")
+	userID, email, sessionID, ok := getUserContextFromMiddleware(ctx)
+	if !ok {
+		return
+	}
 
 	// Call user service to get list of users
-	userResp, err := u.userService.GetUsers(ctx.Request.Context(), page, pageSize, status, search)
+	userResp, err := u.userService.GetUsers(ctx.Request.Context(), page, pageSize, status, search, userID, email, sessionID)
 	if err != nil {
 		utils.Fail(ctx, "Failed to fetch users", http.StatusInternalServerError, err.Error())
 		return
@@ -279,6 +283,11 @@ func (u *UserController) ListUsersWithProgress(ctx *gin.Context) {
 				Email:     userData.Email,
 				Status:    userData.Status,
 				CreatedAt: userData.CreatedAt,
+				LastLoginAt: userData.LastLoginAt,
+				LastLoginIP: userData.LastLoginIP,
+				LockoutUntil: userData.LockoutUntil,
+				DeletedAt: userData.DeletedAt,
+				EmailVerified: userData.EmailVerified,
 				Profile:   profile,
 				Points:    points,
 				Streak:    streak,
@@ -324,9 +333,9 @@ func (u *UserController) GetUserById(ctx *gin.Context) {
 	userID := normalizeUUIDOrString(userIDValue)
 	email := normalizeString(emailValue)
 	sessionID := normalizeUUIDOrString(sessionIDValue)
-
+	UserFindID := ctx.Param("id")
 	// Call user service using internal headers
-	userResp, err := u.userService.GetProfileWithContext(ctx.Request.Context(), userID, email, sessionID)
+	userResp, err := u.userService.GetUserById(ctx.Request.Context(), userID, email, sessionID, UserFindID)
 	if err != nil || userResp == nil {
 		utils.Fail(ctx, "Failed to fetch profile", http.StatusBadGateway, errString(err))
 		return
@@ -344,13 +353,13 @@ func (u *UserController) GetUserById(ctx *gin.Context) {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		if resp, err := u.lessonService.GetUserPoints(ctx.Request.Context(), userID); err == nil && resp.StatusCode == http.StatusOK {
+		if resp, err := u.lessonService.GetUserPoints(ctx.Request.Context(), UserFindID); err == nil && resp.StatusCode == http.StatusOK {
 			pointsBody = json.RawMessage(resp.Body)
 		}
 	}()
 	go func() {
 		defer wg.Done()
-		if resp, err := u.lessonService.GetUserStreak(ctx.Request.Context(), userID); err == nil && resp.StatusCode == http.StatusOK {
+		if resp, err := u.lessonService.GetUserStreak(ctx.Request.Context(), UserFindID); err == nil && resp.StatusCode == http.StatusOK {
 			streakBody = json.RawMessage(resp.Body)
 		}
 	}()
