@@ -62,6 +62,7 @@ type ComplexityRoot struct {
 	}
 
 	Course struct {
+		AverageRating func(childComplexity int) int
 		CreatedAt     func(childComplexity int) int
 		Description   func(childComplexity int) int
 		DurationHours func(childComplexity int) int
@@ -72,8 +73,11 @@ type ComplexityRoot struct {
 		Lessons       func(childComplexity int) int
 		Level         func(childComplexity int) int
 		LevelID       func(childComplexity int) int
+		MyReview      func(childComplexity int) int
 		Price         func(childComplexity int) int
 		PublishedAt   func(childComplexity int) int
+		ReviewCount   func(childComplexity int) int
+		Reviews       func(childComplexity int, page *int, pageSize *int) int
 		ThumbnailURL  func(childComplexity int) int
 		Title         func(childComplexity int) int
 		Topic         func(childComplexity int) int
@@ -99,6 +103,23 @@ type ComplexityRoot struct {
 	}
 
 	CourseLessonCollection struct {
+		Items      func(childComplexity int) int
+		Page       func(childComplexity int) int
+		PageSize   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	CourseReview struct {
+		Comment   func(childComplexity int) int
+		CourseID  func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Rating    func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
+		UserID    func(childComplexity int) int
+	}
+
+	CourseReviewCollection struct {
 		Items      func(childComplexity int) int
 		Page       func(childComplexity int) int
 		PageSize   func(childComplexity int) int
@@ -253,6 +274,7 @@ type ComplexityRoot struct {
 		CreateTag            func(childComplexity int, input model.CreateTagInput) int
 		CreateTopic          func(childComplexity int, input model.CreateTopicInput) int
 		DeleteCourse         func(childComplexity int, id string) int
+		DeleteCourseReview   func(childComplexity int, courseID string) int
 		DeleteFolder         func(childComplexity int, id string) int
 		DeleteLesson         func(childComplexity int, id string) int
 		DeleteLessonSection  func(childComplexity int, id string) int
@@ -267,6 +289,7 @@ type ComplexityRoot struct {
 		RemoveContentTag     func(childComplexity int, input model.ContentTagInput) int
 		RemoveCourseLesson   func(childComplexity int, id string) int
 		ReorderCourseLessons func(childComplexity int, courseID string, lessonIds []string) int
+		SubmitCourseReview   func(childComplexity int, input model.SubmitCourseReviewInput) int
 		UnpublishCourse      func(childComplexity int, id string) int
 		UnpublishLesson      func(childComplexity int, id string) int
 		UpdateCourse         func(childComplexity int, id string, input model.UpdateCourseInput) int
@@ -430,6 +453,8 @@ type MutationResolver interface {
 	UpdateCourseLesson(ctx context.Context, id string, input model.UpdateCourseLessonInput) (*model.CourseLesson, error)
 	ReorderCourseLessons(ctx context.Context, courseID string, lessonIds []string) ([]*model.CourseLesson, error)
 	RemoveCourseLesson(ctx context.Context, id string) (bool, error)
+	SubmitCourseReview(ctx context.Context, input model.SubmitCourseReviewInput) (*model.CourseReview, error)
+	DeleteCourseReview(ctx context.Context, courseID string) (bool, error)
 	CreateLessonSection(ctx context.Context, lessonID string, input model.CreateLessonSectionInput) (*model.LessonSection, error)
 	UpdateLessonSection(ctx context.Context, id string, input model.UpdateLessonSectionInput) (*model.LessonSection, error)
 	DeleteLessonSection(ctx context.Context, id string) (bool, error)
@@ -529,6 +554,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ContentTag.TagID(childComplexity), true
 
+	case "Course.averageRating":
+		if e.complexity.Course.AverageRating == nil {
+			break
+		}
+
+		return e.complexity.Course.AverageRating(childComplexity), true
 	case "Course.createdAt":
 		if e.complexity.Course.CreatedAt == nil {
 			break
@@ -589,6 +620,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Course.LevelID(childComplexity), true
+	case "Course.myReview":
+		if e.complexity.Course.MyReview == nil {
+			break
+		}
+
+		return e.complexity.Course.MyReview(childComplexity), true
 	case "Course.price":
 		if e.complexity.Course.Price == nil {
 			break
@@ -601,6 +638,23 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Course.PublishedAt(childComplexity), true
+	case "Course.reviewCount":
+		if e.complexity.Course.ReviewCount == nil {
+			break
+		}
+
+		return e.complexity.Course.ReviewCount(childComplexity), true
+	case "Course.reviews":
+		if e.complexity.Course.Reviews == nil {
+			break
+		}
+
+		args, err := ec.field_Course_reviews_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Course.Reviews(childComplexity, args["page"].(*int), args["pageSize"].(*int)), true
 	case "Course.thumbnailURL":
 		if e.complexity.Course.ThumbnailURL == nil {
 			break
@@ -724,6 +778,74 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.CourseLessonCollection.TotalCount(childComplexity), true
+
+	case "CourseReview.comment":
+		if e.complexity.CourseReview.Comment == nil {
+			break
+		}
+
+		return e.complexity.CourseReview.Comment(childComplexity), true
+	case "CourseReview.courseId":
+		if e.complexity.CourseReview.CourseID == nil {
+			break
+		}
+
+		return e.complexity.CourseReview.CourseID(childComplexity), true
+	case "CourseReview.createdAt":
+		if e.complexity.CourseReview.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.CourseReview.CreatedAt(childComplexity), true
+	case "CourseReview.id":
+		if e.complexity.CourseReview.ID == nil {
+			break
+		}
+
+		return e.complexity.CourseReview.ID(childComplexity), true
+	case "CourseReview.rating":
+		if e.complexity.CourseReview.Rating == nil {
+			break
+		}
+
+		return e.complexity.CourseReview.Rating(childComplexity), true
+	case "CourseReview.updatedAt":
+		if e.complexity.CourseReview.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.CourseReview.UpdatedAt(childComplexity), true
+	case "CourseReview.userId":
+		if e.complexity.CourseReview.UserID == nil {
+			break
+		}
+
+		return e.complexity.CourseReview.UserID(childComplexity), true
+
+	case "CourseReviewCollection.items":
+		if e.complexity.CourseReviewCollection.Items == nil {
+			break
+		}
+
+		return e.complexity.CourseReviewCollection.Items(childComplexity), true
+	case "CourseReviewCollection.page":
+		if e.complexity.CourseReviewCollection.Page == nil {
+			break
+		}
+
+		return e.complexity.CourseReviewCollection.Page(childComplexity), true
+	case "CourseReviewCollection.pageSize":
+		if e.complexity.CourseReviewCollection.PageSize == nil {
+			break
+		}
+
+		return e.complexity.CourseReviewCollection.PageSize(childComplexity), true
+	case "CourseReviewCollection.totalCount":
+		if e.complexity.CourseReviewCollection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.CourseReviewCollection.TotalCount(childComplexity), true
 
 	case "Flashcard.backMediaId":
 		if e.complexity.Flashcard.BackMediaID == nil {
@@ -1444,6 +1566,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteCourse(childComplexity, args["id"].(string)), true
+	case "Mutation.deleteCourseReview":
+		if e.complexity.Mutation.DeleteCourseReview == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteCourseReview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteCourseReview(childComplexity, args["courseId"].(string)), true
 	case "Mutation.deleteFolder":
 		if e.complexity.Mutation.DeleteFolder == nil {
 			break
@@ -1598,6 +1731,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ReorderCourseLessons(childComplexity, args["courseId"].(string), args["lessonIds"].([]string)), true
+	case "Mutation.submitCourseReview":
+		if e.complexity.Mutation.SubmitCourseReview == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_submitCourseReview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SubmitCourseReview(childComplexity, args["input"].(model.SubmitCourseReviewInput)), true
 	case "Mutation.unpublishCourse":
 		if e.complexity.Mutation.UnpublishCourse == nil {
 			break
@@ -2335,6 +2479,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputQuizOrderInput,
 		ec.unmarshalInputQuizQuestionFilterInput,
 		ec.unmarshalInputQuizQuestionOrderInput,
+		ec.unmarshalInputSubmitCourseReviewInput,
 		ec.unmarshalInputUpdateCourseInput,
 		ec.unmarshalInputUpdateCourseLessonInput,
 		ec.unmarshalInputUpdateFolderInput,
@@ -2524,6 +2669,9 @@ type Mutation {
   updateCourseLesson(id: ID!, input: UpdateCourseLessonInput!): CourseLesson!
   reorderCourseLessons(courseId: ID!, lessonIds: [ID!]!): [CourseLesson!]!
   removeCourseLesson(id: ID!): Boolean!
+
+  submitCourseReview(input: SubmitCourseReviewInput!): CourseReview!
+  deleteCourseReview(courseId: ID!): Boolean!
 
   createLessonSection(lessonId: ID!, input: CreateLessonSectionInput!): LessonSection!
   updateLessonSection(id: ID!, input: UpdateLessonSectionInput!): LessonSection!
@@ -2854,12 +3002,16 @@ type Course {
   isFeatured: Boolean!
   price: Float
   durationHours: Int
+  averageRating: Float
+  reviewCount: Int!
   createdAt: Time!
   updatedAt: Time!
   publishedAt: Time
   topic: Topic
   level: Level
   lessons: [CourseLesson!]!
+  reviews(page: Int = 1, pageSize: Int = 20): CourseReviewCollection!
+  myReview: CourseReview
 }
 
 type CourseCollection {
@@ -2891,6 +3043,12 @@ input UpdateCourseInput {
   isFeatured: Boolean
   price: Float
   durationHours: Int
+}
+
+input SubmitCourseReviewInput {
+  courseId: ID!
+  rating: Int!
+  comment: String
 }
 
 input CourseFilterInput {
@@ -2927,6 +3085,23 @@ type CourseLesson {
 
 type CourseLessonCollection {
   items: [CourseLesson!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+type CourseReview {
+  id: ID!
+  courseId: ID!
+  userId: ID!
+  rating: Int!
+  comment: String
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type CourseReviewCollection {
+  items: [CourseReview!]!
   totalCount: Int!
   page: Int!
   pageSize: Int!
@@ -3160,6 +3335,22 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_Course_reviews_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["page"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["pageSize"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_addContentTag_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3334,6 +3525,17 @@ func (ec *executionContext) field_Mutation_createTopic_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteCourseReview_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "courseId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["courseId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteCourse_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3501,6 +3703,17 @@ func (ec *executionContext) field_Mutation_reorderCourseLessons_args(ctx context
 		return nil, err
 	}
 	args["lessonIds"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_submitCourseReview_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSubmitCourseReviewInput2contentᚑservicesᚋgraphᚋmodelᚐSubmitCourseReviewInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -4689,6 +4902,64 @@ func (ec *executionContext) fieldContext_Course_durationHours(_ context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Course_averageRating(ctx context.Context, field graphql.CollectedField, obj *model.Course) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Course_averageRating,
+		func(ctx context.Context) (any, error) {
+			return obj.AverageRating, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Course_averageRating(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Course",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Course_reviewCount(ctx context.Context, field graphql.CollectedField, obj *model.Course) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Course_reviewCount,
+		func(ctx context.Context) (any, error) {
+			return obj.ReviewCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Course_reviewCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Course",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Course_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Course) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4897,6 +5168,101 @@ func (ec *executionContext) fieldContext_Course_lessons(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Course_reviews(ctx context.Context, field graphql.CollectedField, obj *model.Course) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Course_reviews,
+		func(ctx context.Context) (any, error) {
+			return obj.Reviews, nil
+		},
+		nil,
+		ec.marshalNCourseReviewCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐCourseReviewCollection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Course_reviews(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Course",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "items":
+				return ec.fieldContext_CourseReviewCollection_items(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_CourseReviewCollection_totalCount(ctx, field)
+			case "page":
+				return ec.fieldContext_CourseReviewCollection_page(ctx, field)
+			case "pageSize":
+				return ec.fieldContext_CourseReviewCollection_pageSize(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CourseReviewCollection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Course_reviews_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Course_myReview(ctx context.Context, field graphql.CollectedField, obj *model.Course) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Course_myReview,
+		func(ctx context.Context) (any, error) {
+			return obj.MyReview, nil
+		},
+		nil,
+		ec.marshalOCourseReview2ᚖcontentᚑservicesᚋgraphᚋmodelᚐCourseReview,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Course_myReview(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Course",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CourseReview_id(ctx, field)
+			case "courseId":
+				return ec.fieldContext_CourseReview_courseId(ctx, field)
+			case "userId":
+				return ec.fieldContext_CourseReview_userId(ctx, field)
+			case "rating":
+				return ec.fieldContext_CourseReview_rating(ctx, field)
+			case "comment":
+				return ec.fieldContext_CourseReview_comment(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CourseReview_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_CourseReview_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CourseReview", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CourseCollection_items(ctx context.Context, field graphql.CollectedField, obj *model.CourseCollection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4943,6 +5309,10 @@ func (ec *executionContext) fieldContext_CourseCollection_items(_ context.Contex
 				return ec.fieldContext_Course_price(ctx, field)
 			case "durationHours":
 				return ec.fieldContext_Course_durationHours(ctx, field)
+			case "averageRating":
+				return ec.fieldContext_Course_averageRating(ctx, field)
+			case "reviewCount":
+				return ec.fieldContext_Course_reviewCount(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Course_createdAt(ctx, field)
 			case "updatedAt":
@@ -4955,6 +5325,10 @@ func (ec *executionContext) fieldContext_CourseCollection_items(_ context.Contex
 				return ec.fieldContext_Course_level(ctx, field)
 			case "lessons":
 				return ec.fieldContext_Course_lessons(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Course_reviews(ctx, field)
+			case "myReview":
+				return ec.fieldContext_Course_myReview(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Course", field.Name)
 		},
@@ -5404,6 +5778,341 @@ func (ec *executionContext) _CourseLessonCollection_pageSize(ctx context.Context
 func (ec *executionContext) fieldContext_CourseLessonCollection_pageSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CourseLessonCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CourseReview_id(ctx context.Context, field graphql.CollectedField, obj *model.CourseReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CourseReview_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CourseReview_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CourseReview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CourseReview_courseId(ctx context.Context, field graphql.CollectedField, obj *model.CourseReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CourseReview_courseId,
+		func(ctx context.Context) (any, error) {
+			return obj.CourseID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CourseReview_courseId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CourseReview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CourseReview_userId(ctx context.Context, field graphql.CollectedField, obj *model.CourseReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CourseReview_userId,
+		func(ctx context.Context) (any, error) {
+			return obj.UserID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CourseReview_userId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CourseReview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CourseReview_rating(ctx context.Context, field graphql.CollectedField, obj *model.CourseReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CourseReview_rating,
+		func(ctx context.Context) (any, error) {
+			return obj.Rating, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CourseReview_rating(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CourseReview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CourseReview_comment(ctx context.Context, field graphql.CollectedField, obj *model.CourseReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CourseReview_comment,
+		func(ctx context.Context) (any, error) {
+			return obj.Comment, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_CourseReview_comment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CourseReview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CourseReview_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.CourseReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CourseReview_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CourseReview_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CourseReview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CourseReview_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.CourseReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CourseReview_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CourseReview_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CourseReview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CourseReviewCollection_items(ctx context.Context, field graphql.CollectedField, obj *model.CourseReviewCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CourseReviewCollection_items,
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		ec.marshalNCourseReview2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐCourseReviewᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CourseReviewCollection_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CourseReviewCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CourseReview_id(ctx, field)
+			case "courseId":
+				return ec.fieldContext_CourseReview_courseId(ctx, field)
+			case "userId":
+				return ec.fieldContext_CourseReview_userId(ctx, field)
+			case "rating":
+				return ec.fieldContext_CourseReview_rating(ctx, field)
+			case "comment":
+				return ec.fieldContext_CourseReview_comment(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CourseReview_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_CourseReview_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CourseReview", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CourseReviewCollection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.CourseReviewCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CourseReviewCollection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CourseReviewCollection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CourseReviewCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CourseReviewCollection_page(ctx context.Context, field graphql.CollectedField, obj *model.CourseReviewCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CourseReviewCollection_page,
+		func(ctx context.Context) (any, error) {
+			return obj.Page, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CourseReviewCollection_page(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CourseReviewCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CourseReviewCollection_pageSize(ctx context.Context, field graphql.CollectedField, obj *model.CourseReviewCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CourseReviewCollection_pageSize,
+		func(ctx context.Context) (any, error) {
+			return obj.PageSize, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CourseReviewCollection_pageSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CourseReviewCollection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -9368,6 +10077,10 @@ func (ec *executionContext) fieldContext_Mutation_createCourse(ctx context.Conte
 				return ec.fieldContext_Course_price(ctx, field)
 			case "durationHours":
 				return ec.fieldContext_Course_durationHours(ctx, field)
+			case "averageRating":
+				return ec.fieldContext_Course_averageRating(ctx, field)
+			case "reviewCount":
+				return ec.fieldContext_Course_reviewCount(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Course_createdAt(ctx, field)
 			case "updatedAt":
@@ -9380,6 +10093,10 @@ func (ec *executionContext) fieldContext_Mutation_createCourse(ctx context.Conte
 				return ec.fieldContext_Course_level(ctx, field)
 			case "lessons":
 				return ec.fieldContext_Course_lessons(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Course_reviews(ctx, field)
+			case "myReview":
+				return ec.fieldContext_Course_myReview(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Course", field.Name)
 		},
@@ -9445,6 +10162,10 @@ func (ec *executionContext) fieldContext_Mutation_updateCourse(ctx context.Conte
 				return ec.fieldContext_Course_price(ctx, field)
 			case "durationHours":
 				return ec.fieldContext_Course_durationHours(ctx, field)
+			case "averageRating":
+				return ec.fieldContext_Course_averageRating(ctx, field)
+			case "reviewCount":
+				return ec.fieldContext_Course_reviewCount(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Course_createdAt(ctx, field)
 			case "updatedAt":
@@ -9457,6 +10178,10 @@ func (ec *executionContext) fieldContext_Mutation_updateCourse(ctx context.Conte
 				return ec.fieldContext_Course_level(ctx, field)
 			case "lessons":
 				return ec.fieldContext_Course_lessons(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Course_reviews(ctx, field)
+			case "myReview":
+				return ec.fieldContext_Course_myReview(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Course", field.Name)
 		},
@@ -9563,6 +10288,10 @@ func (ec *executionContext) fieldContext_Mutation_publishCourse(ctx context.Cont
 				return ec.fieldContext_Course_price(ctx, field)
 			case "durationHours":
 				return ec.fieldContext_Course_durationHours(ctx, field)
+			case "averageRating":
+				return ec.fieldContext_Course_averageRating(ctx, field)
+			case "reviewCount":
+				return ec.fieldContext_Course_reviewCount(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Course_createdAt(ctx, field)
 			case "updatedAt":
@@ -9575,6 +10304,10 @@ func (ec *executionContext) fieldContext_Mutation_publishCourse(ctx context.Cont
 				return ec.fieldContext_Course_level(ctx, field)
 			case "lessons":
 				return ec.fieldContext_Course_lessons(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Course_reviews(ctx, field)
+			case "myReview":
+				return ec.fieldContext_Course_myReview(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Course", field.Name)
 		},
@@ -9640,6 +10373,10 @@ func (ec *executionContext) fieldContext_Mutation_unpublishCourse(ctx context.Co
 				return ec.fieldContext_Course_price(ctx, field)
 			case "durationHours":
 				return ec.fieldContext_Course_durationHours(ctx, field)
+			case "averageRating":
+				return ec.fieldContext_Course_averageRating(ctx, field)
+			case "reviewCount":
+				return ec.fieldContext_Course_reviewCount(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Course_createdAt(ctx, field)
 			case "updatedAt":
@@ -9652,6 +10389,10 @@ func (ec *executionContext) fieldContext_Mutation_unpublishCourse(ctx context.Co
 				return ec.fieldContext_Course_level(ctx, field)
 			case "lessons":
 				return ec.fieldContext_Course_lessons(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Course_reviews(ctx, field)
+			case "myReview":
+				return ec.fieldContext_Course_myReview(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Course", field.Name)
 		},
@@ -9876,6 +10617,104 @@ func (ec *executionContext) fieldContext_Mutation_removeCourseLesson(ctx context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_removeCourseLesson_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_submitCourseReview(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_submitCourseReview,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().SubmitCourseReview(ctx, fc.Args["input"].(model.SubmitCourseReviewInput))
+		},
+		nil,
+		ec.marshalNCourseReview2ᚖcontentᚑservicesᚋgraphᚋmodelᚐCourseReview,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_submitCourseReview(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CourseReview_id(ctx, field)
+			case "courseId":
+				return ec.fieldContext_CourseReview_courseId(ctx, field)
+			case "userId":
+				return ec.fieldContext_CourseReview_userId(ctx, field)
+			case "rating":
+				return ec.fieldContext_CourseReview_rating(ctx, field)
+			case "comment":
+				return ec.fieldContext_CourseReview_comment(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CourseReview_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_CourseReview_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CourseReview", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_submitCourseReview_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteCourseReview(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteCourseReview,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteCourseReview(ctx, fc.Args["courseId"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteCourseReview(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteCourseReview_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -11610,6 +12449,10 @@ func (ec *executionContext) fieldContext_Query_course(ctx context.Context, field
 				return ec.fieldContext_Course_price(ctx, field)
 			case "durationHours":
 				return ec.fieldContext_Course_durationHours(ctx, field)
+			case "averageRating":
+				return ec.fieldContext_Course_averageRating(ctx, field)
+			case "reviewCount":
+				return ec.fieldContext_Course_reviewCount(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Course_createdAt(ctx, field)
 			case "updatedAt":
@@ -11622,6 +12465,10 @@ func (ec *executionContext) fieldContext_Query_course(ctx context.Context, field
 				return ec.fieldContext_Course_level(ctx, field)
 			case "lessons":
 				return ec.fieldContext_Course_lessons(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Course_reviews(ctx, field)
+			case "myReview":
+				return ec.fieldContext_Course_myReview(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Course", field.Name)
 		},
@@ -16487,6 +17334,47 @@ func (ec *executionContext) unmarshalInputQuizQuestionOrderInput(ctx context.Con
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSubmitCourseReviewInput(ctx context.Context, obj any) (model.SubmitCourseReviewInput, error) {
+	var it model.SubmitCourseReviewInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"courseId", "rating", "comment"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "courseId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("courseId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CourseID = data
+		case "rating":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rating"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Rating = data
+		case "comment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("comment"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Comment = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateCourseInput(ctx context.Context, obj any) (model.UpdateCourseInput, error) {
 	var it model.UpdateCourseInput
 	asMap := map[string]any{}
@@ -17091,6 +17979,13 @@ func (ec *executionContext) _Course(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Course_price(ctx, field, obj)
 		case "durationHours":
 			out.Values[i] = ec._Course_durationHours(ctx, field, obj)
+		case "averageRating":
+			out.Values[i] = ec._Course_averageRating(ctx, field, obj)
+		case "reviewCount":
+			out.Values[i] = ec._Course_reviewCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "createdAt":
 			out.Values[i] = ec._Course_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -17205,6 +18100,13 @@ func (ec *executionContext) _Course(ctx context.Context, sel ast.SelectionSet, o
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "reviews":
+			out.Values[i] = ec._Course_reviews(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "myReview":
+			out.Values[i] = ec._Course_myReview(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -17407,6 +18309,126 @@ func (ec *executionContext) _CourseLessonCollection(ctx context.Context, sel ast
 			}
 		case "pageSize":
 			out.Values[i] = ec._CourseLessonCollection_pageSize(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var courseReviewImplementors = []string{"CourseReview"}
+
+func (ec *executionContext) _CourseReview(ctx context.Context, sel ast.SelectionSet, obj *model.CourseReview) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, courseReviewImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CourseReview")
+		case "id":
+			out.Values[i] = ec._CourseReview_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "courseId":
+			out.Values[i] = ec._CourseReview_courseId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "userId":
+			out.Values[i] = ec._CourseReview_userId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rating":
+			out.Values[i] = ec._CourseReview_rating(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "comment":
+			out.Values[i] = ec._CourseReview_comment(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._CourseReview_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._CourseReview_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var courseReviewCollectionImplementors = []string{"CourseReviewCollection"}
+
+func (ec *executionContext) _CourseReviewCollection(ctx context.Context, sel ast.SelectionSet, obj *model.CourseReviewCollection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, courseReviewCollectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CourseReviewCollection")
+		case "items":
+			out.Values[i] = ec._CourseReviewCollection_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._CourseReviewCollection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "page":
+			out.Values[i] = ec._CourseReviewCollection_page(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageSize":
+			out.Values[i] = ec._CourseReviewCollection_pageSize(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -18789,6 +19811,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "removeCourseLesson":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_removeCourseLesson(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "submitCourseReview":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_submitCourseReview(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteCourseReview":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteCourseReview(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -20681,6 +21717,74 @@ func (ec *executionContext) marshalNCourseOrderField2contentᚑservicesᚋgraph�
 	return v
 }
 
+func (ec *executionContext) marshalNCourseReview2contentᚑservicesᚋgraphᚋmodelᚐCourseReview(ctx context.Context, sel ast.SelectionSet, v model.CourseReview) graphql.Marshaler {
+	return ec._CourseReview(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCourseReview2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐCourseReviewᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CourseReview) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCourseReview2ᚖcontentᚑservicesᚋgraphᚋmodelᚐCourseReview(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCourseReview2ᚖcontentᚑservicesᚋgraphᚋmodelᚐCourseReview(ctx context.Context, sel ast.SelectionSet, v *model.CourseReview) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CourseReview(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCourseReviewCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐCourseReviewCollection(ctx context.Context, sel ast.SelectionSet, v *model.CourseReviewCollection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CourseReviewCollection(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCreateCourseInput2contentᚑservicesᚋgraphᚋmodelᚐCreateCourseInput(ctx context.Context, v any) (model.CreateCourseInput, error) {
 	res, err := ec.unmarshalInputCreateCourseInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -21718,6 +22822,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) unmarshalNSubmitCourseReviewInput2contentᚑservicesᚋgraphᚋmodelᚐSubmitCourseReviewInput(ctx context.Context, v any) (model.SubmitCourseReviewInput, error) {
+	res, err := ec.unmarshalInputSubmitCourseReviewInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNTag2contentᚑservicesᚋgraphᚋmodelᚐTag(ctx context.Context, sel ast.SelectionSet, v model.Tag) graphql.Marshaler {
 	return ec._Tag(ctx, sel, &v)
 }
@@ -22234,6 +23343,13 @@ func (ec *executionContext) unmarshalOCourseOrderInput2ᚖcontentᚑservicesᚋg
 	}
 	res, err := ec.unmarshalInputCourseOrderInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOCourseReview2ᚖcontentᚑservicesᚋgraphᚋmodelᚐCourseReview(ctx context.Context, sel ast.SelectionSet, v *model.CourseReview) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CourseReview(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOFlashcardFilterInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardFilterInput(ctx context.Context, v any) (*model.FlashcardFilterInput, error) {

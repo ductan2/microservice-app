@@ -84,6 +84,8 @@ type Course struct {
 	IsFeatured    bool         `gorm:"default:false;not null;index:courses_featured_idx" json:"is_featured"`
 	Price         float64      `gorm:"type:numeric(10,2)" json:"price,omitempty"`
 	DurationHours int          `gorm:"type:int" json:"duration_hours,omitempty"`
+	AverageRating float64      `gorm:"type:numeric(3,2);default:0" json:"average_rating"`
+	ReviewCount   int          `gorm:"type:int;default:0" json:"review_count"`
 	CreatedAt     time.Time    `gorm:"default:now();not null" json:"created_at"`
 	UpdatedAt     time.Time    `gorm:"default:now();not null" json:"updated_at"`
 	PublishedAt   sql.NullTime `json:"published_at,omitempty"`
@@ -97,6 +99,17 @@ type CourseLesson struct {
 	Ord        int       `gorm:"not null" json:"ord"`
 	IsRequired bool      `gorm:"default:true;not null" json:"is_required"`
 	CreatedAt  time.Time `gorm:"default:now();not null" json:"created_at"`
+}
+
+// CourseReview captures learner feedback for a course.
+type CourseReview struct {
+	ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	CourseID  uuid.UUID `gorm:"type:uuid;not null" json:"course_id"`
+	UserID    uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
+	Rating    int       `gorm:"type:int;not null" json:"rating"`
+	Comment   string    `gorm:"type:text" json:"comment"`
+	CreatedAt time.Time `gorm:"default:now();not null" json:"created_at"`
+	UpdatedAt time.Time `gorm:"default:now();not null" json:"updated_at"`
 }
 
 // LessonSection content blocks within a lesson

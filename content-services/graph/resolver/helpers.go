@@ -10,6 +10,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/google/uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
@@ -274,12 +275,17 @@ func mapCourse(course *models.Course) *model.Course {
 		IsFeatured:    course.IsFeatured,
 		Price:         toFloat64Ptr(course.Price),
 		DurationHours: toIntPtr(course.DurationHours),
+		ReviewCount:   course.ReviewCount,
 		CreatedAt:     course.CreatedAt,
 		UpdatedAt:     course.UpdatedAt,
 	}
 
 	if course.PublishedAt.Valid {
 		mapped.PublishedAt = &course.PublishedAt.Time
+	}
+
+	if course.ReviewCount > 0 {
+		mapped.AverageRating = toFloat64Ptr(course.AverageRating)
 	}
 
 	return mapped
@@ -306,6 +312,87 @@ func mapCourseLessons(lessons []models.CourseLesson) []*model.CourseLesson {
 		items = append(items, mapCourseLesson(&lessons[i]))
 	}
 	return items
+}
+
+func mapCourseReview(review *models.CourseReview) *model.CourseReview {
+	if review == nil {
+		return nil
+	}
+
+	comment := toStringPtr(review.Comment)
+	if comment != nil {
+		trimmed := strings.TrimSpace(*comment)
+		if trimmed == "" {
+			comment = nil
+		} else {
+			comment = &trimmed
+		}
+	}
+
+	return &model.CourseReview{
+		ID:        review.ID.String(),
+		CourseID:  review.CourseID.String(),
+		UserID:    review.UserID.String(),
+		Rating:    review.Rating,
+		Comment:   comment,
+		CreatedAt: review.CreatedAt,
+		UpdatedAt: review.UpdatedAt,
+	}
+}
+
+func mapCourseReviews(reviews []models.CourseReview) []*model.CourseReview {
+	out := make([]*model.CourseReview, 0, len(reviews))
+	for i := range reviews {
+		out = append(out, mapCourseReview(&reviews[i]))
+	}
+	return out
+}
+
+func mapCourseReviewError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	switch {
+	case errors.Is(err, types.ErrCourseReviewInvalidRating):
+		return gqlerror.Errorf("rating must be between 1 and 5")
+	case errors.Is(err, types.ErrCourseReviewNotEnrolled):
+		return gqlerror.Errorf("enrollment required to review this course")
+	case errors.Is(err, types.ErrCourseReviewNotFound):
+		return gqlerror.Errorf("course review not found")
+	default:
+		return err
+	}
+}
+
+func userIDFromContext(ctx context.Context) (uuid.UUID, error) {
+	id, ok, err := userIDFromContextOptional(ctx)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	if !ok {
+		return uuid.Nil, gqlerror.Errorf("authentication required")
+	}
+	return id, nil
+}
+
+func userIDFromContextOptional(ctx context.Context) (uuid.UUID, bool, error) {
+	opCtx := graphql.GetOperationContext(ctx)
+	if opCtx == nil {
+		return uuid.Nil, false, gqlerror.Errorf("missing request context")
+	}
+
+	userID := strings.TrimSpace(opCtx.Headers.Get("X-User-ID"))
+	if userID == "" {
+		return uuid.Nil, false, nil
+	}
+
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return uuid.Nil, false, gqlerror.Errorf("invalid user id")
+	}
+
+	return id, true, nil
 }
 
 // mapLessonSections converts a slice of models.LessonSection to GraphQL model.

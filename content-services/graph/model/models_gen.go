@@ -41,23 +41,27 @@ type ContentTagInput struct {
 }
 
 type Course struct {
-	ID            string          `json:"id"`
-	Title         string          `json:"title"`
-	Description   *string         `json:"description,omitempty"`
-	TopicID       *string         `json:"topicId,omitempty"`
-	LevelID       *string         `json:"levelId,omitempty"`
-	InstructorID  *string         `json:"instructorId,omitempty"`
-	ThumbnailURL  *string         `json:"thumbnailURL,omitempty"`
-	IsPublished   bool            `json:"isPublished"`
-	IsFeatured    bool            `json:"isFeatured"`
-	Price         *float64        `json:"price,omitempty"`
-	DurationHours *int            `json:"durationHours,omitempty"`
-	CreatedAt     time.Time       `json:"createdAt"`
-	UpdatedAt     time.Time       `json:"updatedAt"`
-	PublishedAt   *time.Time      `json:"publishedAt,omitempty"`
-	Topic         *Topic          `json:"topic,omitempty"`
-	Level         *Level          `json:"level,omitempty"`
-	Lessons       []*CourseLesson `json:"lessons"`
+	ID            string                  `json:"id"`
+	Title         string                  `json:"title"`
+	Description   *string                 `json:"description,omitempty"`
+	TopicID       *string                 `json:"topicId,omitempty"`
+	LevelID       *string                 `json:"levelId,omitempty"`
+	InstructorID  *string                 `json:"instructorId,omitempty"`
+	ThumbnailURL  *string                 `json:"thumbnailURL,omitempty"`
+	IsPublished   bool                    `json:"isPublished"`
+	IsFeatured    bool                    `json:"isFeatured"`
+	Price         *float64                `json:"price,omitempty"`
+	DurationHours *int                    `json:"durationHours,omitempty"`
+	AverageRating *float64                `json:"averageRating,omitempty"`
+	ReviewCount   int                     `json:"reviewCount"`
+	CreatedAt     time.Time               `json:"createdAt"`
+	UpdatedAt     time.Time               `json:"updatedAt"`
+	PublishedAt   *time.Time              `json:"publishedAt,omitempty"`
+	Topic         *Topic                  `json:"topic,omitempty"`
+	Level         *Level                  `json:"level,omitempty"`
+	Lessons       []*CourseLesson         `json:"lessons"`
+	Reviews       *CourseReviewCollection `json:"reviews"`
+	MyReview      *CourseReview           `json:"myReview,omitempty"`
 }
 
 type CourseCollection struct {
@@ -105,6 +109,23 @@ type CourseLessonOrderInput struct {
 type CourseOrderInput struct {
 	Field     CourseOrderField `json:"field"`
 	Direction OrderDirection   `json:"direction"`
+}
+
+type CourseReview struct {
+	ID        string    `json:"id"`
+	CourseID  string    `json:"courseId"`
+	UserID    string    `json:"userId"`
+	Rating    int       `json:"rating"`
+	Comment   *string   `json:"comment,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type CourseReviewCollection struct {
+	Items      []*CourseReview `json:"items"`
+	TotalCount int             `json:"totalCount"`
+	Page       int             `json:"page"`
+	PageSize   int             `json:"pageSize"`
 }
 
 type CreateCourseInput struct {
@@ -451,6 +472,12 @@ type QuizQuestionFilterInput struct {
 type QuizQuestionOrderInput struct {
 	Field     QuizQuestionOrderField `json:"field"`
 	Direction OrderDirection         `json:"direction"`
+}
+
+type SubmitCourseReviewInput struct {
+	CourseID string  `json:"courseId"`
+	Rating   int     `json:"rating"`
+	Comment  *string `json:"comment,omitempty"`
 }
 
 type Tag struct {

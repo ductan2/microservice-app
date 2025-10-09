@@ -80,6 +80,9 @@ type Mutation {
   reorderCourseLessons(courseId: ID!, lessonIds: [ID!]!): [CourseLesson!]!
   removeCourseLesson(id: ID!): Boolean!
 
+  submitCourseReview(input: SubmitCourseReviewInput!): CourseReview!
+  deleteCourseReview(courseId: ID!): Boolean!
+
   createLessonSection(lessonId: ID!, input: CreateLessonSectionInput!): LessonSection!
   updateLessonSection(id: ID!, input: UpdateLessonSectionInput!): LessonSection!
   deleteLessonSection(id: ID!): Boolean!
@@ -409,12 +412,16 @@ type Course {
   isFeatured: Boolean!
   price: Float
   durationHours: Int
+  averageRating: Float
+  reviewCount: Int!
   createdAt: Time!
   updatedAt: Time!
   publishedAt: Time
   topic: Topic
   level: Level
   lessons: [CourseLesson!]!
+  reviews(page: Int = 1, pageSize: Int = 20): CourseReviewCollection!
+  myReview: CourseReview
 }
 
 type CourseCollection {
@@ -446,6 +453,12 @@ input UpdateCourseInput {
   isFeatured: Boolean
   price: Float
   durationHours: Int
+}
+
+input SubmitCourseReviewInput {
+  courseId: ID!
+  rating: Int!
+  comment: String
 }
 
 input CourseFilterInput {
@@ -482,6 +495,23 @@ type CourseLesson {
 
 type CourseLessonCollection {
   items: [CourseLesson!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
+type CourseReview {
+  id: ID!
+  courseId: ID!
+  userId: ID!
+  rating: Int!
+  comment: String
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type CourseReviewCollection {
+  items: [CourseReview!]!
   totalCount: Int!
   page: Int!
   pageSize: Int!

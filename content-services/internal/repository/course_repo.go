@@ -76,6 +76,8 @@ type courseDoc struct {
 	IsFeatured    bool       `bson:"is_featured"`
 	Price         float64    `bson:"price,omitempty"`
 	DurationHours int        `bson:"duration_hours,omitempty"`
+	AverageRating float64    `bson:"average_rating,omitempty"`
+	ReviewCount   int64      `bson:"review_count,omitempty"`
 	CreatedAt     time.Time  `bson:"created_at"`
 	UpdatedAt     time.Time  `bson:"updated_at"`
 	PublishedAt   *time.Time `bson:"published_at,omitempty"`
@@ -91,6 +93,8 @@ func courseDocFromModel(course *models.Course) *courseDoc {
 		IsFeatured:    course.IsFeatured,
 		Price:         course.Price,
 		DurationHours: course.DurationHours,
+		AverageRating: course.AverageRating,
+		ReviewCount:   int64(course.ReviewCount),
 		CreatedAt:     course.CreatedAt,
 		UpdatedAt:     course.UpdatedAt,
 	}
@@ -125,6 +129,8 @@ func (d *courseDoc) toModel() *models.Course {
 		IsFeatured:    d.IsFeatured,
 		Price:         d.Price,
 		DurationHours: d.DurationHours,
+		AverageRating: d.AverageRating,
+		ReviewCount:   int(d.ReviewCount),
 		CreatedAt:     d.CreatedAt,
 		UpdatedAt:     d.UpdatedAt,
 	}
