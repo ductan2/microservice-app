@@ -48,12 +48,15 @@ func NewRouter(deps Deps) *gin.Engine {
 	mfaService := services.NewMFAService(mfaRepo, userRepo)
 	sessionService := services.NewSessionService(sessionRepo, sessionCache)
 	userService := services.NewUserService(userRepo)
+	roleRepo := repositories.NewRoleRepository(deps.DB)
+	roleService := services.NewRoleService(roleRepo)
 
 	// Initialize controllers
 	userCtrl := controllers.NewUserController(authService, profileService, currentUserService, userService)
 	passwordCtrl := controllers.NewPasswordController(passwordService)
 	mfaCtrl := controllers.NewMFAController(mfaService)
 	sessionCtrl := controllers.NewSessionController(sessionService)
+	roleCtrl := controllers.NewRoleController(roleService)
 
 	api := r.Group("/api/v1")
 	{
@@ -61,6 +64,7 @@ func NewRouter(deps Deps) *gin.Engine {
 		routers.RegisterPasswordRoutes(api, passwordCtrl, sessionCache)
 		routers.RegisterMFARoutes(api, mfaCtrl, sessionCache)
 		routers.RegisterSessionRoutes(api, sessionCtrl, sessionCache)
+		routers.RegisterRoleRoutes(api, roleCtrl)
 	}
 
 	return r

@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"sync"
 
 	"bff-services/internal/api/dto"
@@ -128,6 +129,78 @@ func (u *UserController) UpdateProfile(c *gin.Context) {
 }
 
 // Users management methods
+func (u *UserController) AssignRoleToUser(ctx *gin.Context) {
+	actorID, actorEmail, sessionID, ok := getUserContextFromMiddleware(ctx)
+	if !ok {
+		return
+	}
+
+	targetUserID := ctx.Param("id")
+	if targetUserID == "" {
+		utils.Fail(ctx, "User ID is required", http.StatusBadRequest, "missing user ID")
+		return
+	}
+	if _, err := uuid.Parse(targetUserID); err != nil {
+		utils.Fail(ctx, "Invalid user ID", http.StatusBadRequest, err.Error())
+		return
+	}
+
+	var req dto.UserRoleRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		utils.Fail(ctx, "Invalid request data", http.StatusBadRequest, err.Error())
+		return
+	}
+	req.RoleName = strings.TrimSpace(req.RoleName)
+	if req.RoleName == "" {
+		utils.Fail(ctx, "Role name is required", http.StatusBadRequest, "role_name is required")
+		return
+	}
+
+	resp, err := u.userService.AssignRoleWithContext(ctx.Request.Context(), actorID, actorEmail, sessionID, targetUserID, req)
+	if err != nil {
+		utils.Fail(ctx, "Failed to assign role", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(ctx, resp)
+}
+
+func (u *UserController) RemoveRoleFromUser(ctx *gin.Context) {
+	actorID, actorEmail, sessionID, ok := getUserContextFromMiddleware(ctx)
+	if !ok {
+		return
+	}
+
+	targetUserID := ctx.Param("id")
+	if targetUserID == "" {
+		utils.Fail(ctx, "User ID is required", http.StatusBadRequest, "missing user ID")
+		return
+	}
+	if _, err := uuid.Parse(targetUserID); err != nil {
+		utils.Fail(ctx, "Invalid user ID", http.StatusBadRequest, err.Error())
+		return
+	}
+
+	var req dto.UserRoleRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		utils.Fail(ctx, "Invalid request data", http.StatusBadRequest, err.Error())
+		return
+	}
+	req.RoleName = strings.TrimSpace(req.RoleName)
+	if req.RoleName == "" {
+		utils.Fail(ctx, "Role name is required", http.StatusBadRequest, "role_name is required")
+		return
+	}
+
+	resp, err := u.userService.RemoveRoleWithContext(ctx.Request.Context(), actorID, actorEmail, sessionID, targetUserID, req)
+	if err != nil {
+		utils.Fail(ctx, "Failed to remove role", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(ctx, resp)
+}
+
 func (u *UserController) ListUsersWithProgress(ctx *gin.Context) {
 	// Get query parameters
 	page := ctx.DefaultQuery("page", "1")
