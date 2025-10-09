@@ -15,13 +15,15 @@ func SetupUserRoutes(api *gin.RouterGroup, controllers *controllers.Controllers,
 	}
 
 	// Public user routes
-	
+
 	// Protected user routes
 	if sessionCache != nil {
 		users := api.Group("/users")
 		users.Use(middleware.AuthRequired(sessionCache))
 		{
 			users.GET("", controllers.User.ListUsersWithProgress)
+			users.POST("/:id/roles", controllers.User.AssignRoleToUser)
+			users.DELETE("/:id/roles", controllers.User.RemoveRoleFromUser)
 			// Register specific routes before parameterized routes
 			users.GET("/:id", controllers.User.GetUserById)
 		}

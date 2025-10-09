@@ -33,6 +33,8 @@ type UserService interface {
 	// New methods for internal communication with user context
 	GetProfileWithContext(ctx context.Context, userID, email, sessionID string) (*HTTPResponse, error)
 	UpdateProfileWithContext(ctx context.Context, userID, email, sessionID string, payload dto.UpdateProfileRequest) (*HTTPResponse, error)
+	AssignRoleWithContext(ctx context.Context, actorUserID, actorEmail, actorSessionID, userID string, payload dto.UserRoleRequest) (*HTTPResponse, error)
+	RemoveRoleWithContext(ctx context.Context, actorUserID, actorEmail, actorSessionID, userID string, payload dto.UserRoleRequest) (*HTTPResponse, error)
 }
 
 type UserServiceClient struct {
@@ -84,7 +86,6 @@ func (c *UserServiceClient) VerifyEmail(ctx context.Context, token string) (*HTT
 	path := "/api/v1/users/verify-email?token=" + url.QueryEscape(token)
 	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
 }
-
 
 func (c *UserServiceClient) RequestPasswordReset(ctx context.Context, payload dto.PasswordResetRequest) (*HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/password/reset/request", payload, nil)
@@ -227,4 +228,14 @@ func (c *UserServiceClient) GetProfileWithContext(ctx context.Context, userID, e
 
 func (c *UserServiceClient) UpdateProfileWithContext(ctx context.Context, userID, email, sessionID string, payload dto.UpdateProfileRequest) (*HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPut, "/api/v1/users/profile", payload, internalAuthHeaders(userID, email, sessionID))
+}
+
+func (c *UserServiceClient) AssignRoleWithContext(ctx context.Context, actorUserID, actorEmail, actorSessionID, userID string, payload dto.UserRoleRequest) (*HTTPResponse, error) {
+	path := fmt.Sprintf("/api/v1/users/%s/roles", userID)
+	return c.doRequest(ctx, http.MethodPost, path, payload, internalAuthHeaders(actorUserID, actorEmail, actorSessionID))
+}
+
+func (c *UserServiceClient) RemoveRoleWithContext(ctx context.Context, actorUserID, actorEmail, actorSessionID, userID string, payload dto.UserRoleRequest) (*HTTPResponse, error) {
+	path := fmt.Sprintf("/api/v1/users/%s/roles", userID)
+	return c.doRequest(ctx, http.MethodDelete, path, payload, internalAuthHeaders(actorUserID, actorEmail, actorSessionID))
 }
