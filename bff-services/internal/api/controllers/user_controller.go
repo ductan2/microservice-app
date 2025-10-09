@@ -145,7 +145,7 @@ func (u *UserController) AssignRoleToUser(ctx *gin.Context) {
 		return
 	}
 
-	var req dto.UserRoleRequest
+	var req dto.AssignRoleRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		utils.Fail(ctx, "Invalid request data", http.StatusBadRequest, err.Error())
 		return
@@ -181,7 +181,7 @@ func (u *UserController) RemoveRoleFromUser(ctx *gin.Context) {
 		return
 	}
 
-	var req dto.UserRoleRequest
+	var req dto.RemoveRoleRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		utils.Fail(ctx, "Invalid request data", http.StatusBadRequest, err.Error())
 		return

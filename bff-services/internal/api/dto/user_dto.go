@@ -23,6 +23,13 @@ type UserWithProgressResponse struct {
 	Streak        int         `json:"streak"`
 }
 
+type AssignRoleRequest struct {
+	RoleName string `json:"role_name" binding:"required"`
+}
+type RemoveRoleRequest struct {
+	RoleName string `json:"role_name" binding:"required"`
+}
+
 type UserData struct {
 	ID            string       `json:"id"`
 	Email         string       `json:"email"`
