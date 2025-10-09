@@ -19,7 +19,6 @@ type UserService interface {
 	Login(ctx context.Context, payload dto.LoginRequest, userAgent, clientIP string) (*HTTPResponse, error)
 	Logout(ctx context.Context, token string) (*HTTPResponse, error)
 	VerifyEmail(ctx context.Context, token string) (*HTTPResponse, error)
-	CheckAuth(ctx context.Context, token string) (*HTTPResponse, error)
 	RequestPasswordReset(ctx context.Context, payload dto.PasswordResetRequest) (*HTTPResponse, error)
 	ConfirmPasswordReset(ctx context.Context, payload dto.PasswordResetConfirmRequest) (*HTTPResponse, error)
 	ChangePassword(ctx context.Context, token string, payload dto.ChangePasswordRequest) (*HTTPResponse, error)
@@ -59,7 +58,7 @@ func NewUserServiceClient(baseURL string, httpClient *http.Client) *UserServiceC
 }
 
 func (c *UserServiceClient) Register(ctx context.Context, payload dto.RegisterRequest) (*HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/register", payload, nil)
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/register", payload, nil)
 }
 
 func (c *UserServiceClient) Login(ctx context.Context, payload dto.LoginRequest, userAgent, clientIP string) (*HTTPResponse, error) {
@@ -70,11 +69,11 @@ func (c *UserServiceClient) Login(ctx context.Context, payload dto.LoginRequest,
 	if clientIP != "" {
 		headers.Set("X-Forwarded-For", clientIP)
 	}
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/login", payload, headers)
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/login", payload, headers)
 }
 
 func (c *UserServiceClient) Logout(ctx context.Context, token string) (*HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/logout", nil, authHeader(token))
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/logout", nil, authHeader(token))
 }
 
 func (c *UserServiceClient) VerifyEmail(ctx context.Context, token string) (*HTTPResponse, error) {
@@ -82,24 +81,21 @@ func (c *UserServiceClient) VerifyEmail(ctx context.Context, token string) (*HTT
 		return nil, fmt.Errorf("verification token is required")
 	}
 
-	path := "/api/v1/verify-email?token=" + url.QueryEscape(token)
+	path := "/api/v1/users/verify-email?token=" + url.QueryEscape(token)
 	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
 }
 
-func (c *UserServiceClient) CheckAuth(ctx context.Context, token string) (*HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodGet, "/api/v1/profile/check-auth", nil, authHeader(token))
-}
 
 func (c *UserServiceClient) RequestPasswordReset(ctx context.Context, payload dto.PasswordResetRequest) (*HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/password/reset/request", payload, nil)
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/password/reset/request", payload, nil)
 }
 
 func (c *UserServiceClient) ConfirmPasswordReset(ctx context.Context, payload dto.PasswordResetConfirmRequest) (*HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/password/reset/confirm", payload, nil)
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/password/reset/confirm", payload, nil)
 }
 
 func (c *UserServiceClient) ChangePassword(ctx context.Context, token string, payload dto.ChangePasswordRequest) (*HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/password/change", payload, authHeader(token))
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/password/change", payload, authHeader(token))
 }
 
 func (c *UserServiceClient) SetupMFA(ctx context.Context, token string, payload dto.MFASetupRequest) (*HTTPResponse, error) {
@@ -226,9 +222,9 @@ func internalAuthHeaders(userID, email, sessionID string) http.Header {
 }
 
 func (c *UserServiceClient) GetProfileWithContext(ctx context.Context, userID, email, sessionID string) (*HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodGet, "/api/v1/profile", nil, internalAuthHeaders(userID, email, sessionID))
+	return c.doRequest(ctx, http.MethodGet, "/api/v1/users/profile", nil, internalAuthHeaders(userID, email, sessionID))
 }
 
 func (c *UserServiceClient) UpdateProfileWithContext(ctx context.Context, userID, email, sessionID string, payload dto.UpdateProfileRequest) (*HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPut, "/api/v1/profile", payload, internalAuthHeaders(userID, email, sessionID))
+	return c.doRequest(ctx, http.MethodPut, "/api/v1/users/profile", payload, internalAuthHeaders(userID, email, sessionID))
 }

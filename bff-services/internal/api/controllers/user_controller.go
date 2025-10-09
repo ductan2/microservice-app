@@ -14,20 +14,121 @@ import (
 	"github.com/google/uuid"
 )
 
-type UsersController struct {
+type UserController struct {
 	userService   services.UserService
 	lessonService services.LessonService
 }
 
-func NewUsersController(userService services.UserService, lessonService services.LessonService) *UsersController {
-	return &UsersController{
+func NewUserController(userService services.UserService, lessonService services.LessonService) *UserController {
+	return &UserController{
 		userService:   userService,
 		lessonService: lessonService,
 	}
 }
 
-// ListUsersWithProgress returns list of users with their points and streak
-func (c *UsersController) ListUsersWithProgress(ctx *gin.Context) {
+// Authentication methods
+func (u *UserController) Register(c *gin.Context) {
+	var req dto.RegisterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.Fail(c, "Invalid request data", http.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp, err := u.userService.Register(c.Request.Context(), req)
+	if err != nil {
+		utils.Fail(c, "Unable to register user", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(c, resp)
+}
+
+func (u *UserController) Login(c *gin.Context) {
+	var req dto.LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.Fail(c, "Invalid request data", http.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp, err := u.userService.Login(c.Request.Context(), req, c.GetHeader("User-Agent"), c.ClientIP())
+	if err != nil {
+		utils.Fail(c, "Unable to login", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(c, resp)
+}
+
+func (u *UserController) Logout(c *gin.Context) {
+	token, ok := requireBearerToken(c)
+	if !ok {
+		return
+	}
+
+	resp, err := u.userService.Logout(c.Request.Context(), token)
+	if err != nil {
+		utils.Fail(c, "Unable to logout", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(c, resp)
+}
+
+func (u *UserController) VerifyEmail(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		utils.Fail(c, "Verification token is required", http.StatusBadRequest, "missing token")
+		return
+	}
+
+	resp, err := u.userService.VerifyEmail(c.Request.Context(), token)
+	if err != nil {
+		utils.Fail(c, "Unable to verify email", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(c, resp)
+}
+
+// Profile methods
+func (u *UserController) GetProfile(c *gin.Context) {
+	userID, email, sessionID, ok := getUserContextFromMiddleware(c)
+	if !ok {
+		return
+	}
+
+	resp, err := u.userService.GetProfileWithContext(c.Request.Context(), userID, email, sessionID)
+	if err != nil {
+		utils.Fail(c, "Unable to fetch profile", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(c, resp)
+}
+
+func (u *UserController) UpdateProfile(c *gin.Context) {
+	userID, email, sessionID, ok := getUserContextFromMiddleware(c)
+	if !ok {
+		return
+	}
+
+	var req dto.UpdateProfileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.Fail(c, "Invalid request data", http.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp, err := u.userService.UpdateProfileWithContext(c.Request.Context(), userID, email, sessionID, req)
+	if err != nil {
+		utils.Fail(c, "Unable to update profile", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(c, resp)
+}
+
+// Users management methods
+func (u *UserController) ListUsersWithProgress(ctx *gin.Context) {
 	// Get query parameters
 	page := ctx.DefaultQuery("page", "1")
 	pageSize := ctx.DefaultQuery("page_size", "20")
@@ -35,7 +136,7 @@ func (c *UsersController) ListUsersWithProgress(ctx *gin.Context) {
 	search := ctx.Query("search")
 
 	// Call user service to get list of users
-	userResp, err := c.userService.GetUsers(ctx.Request.Context(), page, pageSize, status, search)
+	userResp, err := u.userService.GetUsers(ctx.Request.Context(), page, pageSize, status, search)
 	if err != nil {
 		utils.Fail(ctx, "Failed to fetch users", http.StatusInternalServerError, err.Error())
 		return
@@ -77,7 +178,7 @@ func (c *UsersController) ListUsersWithProgress(ctx *gin.Context) {
 			streak := 0
 
 			// Fetch points
-			if pointsResp, err := c.lessonService.GetUserPoints(ctx.Request.Context(), userData.ID); err == nil && pointsResp.StatusCode == http.StatusOK {
+			if pointsResp, err := u.lessonService.GetUserPoints(ctx.Request.Context(), userData.ID); err == nil && pointsResp.StatusCode == http.StatusOK {
 				var pointsData dto.PointsData
 				if err := json.Unmarshal(pointsResp.Body, &pointsData); err == nil {
 					points = pointsData.Lifetime
@@ -85,7 +186,7 @@ func (c *UsersController) ListUsersWithProgress(ctx *gin.Context) {
 			}
 
 			// Fetch streak
-			if streakResp, err := c.lessonService.GetUserStreak(ctx.Request.Context(), userData.ID); err == nil && streakResp.StatusCode == http.StatusOK {
+			if streakResp, err := u.lessonService.GetUserStreak(ctx.Request.Context(), userData.ID); err == nil && streakResp.StatusCode == http.StatusOK {
 				var streakData dto.StreakData
 				if err := json.Unmarshal(streakResp.Body, &streakData); err == nil {
 					streak = streakData.CurrentLen
@@ -129,8 +230,7 @@ func (c *UsersController) ListUsersWithProgress(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
-// MyProfile returns the authenticated user's profile aggregated with points and streak
-func (c *UsersController) GetUserById(ctx *gin.Context) {
+func (u *UserController) GetUserById(ctx *gin.Context) {
 	// Extract user context from middleware
 	userIDValue, exists := ctx.Get(middleware.ContextUserIDKey())
 	if !exists {
@@ -153,7 +253,7 @@ func (c *UsersController) GetUserById(ctx *gin.Context) {
 	sessionID := normalizeUUIDOrString(sessionIDValue)
 
 	// Call user service using internal headers
-	userResp, err := c.userService.GetProfileWithContext(ctx.Request.Context(), userID, email, sessionID)
+	userResp, err := u.userService.GetProfileWithContext(ctx.Request.Context(), userID, email, sessionID)
 	if err != nil || userResp == nil {
 		utils.Fail(ctx, "Failed to fetch profile", http.StatusBadGateway, errString(err))
 		return
@@ -171,13 +271,13 @@ func (c *UsersController) GetUserById(ctx *gin.Context) {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		if resp, err := c.lessonService.GetUserPoints(ctx.Request.Context(), userID); err == nil && resp.StatusCode == http.StatusOK {
+		if resp, err := u.lessonService.GetUserPoints(ctx.Request.Context(), userID); err == nil && resp.StatusCode == http.StatusOK {
 			pointsBody = json.RawMessage(resp.Body)
 		}
 	}()
 	go func() {
 		defer wg.Done()
-		if resp, err := c.lessonService.GetUserStreak(ctx.Request.Context(), userID); err == nil && resp.StatusCode == http.StatusOK {
+		if resp, err := u.lessonService.GetUserStreak(ctx.Request.Context(), userID); err == nil && resp.StatusCode == http.StatusOK {
 			streakBody = json.RawMessage(resp.Body)
 		}
 	}()
@@ -198,32 +298,47 @@ func (c *UsersController) GetUserById(ctx *gin.Context) {
 	})
 }
 
-func (a *UsersController) Profile(c *gin.Context) {
+// Helper functions
+func getUserContextFromMiddleware(c *gin.Context) (userID, email, sessionID string, ok bool) {
 	userIDValue, exists := c.Get(middleware.ContextUserIDKey())
 	if !exists {
 		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "user context not found")
-		return
+		return "", "", "", false
 	}
+
 	emailValue, exists := c.Get(middleware.ContextUserEmailKey())
 	if !exists {
 		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "email context not found")
-		return
+		return "", "", "", false
 	}
+
 	sessionIDValue, exists := c.Get(middleware.ContextSessionIDKey())
 	if !exists {
 		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "session context not found")
-		return
+		return "", "", "", false
 	}
 
-	resp, err := a.userService.GetProfileWithContext(c.Request.Context(), normalizeUUIDOrString(userIDValue), normalizeString(emailValue), normalizeUUIDOrString(sessionIDValue))
-	if err != nil {
-		utils.Fail(c, "Unable to get user", http.StatusBadGateway, err.Error())
-		return
+	// Convert UUID to string for internal communication
+	userIDUUID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "invalid user ID type")
+		return "", "", "", false
 	}
 
-	respondWithServiceResponse(c, resp)
+	emailStr, ok := emailValue.(string)
+	if !ok {
+		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "invalid email type")
+		return "", "", "", false
+	}
+
+	sessionIDUUID, ok := sessionIDValue.(uuid.UUID)
+	if !ok {
+		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "invalid session ID type")
+		return "", "", "", false
+	}
+
+	return userIDUUID.String(), emailStr, sessionIDUUID.String(), true
 }
-
 
 func errString(err error) string {
 	if err == nil {
