@@ -145,7 +145,7 @@ func (s *AuthService) Register(ctx context.Context, email, password, name string
 	}
 
 	// 8. Build verification link
-	frontendURL := utils.GetEnv("FRONTEND_URL", "http://localhost:3000")
+	frontendURL := utils.GetEnv("FRONTEND_URL", "http://localhost:3001")
 	verificationLink := fmt.Sprintf("%s/verify-email?token=%s", frontendURL, verificationToken)
 
 	// 9. Create outbox event for email verification
@@ -215,7 +215,7 @@ func (s *AuthService) Login(ctx context.Context, email, password, mfaCode, userA
 	session := &models.Session{
 		UserID:    user.ID,
 		UserAgent: userAgent,
-		IPAddr:    ipAddr,
+		IPAddr:    utils.SanitizeIPAddress(ipAddr),
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // default 30d session expiry
 	}
@@ -229,7 +229,7 @@ func (s *AuthService) Login(ctx context.Context, email, password, mfaCode, userA
 		UserID:    user.ID,
 		Email:     user.Email,
 		UserAgent: userAgent,
-		IPAddr:    ipAddr,
+		IPAddr:    utils.SanitizeIPAddress(ipAddr),
 		CreatedAt: session.CreatedAt,
 	}
 	if err := s.SessionCache.StoreSession(ctx, session.ID, sessionData, jwtConfig.ExpiresIn); err != nil {

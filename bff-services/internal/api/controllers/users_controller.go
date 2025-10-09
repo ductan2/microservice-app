@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 	"sync"
 
 	"bff-services/internal/api/dto"
@@ -131,7 +130,7 @@ func (c *UsersController) ListUsersWithProgress(ctx *gin.Context) {
 }
 
 // MyProfile returns the authenticated user's profile aggregated with points and streak
-func (c *UsersController) MyProfile(ctx *gin.Context) {
+func (c *UsersController) GetUserById(ctx *gin.Context) {
 	// Extract user context from middleware
 	userIDValue, exists := ctx.Get(middleware.ContextUserIDKey())
 	if !exists {
@@ -199,44 +198,32 @@ func (c *UsersController) MyProfile(ctx *gin.Context) {
 	})
 }
 
-func deriveUsername(email string) string {
-	if email == "" {
-		return ""
+func (a *UsersController) Profile(c *gin.Context) {
+	userIDValue, exists := c.Get(middleware.ContextUserIDKey())
+	if !exists {
+		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "user context not found")
+		return
 	}
-	parts := strings.SplitN(email, "@", 2)
-	return parts[0]
+	emailValue, exists := c.Get(middleware.ContextUserEmailKey())
+	if !exists {
+		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "email context not found")
+		return
+	}
+	sessionIDValue, exists := c.Get(middleware.ContextSessionIDKey())
+	if !exists {
+		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "session context not found")
+		return
+	}
+
+	resp, err := a.userService.GetProfileWithContext(c.Request.Context(), normalizeUUIDOrString(userIDValue), normalizeString(emailValue), normalizeUUIDOrString(sessionIDValue))
+	if err != nil {
+		utils.Fail(c, "Unable to get user", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(c, resp)
 }
 
-func nestedString(m map[string]interface{}, path []string) (string, bool) {
-	cur := interface{}(m)
-	for _, key := range path {
-		asMap, ok := cur.(map[string]interface{})
-		if !ok {
-			return "", false
-		}
-		cur, ok = asMap[key]
-		if !ok {
-			return "", false
-		}
-	}
-	return toString(cur)
-}
-
-func toString(v interface{}) (string, bool) {
-	switch t := v.(type) {
-	case string:
-		return t, true
-	default:
-		return "", false
-	}
-}
-
-func nullIfEmpty(s string, _ bool) interface{} {
-	if s == "" {
-		return nil
-	}
-	return s
-}
 
 func errString(err error) string {
 	if err == nil {

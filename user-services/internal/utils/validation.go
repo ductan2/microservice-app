@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"net"
 	"regexp"
 	"strings"
 	"unicode"
@@ -88,4 +89,42 @@ func ValidatePassword(password string) error {
 	}
 
 	return nil
+}
+
+// ValidateIPAddress validates if a string is a valid IP address
+func ValidateIPAddress(ip string) error {
+	if ip == "" {
+		return nil // Empty IP is allowed
+	}
+
+	ip = strings.TrimSpace(ip)
+	if ip == "" {
+		return nil // Empty after trim is allowed
+	}
+
+	if net.ParseIP(ip) == nil {
+		return errors.New("invalid IP address format")
+	}
+
+	return nil
+}
+
+// SanitizeIPAddress returns a valid IP address or empty string if invalid
+func SanitizeIPAddress(ip string) string {
+	if ip == "" {
+		return ""
+	}
+
+	ip = strings.TrimSpace(ip)
+	if ip == "" {
+		return ""
+	}
+
+	// Parse the IP to validate it
+	parsedIP := net.ParseIP(ip)
+	if parsedIP == nil {
+		return "" // Return empty string for invalid IPs
+	}
+
+	return parsedIP.String()
 }

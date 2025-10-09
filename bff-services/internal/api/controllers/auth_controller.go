@@ -80,3 +80,4 @@ func (a *AuthController) VerifyEmail(c *gin.Context) {
 
 	respondWithServiceResponse(c, resp)
 }
+

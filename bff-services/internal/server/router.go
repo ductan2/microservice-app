@@ -117,7 +117,8 @@ func NewRouter(deps Deps) *gin.Engine {
 		if usersCtrl != nil && deps.SessionCache != nil {
 			usersAuth := api.Group("/users")
 			usersAuth.Use(middleware.AuthRequired(deps.SessionCache))
-			usersAuth.GET("/my-profile", usersCtrl.MyProfile)
+			usersAuth.GET("/:id", usersCtrl.GetUserById)
+			usersAuth.GET("/profile", usersCtrl.Profile)
 		}
 		if notificationCtrl != nil {
 			// Notification template routes

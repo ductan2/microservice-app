@@ -31,7 +31,7 @@ func (a AuthController) Register(c *gin.Context) {
 
 	result, err := a.Service.Register(c.Request.Context(), email, req.Password, req.Name)
 	if err != nil {
-		utils.Fail(c, "Failed to register", http.StatusInternalServerError, err.Error())
+		utils.Fail(c, "Failed to register", http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -98,6 +98,7 @@ func (a AuthController) VerifyEmail(c *gin.Context) {
 		"message": "Email verified successfully! You can now login.",
 	})
 }
+
 
 func modelToPublicUser(user models.User) dto.PublicUser {
 	return dto.PublicUser{

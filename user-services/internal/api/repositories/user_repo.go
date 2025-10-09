@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"user-services/internal/models"
+	"user-services/internal/utils"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -122,13 +123,22 @@ func (r *userRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, p
 
 // UpdateLastLogin updates last login timestamp and ip
 func (r *userRepository) UpdateLastLogin(ctx context.Context, userID uuid.UUID, at time.Time, ip string) error {
+	updates := map[string]any{
+		"last_login_at": at,
+	}
+
+	// Sanitize IP address - returns empty string if invalid
+	sanitizedIP := utils.SanitizeIPAddress(ip)
+	if sanitizedIP != "" {
+		updates["last_login_ip"] = &sanitizedIP
+	} else {
+		updates["last_login_ip"] = nil
+	}
+
 	return r.DB.WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", userID).
-		Updates(map[string]any{
-			"last_login_at": at,
-			"last_login_ip": ip,
-		}).Error
+		Updates(updates).Error
 }
 
 // GetByVerificationToken retrieves a user by their email verification token

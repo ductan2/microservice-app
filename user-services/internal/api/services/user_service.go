@@ -66,7 +66,7 @@ func toPublicUser(user models.User) dto.PublicUser {
 		EmailVerified: user.EmailVerified,
 		Status:        user.Status,
 		LastLoginAt:   user.LastLoginAt.Time,
-		LastLoginIP:   user.LastLoginIP,
+		LastLoginIP:   getStringValue(user.LastLoginIP),
 		LockoutUntil:  user.LockoutUntil.Time,
 		DeletedAt:     user.DeletedAt.Time,
 		CreatedAt:     user.CreatedAt,
@@ -85,4 +85,12 @@ func toPublicUser(user models.User) dto.PublicUser {
 	}
 
 	return publicUser
+}
+
+// getStringValue safely dereferences a string pointer
+func getStringValue(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }

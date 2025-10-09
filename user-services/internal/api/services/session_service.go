@@ -9,6 +9,7 @@ import (
 	"user-services/internal/api/repositories"
 	"user-services/internal/cache"
 	"user-services/internal/models"
+	"user-services/internal/utils"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -44,7 +45,7 @@ func (s *sessionService) CreateSession(ctx context.Context, userID uuid.UUID, us
 	session := &models.Session{
 		UserID:    userID,
 		UserAgent: userAgent,
-		IPAddr:    ipAddr,
+		IPAddr:    utils.SanitizeIPAddress(ipAddr),
 		CreatedAt: now,
 		ExpiresAt: now.Add(defaultSessionExpiry),
 	}
