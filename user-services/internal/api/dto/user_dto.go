@@ -8,18 +8,19 @@ import (
 
 // PublicUser exposed via API (no sensitive data)
 type PublicUser struct {
-	ID            uuid.UUID    `json:"id"`
-	Email         string       `json:"email"`
-	EmailVerified bool         `json:"email_verified"`
-	Status        string       `json:"status"`
-	LastLoginAt   time.Time    `json:"last_login_at,omitempty"`
-	LastLoginIP   string       `json:"last_login_ip,omitempty"`
-	LockoutUntil  time.Time    `json:"lockout_until,omitempty"`
-	DeletedAt     time.Time    `json:"deleted_at,omitempty"`
-	Profile       *UserProfile `json:"profile,omitempty"`
-	Roles         []Role       `json:"roles,omitempty"`
-	CreatedAt     time.Time    `json:"created_at"`
-	UpdatedAt     time.Time    `json:"updated_at"`
+	ID            uuid.UUID         `json:"id"`
+	Email         string            `json:"email"`
+	EmailVerified bool              `json:"email_verified"`
+	Status        string            `json:"status"`
+	LastLoginAt   time.Time         `json:"last_login_at,omitempty"`
+	LastLoginIP   string            `json:"last_login_ip,omitempty"`
+	LockoutUntil  time.Time         `json:"lockout_until,omitempty"`
+	DeletedAt     time.Time         `json:"deleted_at,omitempty"`
+	Profile       *UserProfile      `json:"profile,omitempty"`
+	Roles         []Role            `json:"roles,omitempty"`
+	Sessions      []SessionResponse `json:"sessions,omitempty"`
+	CreatedAt     time.Time         `json:"created_at"`
+	UpdatedAt     time.Time         `json:"updated_at"`
 }
 
 type Role struct {
@@ -29,10 +30,10 @@ type Role struct {
 
 // UserProfile for non-auth data
 type UserProfile struct {
-	DisplayName string `json:"display_name,omitempty"`
-	AvatarURL   string `json:"avatar_url,omitempty"`
-	Locale      string `json:"locale"`
-	TimeZone    string `json:"time_zone"`
+	DisplayName string    `json:"display_name,omitempty"`
+	AvatarURL   string    `json:"avatar_url,omitempty"`
+	Locale      string    `json:"locale"`
+	TimeZone    string    `json:"time_zone"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
