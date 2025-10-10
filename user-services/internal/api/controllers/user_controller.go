@@ -20,6 +20,7 @@ type UserController struct {
 	profileService     services.UserProfileService
 	currentUserService services.CurrentUserService
 	userService        services.UserService
+	sessionService     services.SessionService
 }
 
 func NewUserController(
@@ -27,12 +28,14 @@ func NewUserController(
 	profileService services.UserProfileService,
 	currentUserService services.CurrentUserService,
 	userService services.UserService,
+	sessionService services.SessionService,
 ) *UserController {
 	return &UserController{
 		authService:        authService,
 		profileService:     profileService,
 		currentUserService: currentUserService,
 		userService:        userService,
+		sessionService:     sessionService,
 	}
 }
 
@@ -145,6 +148,24 @@ func (c *UserController) GetUserProfile(ctx *gin.Context) {
 		return
 	}
 
+	sessions, err := c.sessionService.GetUserSessions(ctx.Request.Context(), userID)
+	if err != nil {
+		utils.Fail(ctx, "Failed to retrieve user sessions", http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if sessionIDValue, exists := ctx.Get(middleware.ContextSessionIDKey()); exists {
+		if currentSessionID, ok := sessionIDValue.(uuid.UUID); ok {
+			for i := range sessions {
+				if sessions[i].ID == currentSessionID {
+					sessions[i].IsCurrent = true
+				}
+			}
+		}
+	}
+
+	profile.Sessions = sessions
+
 	utils.Success(ctx, profile)
 }
 
@@ -186,6 +207,24 @@ func (c *UserController) UpdateUserProfile(ctx *gin.Context) {
 		return
 	}
 
+	sessions, err := c.sessionService.GetUserSessions(ctx.Request.Context(), userID)
+	if err != nil {
+		utils.Fail(ctx, "Failed to retrieve user sessions", http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if sessionIDValue, exists := ctx.Get(middleware.ContextSessionIDKey()); exists {
+		if currentSessionID, ok := sessionIDValue.(uuid.UUID); ok {
+			for i := range sessions {
+				if sessions[i].ID == currentSessionID {
+					sessions[i].IsCurrent = true
+				}
+			}
+		}
+	}
+
+	profile.Sessions = sessions
+
 	utils.Success(ctx, profile)
 }
 
@@ -216,12 +255,36 @@ func (c *UserController) GetUserByID(ctx *gin.Context) {
 		return
 	}
 
+	targetUserID, err := uuid.Parse(userID)
+	if err != nil {
+		utils.Fail(ctx, "Invalid user ID", http.StatusBadRequest, err.Error())
+		return
+	}
+
 	// Return combined {user + profile} from users table with preload
 	user, err := c.currentUserService.GetPublicUserByID(ctx.Request.Context(), userID)
 	if err != nil {
 		utils.Fail(ctx, "Failed to retrieve user", http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	sessions, err := c.sessionService.GetUserSessions(ctx.Request.Context(), targetUserID)
+	if err != nil {
+		utils.Fail(ctx, "Failed to retrieve user sessions", http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if sessionIDValue, exists := ctx.Get(middleware.ContextSessionIDKey()); exists {
+		if currentSessionID, ok := sessionIDValue.(uuid.UUID); ok {
+			for i := range sessions {
+				if sessions[i].ID == currentSessionID {
+					sessions[i].IsCurrent = true
+				}
+			}
+		}
+	}
+
+	user.Sessions = sessions
 
 	utils.Success(ctx, user)
 }

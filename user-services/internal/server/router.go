@@ -52,7 +52,7 @@ func NewRouter(deps Deps) *gin.Engine {
 	roleService := services.NewRoleService(roleRepo)
 
 	// Initialize controllers
-	userCtrl := controllers.NewUserController(authService, profileService, currentUserService, userService)
+	userCtrl := controllers.NewUserController(authService, profileService, currentUserService, userService, sessionService)
 	passwordCtrl := controllers.NewPasswordController(passwordService)
 	mfaCtrl := controllers.NewMFAController(mfaService)
 	sessionCtrl := controllers.NewSessionController(sessionService)
