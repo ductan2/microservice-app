@@ -296,6 +296,7 @@ func modelToPublicUser(user models.User) dto.PublicUser {
 		Email:         user.Email,
 		EmailVerified: user.EmailVerified,
 		Status:        user.Status,
+		Role:          user.Role,
 		CreatedAt:     user.CreatedAt,
 		Profile: &dto.UserProfile{
 			DisplayName: user.Profile.DisplayName,

@@ -12,6 +12,7 @@ type UserWithProgressResponse struct {
 	ID            string      `json:"id"`
 	Email         string      `json:"email"`
 	Status        string      `json:"status"`
+	Role          string      `json:"role"`
 	CreatedAt     string      `json:"created_at"`
 	LastLoginAt   string      `json:"last_login_at"`
 	LastLoginIP   string      `json:"last_login_ip"`
@@ -23,17 +24,11 @@ type UserWithProgressResponse struct {
 	Streak        int         `json:"streak"`
 }
 
-type AssignRoleRequest struct {
-	RoleName string `json:"role_name" binding:"required"`
-}
-type RemoveRoleRequest struct {
-	RoleName string `json:"role_name" binding:"required"`
-}
-
 type UserData struct {
 	ID            string       `json:"id"`
 	Email         string       `json:"email"`
 	Status        string       `json:"status"`
+	Role          string       `json:"role"`
 	CreatedAt     string       `json:"created_at"`
 	LastLoginAt   string       `json:"last_login_at"`
 	LastLoginIP   string       `json:"last_login_ip"`

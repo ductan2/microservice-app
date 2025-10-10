@@ -12,20 +12,15 @@ type PublicUser struct {
 	Email         string            `json:"email"`
 	EmailVerified bool              `json:"email_verified"`
 	Status        string            `json:"status"`
+	Role          string            `json:"role"`
 	LastLoginAt   time.Time         `json:"last_login_at,omitempty"`
 	LastLoginIP   string            `json:"last_login_ip,omitempty"`
 	LockoutUntil  time.Time         `json:"lockout_until,omitempty"`
 	DeletedAt     time.Time         `json:"deleted_at,omitempty"`
 	Profile       *UserProfile      `json:"profile,omitempty"`
-	Roles         []Role            `json:"roles,omitempty"`
 	Sessions      []SessionResponse `json:"sessions,omitempty"`
 	CreatedAt     time.Time         `json:"created_at"`
 	UpdatedAt     time.Time         `json:"updated_at"`
-}
-
-type Role struct {
-	ID   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
 }
 
 // UserProfile for non-auth data
@@ -49,27 +44,6 @@ type UpdateProfileRequest struct {
 type UpdateUserStatusRequest struct {
 	Status string `json:"status" binding:"required,oneof=active locked disabled deleted"`
 	Reason string `json:"reason,omitempty"`
-}
-
-// AssignRoleRequest assigns role to user
-type AssignRoleRequest struct {
-	RoleName string `json:"role_name" binding:"required"`
-}
-
-// RemoveRoleRequest removes role from user
-type RemoveRoleRequest struct {
-	RoleName string `json:"role_name" binding:"required"`
-}
-
-// CreateRoleRequest creates new role
-type CreateRoleRequest struct {
-	Name string `json:"name" binding:"required"`
-}
-
-// RoleResponse represents a role
-type RoleResponse struct {
-	ID   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
 }
 
 // AuditLogResponse for audit trail

@@ -43,6 +43,7 @@ func (r *userRepository) CreateUser(ctx context.Context, email, passwordHash str
 		EmailNormalized: email,
 		EmailVerified:   false,
 		PasswordHash:    passwordHash,
+		Role:            models.RoleStudent,
 	}
 
 	if err := r.DB.WithContext(ctx).Create(&user).Error; err != nil {
@@ -65,7 +66,7 @@ func (r *userRepository) CheckEmailExists(ctx context.Context, email string) (bo
 // GetUserByEmail retrieves a user by their email address
 func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
 	var user models.User
-	err := r.DB.WithContext(ctx).Preload("Profile").Preload("Roles").First(&user, "email = ?", email).Error
+	err := r.DB.WithContext(ctx).Preload("Profile").First(&user, "email = ?", email).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return models.User{}, errors.New("user not found")
@@ -78,7 +79,7 @@ func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (mode
 // GetByEmail retrieves a user by email (alias for auth service)
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
-	err := r.DB.WithContext(ctx).Preload("Profile").Preload("Roles").Where("email = ?", email).First(&user).Error
+	err := r.DB.WithContext(ctx).Preload("Profile").Where("email = ?", email).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +89,7 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*models.
 // GetByID retrieves a user by UUID
 func (r *userRepository) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
 	var user models.User
-	err := r.DB.WithContext(ctx).Preload("Profile").Preload("Roles").Where("id = ?", userID).First(&user).Error
+	err := r.DB.WithContext(ctx).Preload("Profile").Where("id = ?", userID).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +99,7 @@ func (r *userRepository) GetByID(ctx context.Context, userID uuid.UUID) (*models
 // GetUserByID retrieves a user by their ID (string version)
 func (r *userRepository) GetUserByID(ctx context.Context, userID string) (models.User, error) {
 	var user models.User
-	err := r.DB.WithContext(ctx).Preload("Profile").Preload("Roles").Where("id = ?", userID).First(&user).Error
+	err := r.DB.WithContext(ctx).Preload("Profile").Where("id = ?", userID).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return models.User{}, errors.New("user not found")
@@ -183,7 +184,6 @@ func (r *userRepository) ListUsers(ctx context.Context, page, pageSize int, stat
 	offset := (page - 1) * pageSize
 	if err := query.
 		Preload("Profile").
-		Preload("Roles").
 		Order("created_at DESC").
 		Offset(offset).
 		Limit(pageSize).
