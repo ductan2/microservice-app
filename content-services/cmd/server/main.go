@@ -51,6 +51,8 @@ func main() {
 	sectionRepo := repository.NewLessonSectionRepository(database)
 	courseRepo := repository.NewCourseRepository(database)
 	courseLessonRepo := repository.NewCourseLessonRepository(database)
+	courseEnrollmentRepo := repository.NewCourseEnrollmentRepository(database)
+	courseReviewRepo := repository.NewCourseReviewRepository(database)
 	quizRepo := repository.NewQuizRepository(database)
 	quizQuestionRepo := repository.NewQuizQuestionRepository(database)
 	flashcardSetRepo := repository.NewFlashcardSetRepository(database)
@@ -76,19 +78,21 @@ func main() {
 	folderService := service.NewFolderService(folderRepo)
 	lessonService := service.NewLessonService(lessonRepo, sectionRepo, outboxRepo)
 	courseService := service.NewCourseService(courseRepo, courseLessonRepo, lessonRepo)
+	courseReviewService := service.NewCourseReviewService(courseReviewRepo, courseRepo, courseEnrollmentRepo)
 	quizService := service.NewQuizService(quizRepo, quizQuestionRepo, nil, tagRepo, outboxRepo)
 	flashcardService := service.NewFlashcardService(flashcardSetRepo, flashcardRepo, tagRepo)
 
 	resolver := &gqlresolver.Resolver{
-		DB:               database,
-		Taxonomy:         taxonomyStore,
-		Media:            mediaService,
-		FolderService:    folderService,
-		LessonService:    lessonService,
-		CourseService:    courseService,
-		QuizService:      quizService,
-		FlashcardService: flashcardService,
-		TagRepo:          tagRepo,
+		DB:                  database,
+		Taxonomy:            taxonomyStore,
+		Media:               mediaService,
+		FolderService:       folderService,
+		LessonService:       lessonService,
+		CourseService:       courseService,
+		CourseReviewService: courseReviewService,
+		QuizService:         quizService,
+		FlashcardService:    flashcardService,
+		TagRepo:             tagRepo,
 	}
 	gqlSrv := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	graphqlHandler := handler.NewDefaultServer(gqlSrv)

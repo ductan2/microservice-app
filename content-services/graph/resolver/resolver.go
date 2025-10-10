@@ -10,13 +10,14 @@ import (
 
 // Resolver serves as dependency injection for your app, add any dependencies you require here.
 type Resolver struct {
-	DB               *mongo.Database
-	Taxonomy         *taxonomy.Store
-	Media            service.MediaService
-	FolderService    service.FolderService
-	LessonService    service.LessonService
-	CourseService    service.CourseService
-	QuizService      service.QuizService
-	FlashcardService service.FlashcardService
-	TagRepo          repository.TagRepository
+	DB                  *mongo.Database
+	Taxonomy            *taxonomy.Store
+	Media               service.MediaService
+	FolderService       service.FolderService
+	LessonService       service.LessonService
+	CourseService       service.CourseService
+	CourseReviewService service.CourseReviewService
+	QuizService         service.QuizService
+	FlashcardService    service.FlashcardService
+	TagRepo             repository.TagRepository
 }
