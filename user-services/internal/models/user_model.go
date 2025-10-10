@@ -17,6 +17,7 @@ type User struct {
 	EmailVerificationToken  string       `gorm:"type:text" json:"-"`
 	EmailVerificationExpiry sql.NullTime `gorm:"type:timestamptz" json:"-"`
 	Status                  string       `gorm:"type:text;default:'active';not null;check:status IN ('active','locked','disabled','deleted')" json:"status"`
+	Role                    string       `gorm:"type:text;default:'student';not null;check:role IN ('student','teacher','admin','super-admin')" json:"role"`
 	CreatedAt               time.Time    `json:"created_at"`
 	UpdatedAt               time.Time    `json:"updated_at"`
 	Profile                 UserProfile  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:UserID;references:ID" json:"profile"`
@@ -24,8 +25,14 @@ type User struct {
 	LastLoginAt             sql.NullTime `gorm:"type:timestamptz" json:"last_login_at,omitempty"`
 	LastLoginIP             *string      `gorm:"type:inet" json:"last_login_ip,omitempty"`
 	LockoutUntil            sql.NullTime `gorm:"type:timestamptz" json:"lockout_until,omitempty"`
-	Roles                   []Role       `gorm:"many2many:user_roles;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"roles"`
 }
+
+const (
+	RoleStudent    = "student"
+	RoleTeacher    = "teacher"
+	RoleAdmin      = "admin"
+	RoleSuperAdmin = "super-admin"
+)
 
 // UserProfile stores non-auth PII
 type UserProfile struct {
@@ -89,19 +96,6 @@ type PasswordReset struct {
 	TokenHash  string       `gorm:"type:text;uniqueIndex;not null" json:"-"`
 	ExpiresAt  time.Time    `gorm:"not null" json:"expires_at"`
 	ConsumedAt sql.NullTime `json:"consumed_at,omitempty"`
-}
-
-// Role for RBAC
-type Role struct {
-	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	Name string    `gorm:"type:text;uniqueIndex;not null" json:"name"`
-	Users []User    `gorm:"many2many:user_roles;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"users"`
-}
-
-// UserRole junction table
-type UserRole struct {
-	UserID uuid.UUID `gorm:"type:uuid;primaryKey;constraint:OnDelete:CASCADE" json:"user_id"`
-	RoleID uuid.UUID `gorm:"type:uuid;primaryKey;constraint:OnDelete:CASCADE" json:"role_id"`
 }
 
 // AuditLog append-only audit trail

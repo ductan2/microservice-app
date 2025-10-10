@@ -60,24 +60,18 @@ func (s *userService) ListUsers(ctx context.Context, req dto.ListUsersRequest) (
 }
 
 func toPublicUser(user models.User) dto.PublicUser {
-	// Convert model roles to DTO roles
-	rolesDTO := make([]dto.Role, 0, len(user.Roles))
-	for _, role := range user.Roles {
-		rolesDTO = append(rolesDTO, dto.Role{ID: role.ID, Name: role.Name})
-	}
-
 	publicUser := dto.PublicUser{
 		ID:            user.ID,
 		Email:         user.Email,
 		EmailVerified: user.EmailVerified,
 		Status:        user.Status,
+		Role:          user.Role,
 		LastLoginAt:   user.LastLoginAt.Time,
 		LastLoginIP:   getStringValue(user.LastLoginIP),
 		LockoutUntil:  user.LockoutUntil.Time,
 		DeletedAt:     user.DeletedAt.Time,
 		CreatedAt:     user.CreatedAt,
 		UpdatedAt:     user.UpdatedAt,
-		Roles:         rolesDTO,
 	}
 
 	// Include profile if available

@@ -57,7 +57,7 @@ func ConnectPostgres() (*gorm.DB, error) {
 func AutoMigrate(db *gorm.DB) error {
 	// Enable UUID extension
 	db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"")
-	
+
 	// Auto-migrate models
 	if err := db.AutoMigrate(
 		&models.User{},
@@ -67,8 +67,6 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.MFAMethod{},
 		&models.LoginAttempt{},
 		&models.PasswordReset{},
-		&models.Role{},
-		&models.UserRole{},
 		&models.AuditLog{},
 		&models.Outbox{},
 	); err != nil {
