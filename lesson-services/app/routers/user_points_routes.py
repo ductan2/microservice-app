@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
@@ -22,33 +22,36 @@ def get_user_points_service(db: Session = Depends(get_db)) -> UserPointsService:
     return UserPointsService(db)
 
 
-@router.get("/user/{user_id}", response_model=UserPointsResponse)
+@router.get("/user/me", response_model=UserPointsResponse)
 def get_user_points(
-    user_id: UUID,
+    request: Request,
     service: UserPointsService = Depends(get_user_points_service),
 ) -> UserPointsResponse:
+    user_id: UUID = request.state.user_id
     return service.get_or_create_points(user_id)
 
 
-@router.post("/user/{user_id}/add", response_model=UserPointsResponse)
+@router.post("/user/me/add", response_model=UserPointsResponse)
 def add_user_points(
-    user_id: UUID,
+    request: Request,
     payload: PointsAdjustmentRequest,
     service: UserPointsService = Depends(get_user_points_service),
 ) -> UserPointsResponse:
     try:
+        user_id: UUID = request.state.user_id
         return service.add_points(user_id, payload.points)
     except ValueError as exc:  # pragma: no cover - defensive validation
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
-@router.post("/user/{user_id}/subtract", response_model=UserPointsResponse)
+@router.post("/user/me/subtract", response_model=UserPointsResponse)
 def subtract_user_points(
-    user_id: UUID,
+    request: Request,
     payload: PointsAdjustmentRequest,
     service: UserPointsService = Depends(get_user_points_service),
 ) -> UserPointsResponse:
     try:
+        user_id: UUID = request.state.user_id
         return service.subtract_points(user_id, payload.points)
     except ValueError as exc:  # pragma: no cover - defensive validation
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
@@ -113,11 +116,12 @@ def reset_monthly_points(
     return {"updated": updated}
 
 
-@router.get("/user/{user_id}/rank", response_model=UserPointsRankResponse)
+@router.get("/user/me/rank", response_model=UserPointsRankResponse)
 def get_user_rank(
-    user_id: UUID,
+    request: Request,
     service: UserPointsService = Depends(get_user_points_service),
 ) -> UserPointsRankResponse:
+    user_id: UUID = request.state.user_id
     ranks = service.get_user_ranks(user_id)
     if ranks is None:
         service.initialize_user_points(user_id)

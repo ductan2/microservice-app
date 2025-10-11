@@ -2,7 +2,7 @@ from datetime import date
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
@@ -34,15 +34,16 @@ def create_review(
     return SRReviewResponse.model_validate(review, from_attributes=True)
 
 
-@router.get("/user/{user_id}", response_model=List[SRReviewResponse])
+@router.get("/user/me", response_model=List[SRReviewResponse])
 def get_user_reviews(
-    user_id: UUID,
+    request: Request,
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     date_from: Optional[date] = Query(None),
     date_to: Optional[date] = Query(None),
     service: SRReviewService = Depends(get_sr_review_service),
 ) -> List[SRReviewResponse]:
+    user_id: UUID = request.state.user_id
     reviews = service.get_user_reviews(
         user_id,
         limit=limit,
@@ -53,30 +54,33 @@ def get_user_reviews(
     return [SRReviewResponse.model_validate(review, from_attributes=True) for review in reviews]
 
 
-@router.get("/user/{user_id}/flashcard/{flashcard_id}", response_model=List[SRReviewResponse])
+@router.get("/user/me/flashcard/{flashcard_id}", response_model=List[SRReviewResponse])
 def get_flashcard_reviews(
-    user_id: UUID,
+    request: Request,
     flashcard_id: UUID,
     service: SRReviewService = Depends(get_sr_review_service),
 ) -> List[SRReviewResponse]:
+    user_id: UUID = request.state.user_id
     reviews = service.get_flashcard_reviews(user_id, flashcard_id)
     return [SRReviewResponse.model_validate(review, from_attributes=True) for review in reviews]
 
 
-@router.get("/user/{user_id}/today", response_model=SRReviewTodayStatsResponse)
+@router.get("/user/me/today", response_model=SRReviewTodayStatsResponse)
 def get_today_review_stats(
-    user_id: UUID, 
+    request: Request,
     service: SRReviewService = Depends(get_sr_review_service)
 ) -> SRReviewTodayStatsResponse:
+    user_id: UUID = request.state.user_id
     stats = service.get_today_stats(user_id)
     return SRReviewTodayStatsResponse(**stats)
 
 
-@router.get("/user/{user_id}/stats", response_model=SRReviewStatsResponse)
+@router.get("/user/me/stats", response_model=SRReviewStatsResponse)
 def get_user_review_stats(
-    user_id: UUID, 
+    request: Request,
     service: SRReviewService = Depends(get_sr_review_service)
 ) -> SRReviewStatsResponse:
+    user_id: UUID = request.state.user_id
     stats = service.get_user_review_stats(user_id)
     return SRReviewStatsResponse(**stats)
 

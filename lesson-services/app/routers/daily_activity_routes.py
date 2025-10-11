@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
@@ -35,11 +35,12 @@ def _empty_activity(user_id: UUID, activity_dt: date) -> DailyActivityResponse:
     )
 
 
-@router.get("/user/{user_id}/today", response_model=DailyActivityResponse)
+@router.get("/user/me/today", response_model=DailyActivityResponse)
 def get_today_activity(
-    user_id: UUID, 
+    request: Request,
     service: DailyActivityService = Depends(get_daily_activity_service)
 ) -> DailyActivityResponse:
+    user_id: UUID = request.state.user_id
     activity = service.get_today_activity(user_id)
     if activity is None:
         return _empty_activity(user_id, date.today())
@@ -47,27 +48,29 @@ def get_today_activity(
 
 
 @router.get(
-    "/user/{user_id}/date/{activity_date}", 
+    "/user/me/date/{activity_date}",
     response_model=DailyActivityResponse
 )
 def get_activity_by_date(
-    user_id: UUID, 
-    activity_date: date, 
+    request: Request,
+    activity_date: date,
     service: DailyActivityService = Depends(get_daily_activity_service)
 ) -> DailyActivityResponse:
+    user_id: UUID = request.state.user_id
     activity = service.get_activity_by_date(user_id, activity_date)
     if activity is None:
         return _empty_activity(user_id, activity_date)
     return DailyActivityResponse.model_validate(activity)
 
 
-@router.get("/user/{user_id}/range", response_model=List[DailyActivityResponse])
+@router.get("/user/me/range", response_model=List[DailyActivityResponse])
 def get_activity_range(
-    user_id: UUID,
+    request: Request,
     date_from: Optional[date] = Query(default=None),
     date_to: Optional[date] = Query(default=None),
     service: DailyActivityService = Depends(get_daily_activity_service),
 ) -> List[DailyActivityResponse]:
+    user_id: UUID = request.state.user_id
     end_date = date_to or date.today()
     start_date = date_from or (end_date - timedelta(days=29))
     if start_date > end_date:
@@ -79,22 +82,24 @@ def get_activity_range(
     return [DailyActivityResponse.model_validate(activity) for activity in activities]
 
 
-@router.get("/user/{user_id}/week", response_model=List[DailyActivityResponse])
+@router.get("/user/me/week", response_model=List[DailyActivityResponse])
 def get_week_activity(
-    user_id: UUID, 
+    request: Request,
     service: DailyActivityService = Depends(get_daily_activity_service)
 ) -> List[DailyActivityResponse]:
+    user_id: UUID = request.state.user_id
     activities = service.get_week_activity(user_id)
     return [DailyActivityResponse.model_validate(activity) for activity in activities]
 
 
-@router.get("/user/{user_id}/month", response_model=DailyActivityMonthSummary)
+@router.get("/user/me/month", response_model=DailyActivityMonthSummary)
 def get_month_activity(
-    user_id: UUID,
+    request: Request,
     year: Optional[int] = Query(default=None),
     month: Optional[int] = Query(default=None, ge=1, le=12),
     service: DailyActivityService = Depends(get_daily_activity_service),
 ) -> DailyActivityMonthSummary:
+    user_id: UUID = request.state.user_id
     today = date.today()
     target_year = year or today.year
     target_month = month or today.month
@@ -110,11 +115,12 @@ def get_month_activity(
     )
 
 
-@router.get("/user/{user_id}/stats/summary", response_model=DailyActivitySummary)
+@router.get("/user/me/stats/summary", response_model=DailyActivitySummary)
 def get_activity_summary(
-    user_id: UUID, 
+    request: Request,
     service: DailyActivityService = Depends(get_daily_activity_service)
 ) -> DailyActivitySummary:
+    user_id: UUID = request.state.user_id
     summary = service.get_activity_summary(user_id)
     return DailyActivitySummary(
         lifetime=DailyTotals(**summary["lifetime"]),
