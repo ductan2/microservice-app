@@ -1,7 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
@@ -16,22 +16,24 @@ def get_sr_card_service(db: Session = Depends(get_db)) -> SRCardService:
     return SRCardService(db)
 
 
-@router.get("/user/{user_id}", response_model=List[SRCardResponse])
+@router.get("/user/me", response_model=List[SRCardResponse])
 def get_user_cards(
-    user_id: UUID,
+    request: Request,
     suspended: Optional[bool] = Query(None),
     due_only: bool = Query(False),
     service: SRCardService = Depends(get_sr_card_service),
 ) -> List[SRCardResponse]:
+    user_id: UUID = request.state.user_id
     cards = service.get_user_cards(user_id, suspended=suspended, due_only=due_only)
     return [SRCardResponse.model_validate(card, from_attributes=True) for card in cards]
 
 
-@router.get("/user/{user_id}/due", response_model=List[SRCardResponse])
+@router.get("/user/me/due", response_model=List[SRCardResponse])
 def get_due_cards(
-    user_id: UUID, 
+    request: Request,
     service: SRCardService = Depends(get_sr_card_service)
 ) -> List[SRCardResponse]:
+    user_id: UUID = request.state.user_id
     cards = service.get_due_cards(user_id)
     return [SRCardResponse.model_validate(card, from_attributes=True) for card in cards]
 
@@ -89,10 +91,11 @@ def delete_card(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.get("/user/{user_id}/stats", response_model=SRCardStatsResponse)
+@router.get("/user/me/stats", response_model=SRCardStatsResponse)
 def get_user_card_stats(
-    user_id: UUID, 
+    request: Request,
     service: SRCardService = Depends(get_sr_card_service)
 ) -> SRCardStatsResponse:
+    user_id: UUID = request.state.user_id
     stats = service.get_user_stats(user_id)
     return SRCardStatsResponse(**stats)

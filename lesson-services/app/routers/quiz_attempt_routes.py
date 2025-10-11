@@ -1,7 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
@@ -58,32 +58,35 @@ def submit_quiz_attempt(
     return QuizAttemptDetailResponse.model_validate(refreshed, from_attributes=True)
 
 
-@router.get("/user/{user_id}/quiz/{quiz_id}", response_model=List[QuizAttemptResponse])
+@router.get("/user/me/quiz/{quiz_id}", response_model=List[QuizAttemptResponse])
 def get_user_quiz_attempts(
-    user_id: UUID,
+    request: Request,
     quiz_id: UUID,
     service: QuizAttemptService = Depends(get_quiz_attempt_service),
 ) -> List[QuizAttemptResponse]:
+    user_id: UUID = request.state.user_id
     return service.get_user_quiz_attempts(user_id, quiz_id)
 
 
-@router.get("/user/{user_id}/history", response_model=List[QuizAttemptResponse])
+@router.get("/user/me/history", response_model=List[QuizAttemptResponse])
 def get_user_quiz_history(
-    user_id: UUID,
+    request: Request,
     passed: Optional[bool] = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     service: QuizAttemptService = Depends(get_quiz_attempt_service),
 ) -> List[QuizAttemptResponse]:
+    user_id: UUID = request.state.user_id
     return service.get_user_quiz_history(user_id, passed=passed, limit=limit, offset=offset)
 
 
-@router.get("/lesson/{lesson_id}/user/{user_id}", response_model=List[QuizAttemptResponse])
+@router.get("/lesson/{lesson_id}/user/me", response_model=List[QuizAttemptResponse])
 def get_lesson_quiz_attempts(
     lesson_id: UUID,
-    user_id: UUID,
+    request: Request,
     service: QuizAttemptService = Depends(get_quiz_attempt_service),
 ) -> List[QuizAttemptResponse]:
+    user_id: UUID = request.state.user_id
     return service.get_lesson_quiz_attempts(lesson_id, user_id)
 
 
