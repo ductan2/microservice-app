@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.middlewares.auth_middleware import InternalAuthRequired
 from app.routers import (
     daily_activity_routes,
     dim_user_routes,
@@ -29,6 +30,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add authentication middleware (except for health check)
+app.add_middleware(InternalAuthRequired)
 
 app.include_router(health_routes.router, prefix="/api/v1", tags=["health"])
 app.include_router(daily_activity_routes.router, prefix="/api/v1", tags=["daily-activity"])
