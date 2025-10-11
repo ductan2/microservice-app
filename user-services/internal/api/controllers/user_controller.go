@@ -231,6 +231,30 @@ func (c *UserController) UpdateUserProfile(ctx *gin.Context) {
 // ListAllUsers lists all users with pagination (admin function)
 // GET /users
 func (c *UserController) ListAllUsers(ctx *gin.Context) {
+	userIDValue, exists := ctx.Get(middleware.ContextUserIDKey())
+	if !exists {
+		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, nil)
+		return
+	}
+
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, "invalid user context")
+		return
+	}
+	if userID.String() == "" {
+		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, nil)
+		return
+	}
+	isAdmin, err := c.currentUserService.IsAdmin(ctx.Request.Context(), userID.String())
+	if err != nil {
+		utils.Fail(ctx, "Failed to retrieve user", http.StatusInternalServerError, err.Error())
+		return
+	}
+	if !isAdmin {
+		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, nil)
+		return
+	}
 	var req dto.ListUsersRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		utils.Fail(ctx, "Invalid request parameters", http.StatusBadRequest, err.Error())
@@ -254,37 +278,12 @@ func (c *UserController) GetUserByID(ctx *gin.Context) {
 		utils.Fail(ctx, "User ID is required", http.StatusBadRequest, "missing user ID")
 		return
 	}
-
-	targetUserID, err := uuid.Parse(userID)
-	if err != nil {
-		utils.Fail(ctx, "Invalid user ID", http.StatusBadRequest, err.Error())
-		return
-	}
-
 	// Return combined {user + profile} from users table with preload
 	user, err := c.currentUserService.GetPublicUserByID(ctx.Request.Context(), userID)
 	if err != nil {
 		utils.Fail(ctx, "Failed to retrieve user", http.StatusInternalServerError, err.Error())
 		return
 	}
-
-	sessions, err := c.sessionService.GetUserSessions(ctx.Request.Context(), targetUserID)
-	if err != nil {
-		utils.Fail(ctx, "Failed to retrieve user sessions", http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	if sessionIDValue, exists := ctx.Get(middleware.ContextSessionIDKey()); exists {
-		if currentSessionID, ok := sessionIDValue.(uuid.UUID); ok {
-			for i := range sessions {
-				if sessions[i].ID == currentSessionID {
-					sessions[i].IsCurrent = true
-				}
-			}
-		}
-	}
-
-	user.Sessions = sessions
 
 	utils.Success(ctx, user)
 }
@@ -306,4 +305,55 @@ func modelToPublicUser(user models.User) dto.PublicUser {
 		},
 		UpdatedAt: user.UpdatedAt,
 	}
+}
+
+// UpdateUserRole updates a user's role (admin only; internal auth)
+// PUT /users/:id/role
+func (c *UserController) UpdateUserRole(ctx *gin.Context) {
+	actorIDValue, exists := ctx.Get(middleware.ContextUserIDKey())
+	if !exists {
+		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, nil)
+		return
+	}
+
+	actorID, ok := actorIDValue.(uuid.UUID)
+	if !ok {
+		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, "invalid user context")
+		return
+	}
+
+	targetID := ctx.Param("id")
+	if targetID == "" {
+		utils.Fail(ctx, "User ID is required", http.StatusBadRequest, "missing user ID")
+		return
+	}
+
+	var req dto.UpdateUserRoleRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		utils.Fail(ctx, "Invalid request data", http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Authorization: only admin or super-admin can update roles
+	actor, err := c.currentUserService.GetPublicUserByID(ctx.Request.Context(), actorID.String())
+	if err != nil {
+		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, "actor not found")
+		return
+	}
+	if actor.Role != models.RoleAdmin && actor.Role != models.RoleSuperAdmin {
+		utils.Fail(ctx, "Forbidden", http.StatusForbidden, "insufficient role")
+		return
+	}
+	if req.Role == models.RoleSuperAdmin && actor.Role != models.RoleSuperAdmin {
+		utils.Fail(ctx, "Forbidden", http.StatusForbidden, "only super-admin can assign super-admin")
+		return
+	}
+
+	updated, err := c.userService.UpdateUserRole(ctx.Request.Context(), targetID, req.Role)
+	if err != nil {
+		utils.Fail(ctx, "Failed to update role", http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.Success(ctx, updated)
 }

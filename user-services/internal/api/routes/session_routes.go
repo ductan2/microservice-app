@@ -10,7 +10,7 @@ import (
 
 func RegisterSessionRoutes(router *gin.RouterGroup, controller *controllers.SessionController, sessionCache *cache.SessionCache) {
 	sessions := router.Group("/sessions")
-	sessions.Use(middleware.AuthRequired(sessionCache))
+	sessions.Use(middleware.InternalAuthRequired())
 	{
 		sessions.GET("", controller.GetActiveSessions)             // GET /sessions
 		sessions.DELETE("/:id", controller.RevokeSession)          // DELETE /sessions/:id

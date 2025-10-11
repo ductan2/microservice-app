@@ -11,29 +11,31 @@ import (
 	"strings"
 	"time"
 
+	"bff-services/internal/types"
 	"bff-services/internal/api/dto"
 )
 
 type UserService interface {
-	Register(ctx context.Context, payload dto.RegisterRequest) (*HTTPResponse, error)
-	Login(ctx context.Context, payload dto.LoginRequest, userAgent, clientIP string) (*HTTPResponse, error)
-	Logout(ctx context.Context, token string) (*HTTPResponse, error)
-	VerifyEmail(ctx context.Context, token string) (*HTTPResponse, error)
-	RequestPasswordReset(ctx context.Context, payload dto.PasswordResetRequest) (*HTTPResponse, error)
-	ConfirmPasswordReset(ctx context.Context, payload dto.PasswordResetConfirmRequest) (*HTTPResponse, error)
-	ChangePassword(ctx context.Context, token string, payload dto.ChangePasswordRequest) (*HTTPResponse, error)
-	SetupMFA(ctx context.Context, token string, payload dto.MFASetupRequest) (*HTTPResponse, error)
-	VerifyMFA(ctx context.Context, token string, payload dto.MFAVerifyRequest) (*HTTPResponse, error)
-	DisableMFA(ctx context.Context, token string, payload dto.MFADisableRequest) (*HTTPResponse, error)
-	GetMFAMethods(ctx context.Context, token string) (*HTTPResponse, error)
-	GetSessions(ctx context.Context, token string) (*HTTPResponse, error)
-	DeleteSession(ctx context.Context, token, sessionID string) (*HTTPResponse, error)
-	RevokeAllSessions(ctx context.Context, token string) (*HTTPResponse, error)
-	GetUsers(ctx context.Context, page, pageSize, status, search, userID, email, sessionID string) (*HTTPResponse, error)
-	GetUserById(ctx context.Context, userID, email, sessionID, UserFindID string) (*HTTPResponse, error)
+	Register(ctx context.Context, payload dto.RegisterRequest) (*types.HTTPResponse, error)
+	Login(ctx context.Context, payload dto.LoginRequest, userAgent, clientIP string) (*types.HTTPResponse, error)
+	Logout(ctx context.Context, token string) (*types.HTTPResponse, error)
+	VerifyEmail(ctx context.Context, token string) (*types.HTTPResponse, error)
+	RequestPasswordReset(ctx context.Context, payload dto.PasswordResetRequest) (*types.HTTPResponse, error)
+	ConfirmPasswordReset(ctx context.Context, payload dto.PasswordResetConfirmRequest) (*types.HTTPResponse, error)
+	ChangePassword(ctx context.Context, token string, payload dto.ChangePasswordRequest) (*types.HTTPResponse, error)
+	SetupMFA(ctx context.Context, token string, payload dto.MFASetupRequest) (*types.HTTPResponse, error)
+	VerifyMFA(ctx context.Context, token string, payload dto.MFAVerifyRequest) (*types.HTTPResponse, error)
+	DisableMFA(ctx context.Context, token string, payload dto.MFADisableRequest) (*types.HTTPResponse, error)
+	GetMFAMethods(ctx context.Context, token string) (*types.HTTPResponse, error)
+	GetSessions(ctx context.Context, token string) (*types.HTTPResponse, error)
+	DeleteSession(ctx context.Context, token, sessionID string) (*types.HTTPResponse, error)
+	RevokeAllSessions(ctx context.Context, token string) (*types.HTTPResponse, error)
+	GetUsers(ctx context.Context, page, pageSize, status, search, userID, email, sessionID string) (*types.HTTPResponse, error)
+	GetUserById(ctx context.Context, userID, email, sessionID, UserFindID string) (*types.HTTPResponse, error)
 	// New methods for internal communication with user context
-	GetProfileWithContext(ctx context.Context, userID, email, sessionID string) (*HTTPResponse, error)
-	UpdateProfileWithContext(ctx context.Context, userID, email, sessionID string, payload dto.UpdateProfileRequest) (*HTTPResponse, error)
+	GetProfileWithContext(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
+	UpdateProfileWithContext(ctx context.Context, userID, email, sessionID string, payload dto.UpdateProfileRequest) (*types.HTTPResponse, error)
+	UpdateUserRoleWithContext(ctx context.Context, userID, email, sessionID string, targetID string, payload dto.UpdateUserRoleRequest) (*types.HTTPResponse, error)
 }
 
 type UserServiceClient struct {
@@ -41,11 +43,6 @@ type UserServiceClient struct {
 	httpClient *http.Client
 }
 
-type HTTPResponse struct {
-	StatusCode int
-	Body       []byte
-	Headers    http.Header
-}
 
 func NewUserServiceClient(baseURL string, httpClient *http.Client) *UserServiceClient {
 	trimmed := strings.TrimRight(baseURL, "/")
@@ -58,11 +55,11 @@ func NewUserServiceClient(baseURL string, httpClient *http.Client) *UserServiceC
 	}
 }
 
-func (c *UserServiceClient) Register(ctx context.Context, payload dto.RegisterRequest) (*HTTPResponse, error) {
+func (c *UserServiceClient) Register(ctx context.Context, payload dto.RegisterRequest) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/register", payload, nil)
 }
 
-func (c *UserServiceClient) Login(ctx context.Context, payload dto.LoginRequest, userAgent, clientIP string) (*HTTPResponse, error) {
+func (c *UserServiceClient) Login(ctx context.Context, payload dto.LoginRequest, userAgent, clientIP string) (*types.HTTPResponse, error) {
 	headers := http.Header{}
 	if userAgent != "" {
 		headers.Set("User-Agent", userAgent)
@@ -73,11 +70,11 @@ func (c *UserServiceClient) Login(ctx context.Context, payload dto.LoginRequest,
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/login", payload, headers)
 }
 
-func (c *UserServiceClient) Logout(ctx context.Context, token string) (*HTTPResponse, error) {
+func (c *UserServiceClient) Logout(ctx context.Context, token string) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/logout", nil, authHeader(token))
 }
 
-func (c *UserServiceClient) VerifyEmail(ctx context.Context, token string) (*HTTPResponse, error) {
+func (c *UserServiceClient) VerifyEmail(ctx context.Context, token string) (*types.HTTPResponse, error) {
 	if token == "" {
 		return nil, fmt.Errorf("verification token is required")
 	}
@@ -86,39 +83,39 @@ func (c *UserServiceClient) VerifyEmail(ctx context.Context, token string) (*HTT
 	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
 }
 
-func (c *UserServiceClient) RequestPasswordReset(ctx context.Context, payload dto.PasswordResetRequest) (*HTTPResponse, error) {
+func (c *UserServiceClient) RequestPasswordReset(ctx context.Context, payload dto.PasswordResetRequest) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/password/reset/request", payload, nil)
 }
 
-func (c *UserServiceClient) ConfirmPasswordReset(ctx context.Context, payload dto.PasswordResetConfirmRequest) (*HTTPResponse, error) {
+func (c *UserServiceClient) ConfirmPasswordReset(ctx context.Context, payload dto.PasswordResetConfirmRequest) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/password/reset/confirm", payload, nil)
 }
 
-func (c *UserServiceClient) ChangePassword(ctx context.Context, token string, payload dto.ChangePasswordRequest) (*HTTPResponse, error) {
+func (c *UserServiceClient) ChangePassword(ctx context.Context, token string, payload dto.ChangePasswordRequest) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/password/change", payload, authHeader(token))
 }
 
-func (c *UserServiceClient) SetupMFA(ctx context.Context, token string, payload dto.MFASetupRequest) (*HTTPResponse, error) {
+func (c *UserServiceClient) SetupMFA(ctx context.Context, token string, payload dto.MFASetupRequest) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/mfa/setup", payload, authHeader(token))
 }
 
-func (c *UserServiceClient) VerifyMFA(ctx context.Context, token string, payload dto.MFAVerifyRequest) (*HTTPResponse, error) {
+func (c *UserServiceClient) VerifyMFA(ctx context.Context, token string, payload dto.MFAVerifyRequest) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/mfa/verify", payload, authHeader(token))
 }
 
-func (c *UserServiceClient) DisableMFA(ctx context.Context, token string, payload dto.MFADisableRequest) (*HTTPResponse, error) {
+func (c *UserServiceClient) DisableMFA(ctx context.Context, token string, payload dto.MFADisableRequest) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/mfa/disable", payload, authHeader(token))
 }
 
-func (c *UserServiceClient) GetMFAMethods(ctx context.Context, token string) (*HTTPResponse, error) {
+func (c *UserServiceClient) GetMFAMethods(ctx context.Context, token string) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodGet, "/api/v1/mfa/methods", nil, authHeader(token))
 }
 
-func (c *UserServiceClient) GetSessions(ctx context.Context, token string) (*HTTPResponse, error) {
+func (c *UserServiceClient) GetSessions(ctx context.Context, token string) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodGet, "/api/v1/sessions", nil, authHeader(token))
 }
 
-func (c *UserServiceClient) DeleteSession(ctx context.Context, token, sessionID string) (*HTTPResponse, error) {
+func (c *UserServiceClient) DeleteSession(ctx context.Context, token, sessionID string) (*types.HTTPResponse, error) {
 	if sessionID == "" {
 		return nil, fmt.Errorf("session id is required")
 	}
@@ -126,11 +123,11 @@ func (c *UserServiceClient) DeleteSession(ctx context.Context, token, sessionID 
 	return c.doRequest(ctx, http.MethodDelete, path, nil, authHeader(token))
 }
 
-func (c *UserServiceClient) RevokeAllSessions(ctx context.Context, token string) (*HTTPResponse, error) {
+func (c *UserServiceClient) RevokeAllSessions(ctx context.Context, token string) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/sessions/revoke-all", nil, authHeader(token))
 }
 
-func (c *UserServiceClient) GetUsers(ctx context.Context, page, pageSize, status, search, userID, email, sessionID string) (*HTTPResponse, error) {
+func (c *UserServiceClient) GetUsers(ctx context.Context, page, pageSize, status, search, userID, email, sessionID string) (*types.HTTPResponse, error) {
 	path := "/api/v1/users"
 	query := url.Values{}
 	if page != "" {
@@ -151,12 +148,12 @@ func (c *UserServiceClient) GetUsers(ctx context.Context, page, pageSize, status
 	return c.doRequest(ctx, http.MethodGet, path, nil, internalAuthHeaders(userID, email, sessionID))
 }
 
-func (c *UserServiceClient) GetUserById(ctx context.Context, userID, email, sessionID, UserFindID string) (*HTTPResponse, error) {
+func (c *UserServiceClient) GetUserById(ctx context.Context, userID, email, sessionID, UserFindID string) (*types.HTTPResponse, error) {
 	path := fmt.Sprintf("/api/v1/users/%s", UserFindID)
 	return c.doRequest(ctx, http.MethodGet, path, nil, internalAuthHeaders(userID, email, sessionID))
 }
 
-func (c *UserServiceClient) doRequest(ctx context.Context, method, path string, payload interface{}, headers http.Header) (*HTTPResponse, error) {
+func (c *UserServiceClient) doRequest(ctx context.Context, method, path string, payload interface{}, headers http.Header) (*types.HTTPResponse, error) {
 	if c.baseURL == "" {
 		return nil, fmt.Errorf("user service base URL is not configured")
 	}
@@ -197,15 +194,11 @@ func (c *UserServiceClient) doRequest(ctx context.Context, method, path string, 
 		return nil, fmt.Errorf("read response: %w", err)
 	}
 
-	return &HTTPResponse{
+	return &types.HTTPResponse{
 		StatusCode: resp.StatusCode,
 		Body:       respBody,
 		Headers:    resp.Header.Clone(),
 	}, nil
-}
-
-func (r HTTPResponse) IsBodyEmpty() bool {
-	return len(bytes.TrimSpace(r.Body)) == 0
 }
 
 func authHeader(token string) http.Header {
@@ -226,10 +219,14 @@ func internalAuthHeaders(userID, email, sessionID string) http.Header {
 	return header
 }
 
-func (c *UserServiceClient) GetProfileWithContext(ctx context.Context, userID, email, sessionID string) (*HTTPResponse, error) {
+func (c *UserServiceClient) GetProfileWithContext(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodGet, "/api/v1/users/profile", nil, internalAuthHeaders(userID, email, sessionID))
 }
 
-func (c *UserServiceClient) UpdateProfileWithContext(ctx context.Context, userID, email, sessionID string, payload dto.UpdateProfileRequest) (*HTTPResponse, error) {
+func (c *UserServiceClient) UpdateProfileWithContext(ctx context.Context, userID, email, sessionID string, payload dto.UpdateProfileRequest) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPut, "/api/v1/users/profile", payload, internalAuthHeaders(userID, email, sessionID))
+}
+
+func (c *UserServiceClient) UpdateUserRoleWithContext(ctx context.Context, userID, email, sessionID string, targetID string, payload dto.UpdateUserRoleRequest) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPut, fmt.Sprintf("/api/v1/users/%s/role", targetID), payload, internalAuthHeaders(userID, email, sessionID))
 }

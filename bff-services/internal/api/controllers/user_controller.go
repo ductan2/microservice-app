@@ -11,7 +11,6 @@ import (
 	"bff-services/internal/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type UserController struct {
@@ -92,7 +91,7 @@ func (u *UserController) VerifyEmail(c *gin.Context) {
 
 // Profile methods
 func (u *UserController) GetProfile(c *gin.Context) {
-	userID, email, sessionID, ok := getUserContextFromMiddleware(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
@@ -107,7 +106,7 @@ func (u *UserController) GetProfile(c *gin.Context) {
 }
 
 func (u *UserController) UpdateProfile(c *gin.Context) {
-	userID, email, sessionID, ok := getUserContextFromMiddleware(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
@@ -134,7 +133,7 @@ func (u *UserController) ListUsersWithProgress(ctx *gin.Context) {
 	pageSize := ctx.DefaultQuery("page_size", "20")
 	status := ctx.Query("status")
 	search := ctx.Query("search")
-	userID, email, sessionID, ok := getUserContextFromMiddleware(ctx)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(ctx)
 	if !ok {
 		return
 	}
@@ -258,14 +257,14 @@ func (u *UserController) GetUserById(ctx *gin.Context) {
 		return
 	}
 
-	userID := normalizeUUIDOrString(userIDValue)
-	email := normalizeString(emailValue)
-	sessionID := normalizeUUIDOrString(sessionIDValue)
+	userID := utils.NormalizeUUIDOrString(userIDValue)
+	email := utils.NormalizeString(emailValue)
+	sessionID := utils.NormalizeUUIDOrString(sessionIDValue)
 	UserFindID := ctx.Param("id")
 	// Call user service using internal headers
 	userResp, err := u.userService.GetUserById(ctx.Request.Context(), userID, email, sessionID, UserFindID)
 	if err != nil || userResp == nil {
-		utils.Fail(ctx, "Failed to fetch profile", http.StatusBadGateway, errString(err))
+		utils.Fail(ctx, "Failed to fetch profile", http.StatusBadGateway, utils.ErrString(err))
 		return
 	}
 	if userResp.StatusCode != http.StatusOK {
@@ -308,69 +307,27 @@ func (u *UserController) GetUserById(ctx *gin.Context) {
 	})
 }
 
-// Helper functions
-func getUserContextFromMiddleware(c *gin.Context) (userID, email, sessionID string, ok bool) {
-	userIDValue, exists := c.Get(middleware.ContextUserIDKey())
-	if !exists {
-		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "user context not found")
-		return "", "", "", false
+func (u *UserController) UpdateUserRole(ctx *gin.Context) {
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(ctx)
+	targetID := ctx.Param("id")
+	if targetID == "" {
+		utils.Fail(ctx, "User ID is required", http.StatusBadRequest, "missing user ID")
+		return
 	}
-
-	emailValue, exists := c.Get(middleware.ContextUserEmailKey())
-	if !exists {
-		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "email context not found")
-		return "", "", "", false
-	}
-
-	sessionIDValue, exists := c.Get(middleware.ContextSessionIDKey())
-	if !exists {
-		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "session context not found")
-		return "", "", "", false
-	}
-
-	// Convert UUID to string for internal communication
-	userIDUUID, ok := userIDValue.(uuid.UUID)
 	if !ok {
-		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "invalid user ID type")
-		return "", "", "", false
+		return
+	}
+	var req dto.UpdateUserRoleRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		utils.Fail(ctx, "Invalid request data", http.StatusBadRequest, err.Error())
+		return
+	}
+	userResp, err := u.userService.UpdateUserRoleWithContext(ctx.Request.Context(), userID, email, sessionID, targetID, req)
+	if err != nil {
+		utils.Fail(ctx, "Failed to update user role", http.StatusBadRequest, err.Error())
+		return
 	}
 
-	emailStr, ok := emailValue.(string)
-	if !ok {
-		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "invalid email type")
-		return "", "", "", false
-	}
-
-	sessionIDUUID, ok := sessionIDValue.(uuid.UUID)
-	if !ok {
-		utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "invalid session ID type")
-		return "", "", "", false
-	}
-
-	return userIDUUID.String(), emailStr, sessionIDUUID.String(), true
+	respondWithServiceResponse(ctx, userResp)
 }
 
-func errString(err error) string {
-	if err == nil {
-		return ""
-	}
-	return err.Error()
-}
-
-func normalizeUUIDOrString(v interface{}) string {
-	switch t := v.(type) {
-	case string:
-		return t
-	case uuid.UUID:
-		return t.String()
-	default:
-		return ""
-	}
-}
-
-func normalizeString(v interface{}) string {
-	if s, ok := v.(string); ok {
-		return s
-	}
-	return ""
-}

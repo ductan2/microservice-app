@@ -61,3 +61,7 @@ type StreakData struct {
 	LongestLen int    `json:"longest_len"`
 	LastDay    string `json:"last_day"`
 }
+
+type UpdateUserRoleRequest struct {
+	Role string `json:"role" binding:"required,oneof=student teacher admin super-admin"`
+}

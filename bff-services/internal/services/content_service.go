@@ -12,16 +12,17 @@ import (
 	"time"
 
 	"bff-services/internal/api/dto"
+	"bff-services/internal/types"
 )
 
 // ContentService defines the contract for interacting with the content service GraphQL API.
 type ContentService interface {
-	ExecuteGraphQL(ctx context.Context, token string, payload dto.GraphQLRequest) (*HTTPResponse, error)
-	GetTopicsLevelsTags(ctx context.Context, token string) (*HTTPResponse, error)
-	GetLessons(ctx context.Context, token string, params dto.LessonQueryParams) (*HTTPResponse, error)
-	CreateLesson(ctx context.Context, token string, payload dto.CreateLessonRequest) (*HTTPResponse, error)
-	GetFlashcardSets(ctx context.Context, token string, params dto.FlashcardQueryParams) (*HTTPResponse, error)
-	GetQuizzes(ctx context.Context, token string, params dto.QuizQueryParams) (*HTTPResponse, error)
+	ExecuteGraphQL(ctx context.Context, token string, payload dto.GraphQLRequest) (*types.HTTPResponse, error)
+	GetTopicsLevelsTags(ctx context.Context, token string) (*types.HTTPResponse, error)
+	GetLessons(ctx context.Context, token string, params dto.LessonQueryParams) (*types.HTTPResponse, error)
+	CreateLesson(ctx context.Context, token string, payload dto.CreateLessonRequest) (*types.HTTPResponse, error)
+	GetFlashcardSets(ctx context.Context, token string, params dto.FlashcardQueryParams) (*types.HTTPResponse, error)
+	GetQuizzes(ctx context.Context, token string, params dto.QuizQueryParams) (*types.HTTPResponse, error)
 }
 
 // ContentServiceClient implements ContentService against a remote HTTP GraphQL endpoint.
@@ -131,7 +132,7 @@ const (
 )
 
 // ExecuteGraphQL forwards raw GraphQL operations to the content service.
-func (c *ContentServiceClient) ExecuteGraphQL(ctx context.Context, token string, payload dto.GraphQLRequest) (*HTTPResponse, error) {
+func (c *ContentServiceClient) ExecuteGraphQL(ctx context.Context, token string, payload dto.GraphQLRequest) (*types.HTTPResponse, error) {
 	log.Println("query", payload.Query)
 	query := strings.TrimSpace(payload.Query)
 	if query == "" {
@@ -150,12 +151,12 @@ func (c *ContentServiceClient) ExecuteGraphQL(ctx context.Context, token string,
 }
 
 // GetTopicsLevelsTags fetches topics, levels, and tags metadata.
-func (c *ContentServiceClient) GetTopicsLevelsTags(ctx context.Context, token string) (*HTTPResponse, error) {
+func (c *ContentServiceClient) GetTopicsLevelsTags(ctx context.Context, token string) (*types.HTTPResponse, error) {
 	return c.doGraphQLRequest(ctx, topicsLevelsTagsQuery, nil, token)
 }
 
 // GetLessons fetches paginated lessons using optional filters.
-func (c *ContentServiceClient) GetLessons(ctx context.Context, token string, params dto.LessonQueryParams) (*HTTPResponse, error) {
+func (c *ContentServiceClient) GetLessons(ctx context.Context, token string, params dto.LessonQueryParams) (*types.HTTPResponse, error) {
 	variables := make(map[string]interface{})
 	filter := make(map[string]interface{})
 
@@ -182,7 +183,7 @@ func (c *ContentServiceClient) GetLessons(ctx context.Context, token string, par
 }
 
 // CreateLesson creates a new lesson.
-func (c *ContentServiceClient) CreateLesson(ctx context.Context, token string, payload dto.CreateLessonRequest) (*HTTPResponse, error) {
+func (c *ContentServiceClient) CreateLesson(ctx context.Context, token string, payload dto.CreateLessonRequest) (*types.HTTPResponse, error) {
 	input := map[string]interface{}{
 		"title":       payload.Title,
 		"description": payload.Description,
@@ -201,7 +202,7 @@ func (c *ContentServiceClient) CreateLesson(ctx context.Context, token string, p
 }
 
 // GetFlashcardSets fetches flashcard sets with optional filters.
-func (c *ContentServiceClient) GetFlashcardSets(ctx context.Context, token string, params dto.FlashcardQueryParams) (*HTTPResponse, error) {
+func (c *ContentServiceClient) GetFlashcardSets(ctx context.Context, token string, params dto.FlashcardQueryParams) (*types.HTTPResponse, error) {
 	variables := make(map[string]interface{})
 	if params.TopicID != "" {
 		variables["topicId"] = params.TopicID
@@ -220,7 +221,7 @@ func (c *ContentServiceClient) GetFlashcardSets(ctx context.Context, token strin
 }
 
 // GetQuizzes fetches quizzes for a lesson.
-func (c *ContentServiceClient) GetQuizzes(ctx context.Context, token string, params dto.QuizQueryParams) (*HTTPResponse, error) {
+func (c *ContentServiceClient) GetQuizzes(ctx context.Context, token string, params dto.QuizQueryParams) (*types.HTTPResponse, error) {
 	if params.LessonID == "" {
 		return nil, fmt.Errorf("lessonId is required")
 	}
@@ -238,7 +239,7 @@ func (c *ContentServiceClient) GetQuizzes(ctx context.Context, token string, par
 	return c.doGraphQLRequest(ctx, quizzesQuery, variables, token)
 }
 
-func (c *ContentServiceClient) doGraphQLRequest(ctx context.Context, query string, variables map[string]interface{}, token string) (*HTTPResponse, error) {
+func (c *ContentServiceClient) doGraphQLRequest(ctx context.Context, query string, variables map[string]interface{}, token string) (*types.HTTPResponse, error) {
 	request := graphQLRequest{Query: query}
 	if len(variables) > 0 {
 		request.Variables = variables
@@ -246,7 +247,7 @@ func (c *ContentServiceClient) doGraphQLRequest(ctx context.Context, query strin
 	return c.sendGraphQLRequest(ctx, request, token)
 }
 
-func (c *ContentServiceClient) sendGraphQLRequest(ctx context.Context, payload graphQLRequest, token string) (*HTTPResponse, error) {
+func (c *ContentServiceClient) sendGraphQLRequest(ctx context.Context, payload graphQLRequest, token string) (*types.HTTPResponse, error) {
 	if c.baseURL == "" {
 		return nil, fmt.Errorf("content service base URL is not configured")
 	}
@@ -278,7 +279,7 @@ func (c *ContentServiceClient) sendGraphQLRequest(ctx context.Context, payload g
 		return nil, fmt.Errorf("read graphql response: %w", err)
 	}
 
-	return &HTTPResponse{
+	return &types.HTTPResponse{
 		StatusCode: resp.StatusCode,
 		Body:       respBody,
 		Headers:    resp.Header.Clone(),

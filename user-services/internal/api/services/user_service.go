@@ -11,6 +11,7 @@ import (
 
 type UserService interface {
 	ListUsers(ctx context.Context, req dto.ListUsersRequest) (*dto.PaginatedResponse, error)
+	UpdateUserRole(ctx context.Context, userID string, role string) (dto.PublicUser, error)
 }
 
 type userService struct {
@@ -94,4 +95,19 @@ func getStringValue(s *string) string {
 		return ""
 	}
 	return *s
+}
+
+// UpdateUserRole updates the role of a target user and returns the updated public user
+func (s *userService) UpdateUserRole(ctx context.Context, userID string, role string) (dto.PublicUser, error) {
+	user, err := s.userRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return dto.PublicUser{}, err
+	}
+
+	user.Role = role
+	if err := s.userRepo.UpdateUser(ctx, &user); err != nil {
+		return dto.PublicUser{}, err
+	}
+
+	return toPublicUser(user), nil
 }

@@ -12,25 +12,26 @@ import (
 	"time"
 
 	"bff-services/internal/api/dto"
+	"bff-services/internal/types"
 )
 
 type NotificationService interface {
 	// Template management
-	CreateTemplate(ctx context.Context, payload dto.CreateNotificationTemplateRequest) (*HTTPResponse, error)
-	GetAllTemplates(ctx context.Context) (*HTTPResponse, error)
-	GetTemplateById(ctx context.Context, id string) (*HTTPResponse, error)
-	UpdateTemplate(ctx context.Context, id string, payload dto.UpdateNotificationTemplateRequest) (*HTTPResponse, error)
-	DeleteTemplate(ctx context.Context, id string) (*HTTPResponse, error)
+	CreateTemplate(ctx context.Context, payload dto.CreateNotificationTemplateRequest) (*types.HTTPResponse, error)
+	GetAllTemplates(ctx context.Context) (*types.HTTPResponse, error)
+	GetTemplateById(ctx context.Context, id string) (*types.HTTPResponse, error)
+	UpdateTemplate(ctx context.Context, id string, payload dto.UpdateNotificationTemplateRequest) (*types.HTTPResponse, error)
+	DeleteTemplate(ctx context.Context, id string) (*types.HTTPResponse, error)
 
 	// User notifications
-	CreateUserNotification(ctx context.Context, userID string, payload dto.CreateUserNotificationRequest) (*HTTPResponse, error)
-	GetUserNotifications(ctx context.Context, userID string, limit, offset int, isRead *bool) (*HTTPResponse, error)
-	MarkNotificationsAsRead(ctx context.Context, userID string, payload dto.MarkAsReadRequest) (*HTTPResponse, error)
-	GetUnreadCount(ctx context.Context, userID string) (*HTTPResponse, error)
-	DeleteUserNotification(ctx context.Context, userID, notificationID string) (*HTTPResponse, error)
+	CreateUserNotification(ctx context.Context, userID string, payload dto.CreateUserNotificationRequest) (*types.HTTPResponse, error)
+	GetUserNotifications(ctx context.Context, userID string, limit, offset int, isRead *bool) (*types.HTTPResponse, error)
+	MarkNotificationsAsRead(ctx context.Context, userID string, payload dto.MarkAsReadRequest) (*types.HTTPResponse, error)
+	GetUnreadCount(ctx context.Context, userID string) (*types.HTTPResponse, error)
+	DeleteUserNotification(ctx context.Context, userID, notificationID string) (*types.HTTPResponse, error)
 
 	// Bulk operations
-	SendNotificationToUsers(ctx context.Context, templateID string, payload dto.SendNotificationToUsersRequest) (*HTTPResponse, error)
+	SendNotificationToUsers(ctx context.Context, templateID string, payload dto.SendNotificationToUsersRequest) (*types.HTTPResponse, error)
 }
 
 type NotificationServiceClient struct {
@@ -50,15 +51,15 @@ func NewNotificationServiceClient(baseURL string, httpClient *http.Client) *Noti
 }
 
 // Template management methods
-func (c *NotificationServiceClient) CreateTemplate(ctx context.Context, payload dto.CreateNotificationTemplateRequest) (*HTTPResponse, error) {
+func (c *NotificationServiceClient) CreateTemplate(ctx context.Context, payload dto.CreateNotificationTemplateRequest) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPost, "/api/notifications/templates", payload, nil)
 }
 
-func (c *NotificationServiceClient) GetAllTemplates(ctx context.Context) (*HTTPResponse, error) {
+func (c *NotificationServiceClient) GetAllTemplates(ctx context.Context) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodGet, "/api/notifications/templates", nil, nil)
 }
 
-func (c *NotificationServiceClient) GetTemplateById(ctx context.Context, id string) (*HTTPResponse, error) {
+func (c *NotificationServiceClient) GetTemplateById(ctx context.Context, id string) (*types.HTTPResponse, error) {
 	if id == "" {
 		return nil, fmt.Errorf("template id is required")
 	}
@@ -66,7 +67,7 @@ func (c *NotificationServiceClient) GetTemplateById(ctx context.Context, id stri
 	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
 }
 
-func (c *NotificationServiceClient) UpdateTemplate(ctx context.Context, id string, payload dto.UpdateNotificationTemplateRequest) (*HTTPResponse, error) {
+func (c *NotificationServiceClient) UpdateTemplate(ctx context.Context, id string, payload dto.UpdateNotificationTemplateRequest) (*types.HTTPResponse, error) {
 	if id == "" {
 		return nil, fmt.Errorf("template id is required")
 	}
@@ -74,7 +75,7 @@ func (c *NotificationServiceClient) UpdateTemplate(ctx context.Context, id strin
 	return c.doRequest(ctx, http.MethodPut, path, payload, nil)
 }
 
-func (c *NotificationServiceClient) DeleteTemplate(ctx context.Context, id string) (*HTTPResponse, error) {
+func (c *NotificationServiceClient) DeleteTemplate(ctx context.Context, id string) (*types.HTTPResponse, error) {
 	if id == "" {
 		return nil, fmt.Errorf("template id is required")
 	}
@@ -83,7 +84,7 @@ func (c *NotificationServiceClient) DeleteTemplate(ctx context.Context, id strin
 }
 
 // User notification methods
-func (c *NotificationServiceClient) CreateUserNotification(ctx context.Context, userID string, payload dto.CreateUserNotificationRequest) (*HTTPResponse, error) {
+func (c *NotificationServiceClient) CreateUserNotification(ctx context.Context, userID string, payload dto.CreateUserNotificationRequest) (*types.HTTPResponse, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("user id is required")
 	}
@@ -91,7 +92,7 @@ func (c *NotificationServiceClient) CreateUserNotification(ctx context.Context, 
 	return c.doRequest(ctx, http.MethodPost, path, payload, nil)
 }
 
-func (c *NotificationServiceClient) GetUserNotifications(ctx context.Context, userID string, limit, offset int, isRead *bool) (*HTTPResponse, error) {
+func (c *NotificationServiceClient) GetUserNotifications(ctx context.Context, userID string, limit, offset int, isRead *bool) (*types.HTTPResponse, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("user id is required")
 	}
@@ -108,7 +109,7 @@ func (c *NotificationServiceClient) GetUserNotifications(ctx context.Context, us
 	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
 }
 
-func (c *NotificationServiceClient) MarkNotificationsAsRead(ctx context.Context, userID string, payload dto.MarkAsReadRequest) (*HTTPResponse, error) {
+func (c *NotificationServiceClient) MarkNotificationsAsRead(ctx context.Context, userID string, payload dto.MarkAsReadRequest) (*types.HTTPResponse, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("user id is required")
 	}
@@ -116,7 +117,7 @@ func (c *NotificationServiceClient) MarkNotificationsAsRead(ctx context.Context,
 	return c.doRequest(ctx, http.MethodPut, path, payload, nil)
 }
 
-func (c *NotificationServiceClient) GetUnreadCount(ctx context.Context, userID string) (*HTTPResponse, error) {
+func (c *NotificationServiceClient) GetUnreadCount(ctx context.Context, userID string) (*types.HTTPResponse, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("user id is required")
 	}
@@ -124,7 +125,7 @@ func (c *NotificationServiceClient) GetUnreadCount(ctx context.Context, userID s
 	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
 }
 
-func (c *NotificationServiceClient) DeleteUserNotification(ctx context.Context, userID, notificationID string) (*HTTPResponse, error) {
+func (c *NotificationServiceClient) DeleteUserNotification(ctx context.Context, userID, notificationID string) (*types.HTTPResponse, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("user id is required")
 	}
@@ -136,7 +137,7 @@ func (c *NotificationServiceClient) DeleteUserNotification(ctx context.Context, 
 }
 
 // Bulk operations
-func (c *NotificationServiceClient) SendNotificationToUsers(ctx context.Context, templateID string, payload dto.SendNotificationToUsersRequest) (*HTTPResponse, error) {
+func (c *NotificationServiceClient) SendNotificationToUsers(ctx context.Context, templateID string, payload dto.SendNotificationToUsersRequest) (*types.HTTPResponse, error) {
 	if templateID == "" {
 		return nil, fmt.Errorf("template id is required")
 	}
@@ -144,7 +145,7 @@ func (c *NotificationServiceClient) SendNotificationToUsers(ctx context.Context,
 	return c.doRequest(ctx, http.MethodPost, path, payload, nil)
 }
 
-func (c *NotificationServiceClient) doRequest(ctx context.Context, method, path string, payload interface{}, headers http.Header) (*HTTPResponse, error) {
+func (c *NotificationServiceClient) doRequest(ctx context.Context, method, path string, payload interface{}, headers http.Header) (*types.HTTPResponse, error) {
 	if c.baseURL == "" {
 		return nil, fmt.Errorf("notification service base URL is not configured")
 	}
@@ -185,7 +186,7 @@ func (c *NotificationServiceClient) doRequest(ctx context.Context, method, path 
 		return nil, fmt.Errorf("read response: %w", err)
 	}
 
-	return &HTTPResponse{
+	return &types.HTTPResponse{
 		StatusCode: resp.StatusCode,
 		Body:       respBody,
 		Headers:    resp.Header.Clone(),

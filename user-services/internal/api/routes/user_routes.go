@@ -29,8 +29,9 @@ func RegisterUserRoutes(router *gin.RouterGroup, controller *controllers.UserCon
 		// User management routes (authenticated)
 		users.Use(middleware.InternalAuthRequired())
 		{
-			users.GET("", controller.ListAllUsers)    // GET /users (list all users)
-			users.GET("/:id", controller.GetUserByID) // GET /users/:id (get specific user)
+			users.GET("", controller.ListAllUsers)            // GET /users (list all users)
+			users.GET("/:id", controller.GetUserByID)         // GET /users/:id (get specific user)
+			users.PUT("/:id/role", controller.UpdateUserRole) // PUT /users/:id/role (update role)
 		}
 	}
 }

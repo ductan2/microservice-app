@@ -73,3 +73,8 @@ type PaginatedResponse struct {
 	Total      int `json:"total"`
 	TotalPages int `json:"total_pages"`
 }
+
+// UpdateUserRoleRequest updates a user's role (admin only)
+type UpdateUserRoleRequest struct {
+	Role string `json:"role" binding:"required,oneof=student teacher admin super-admin"`
+}

@@ -9,12 +9,14 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"bff-services/internal/types"
 )
 
 // LessonService defines the contract for interacting with the lesson service API.
 type LessonService interface {
-	GetUserPoints(ctx context.Context, userID string) (*HTTPResponse, error)
-	GetUserStreak(ctx context.Context, userID string) (*HTTPResponse, error)
+	GetUserPoints(ctx context.Context, userID string) (*types.HTTPResponse, error)
+	GetUserStreak(ctx context.Context, userID string) (*types.HTTPResponse, error)
 }
 
 // LessonServiceClient implements LessonService against a remote HTTP REST endpoint.
@@ -35,7 +37,7 @@ func NewLessonServiceClient(baseURL string, httpClient *http.Client) *LessonServ
 	}
 }
 
-func (c *LessonServiceClient) GetUserPoints(ctx context.Context, userID string) (*HTTPResponse, error) {
+func (c *LessonServiceClient) GetUserPoints(ctx context.Context, userID string) (*types.HTTPResponse, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("user ID is required")
 	}
@@ -43,7 +45,7 @@ func (c *LessonServiceClient) GetUserPoints(ctx context.Context, userID string) 
 	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
 }
 
-func (c *LessonServiceClient) GetUserStreak(ctx context.Context, userID string) (*HTTPResponse, error) {
+func (c *LessonServiceClient) GetUserStreak(ctx context.Context, userID string) (*types.HTTPResponse, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("user ID is required")
 	}
@@ -51,7 +53,7 @@ func (c *LessonServiceClient) GetUserStreak(ctx context.Context, userID string) 
 	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
 }
 
-func (c *LessonServiceClient) doRequest(ctx context.Context, method, path string, payload interface{}, headers http.Header) (*HTTPResponse, error) {
+func (c *LessonServiceClient) doRequest(ctx context.Context, method, path string, payload interface{}, headers http.Header) (*types.HTTPResponse, error) {
 	if c.baseURL == "" {
 		return nil, fmt.Errorf("lesson service base URL is not configured")
 	}
@@ -92,7 +94,7 @@ func (c *LessonServiceClient) doRequest(ctx context.Context, method, path string
 		return nil, fmt.Errorf("read response: %w", err)
 	}
 
-	return &HTTPResponse{
+	return &types.HTTPResponse{
 		StatusCode: resp.StatusCode,
 		Body:       respBody,
 		Headers:    resp.Header.Clone(),

@@ -4,12 +4,13 @@ import (
 	"net/http"
 	"strings"
 
-	"bff-services/internal/services"
+	"bff-services/internal/types"
+	"bff-services/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-func respondWithServiceResponse(c *gin.Context, resp *services.HTTPResponse) {
+func respondWithServiceResponse(c *gin.Context, resp *types.HTTPResponse) {
 	if resp == nil {
 		c.Status(http.StatusNoContent)
 		return
@@ -29,7 +30,7 @@ func respondWithServiceResponse(c *gin.Context, resp *services.HTTPResponse) {
 		}
 	}
 
-	if resp.IsBodyEmpty() {
+	if utils.IsBodyEmpty(resp) {
 		c.Status(resp.StatusCode)
 		return
 	}
