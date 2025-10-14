@@ -369,6 +369,13 @@ type Level struct {
 	Name string `json:"name"`
 }
 
+type LevelCollection struct {
+	Items      []*Level `json:"items"`
+	TotalCount int      `json:"totalCount"`
+	Page       int      `json:"page"`
+	PageSize   int      `json:"pageSize"`
+}
+
 type MediaAsset struct {
 	ID           string    `json:"id"`
 	StorageKey   string    `json:"storageKey"`
@@ -486,11 +493,25 @@ type Tag struct {
 	Name string `json:"name"`
 }
 
+type TagCollection struct {
+	Items      []*Tag `json:"items"`
+	TotalCount int    `json:"totalCount"`
+	Page       int    `json:"page"`
+	PageSize   int    `json:"pageSize"`
+}
+
 type Topic struct {
 	ID        string    `json:"id"`
 	Slug      string    `json:"slug"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+type TopicCollection struct {
+	Items      []*Topic `json:"items"`
+	TotalCount int      `json:"totalCount"`
+	Page       int      `json:"page"`
+	PageSize   int      `json:"pageSize"`
 }
 
 type UpdateCourseInput struct {

@@ -235,6 +235,13 @@ type ComplexityRoot struct {
 		Name func(childComplexity int) int
 	}
 
+	LevelCollection struct {
+		Items      func(childComplexity int) int
+		Page       func(childComplexity int) int
+		PageSize   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
 	MediaAsset struct {
 		Bytes        func(childComplexity int) int
 		CreatedAt    func(childComplexity int) int
@@ -322,7 +329,7 @@ type ComplexityRoot struct {
 		LessonSections       func(childComplexity int, lessonID string, filter *model.LessonSectionFilterInput, page *int, pageSize *int, orderBy *model.LessonSectionOrderInput) int
 		Lessons              func(childComplexity int, filter *model.LessonFilterInput, page *int, pageSize *int, orderBy *model.LessonOrderInput) int
 		Level                func(childComplexity int, id *string, code *string) int
-		Levels               func(childComplexity int, search *string) int
+		Levels               func(childComplexity int, search *string, page *int, pageSize *int) int
 		MediaAsset           func(childComplexity int, id string) int
 		MediaAssetCollection func(childComplexity int, filter *model.MediaAssetFilterInput, page *int, pageSize *int, orderBy *model.MediaAssetOrderInput) int
 		MediaAssets          func(childComplexity int, ids []string) int
@@ -331,9 +338,9 @@ type ComplexityRoot struct {
 		Quizzes              func(childComplexity int, lessonID *string, topicID *string, levelID *string, search *string, page *int, pageSize *int, orderBy *model.QuizOrderInput) int
 		RootFolders          func(childComplexity int) int
 		Tag                  func(childComplexity int, id *string, slug *string) int
-		Tags                 func(childComplexity int, search *string) int
+		Tags                 func(childComplexity int, search *string, page *int, pageSize *int) int
 		Topic                func(childComplexity int, id *string, slug *string) int
-		Topics               func(childComplexity int, search *string) int
+		Topics               func(childComplexity int, search *string, page *int, pageSize *int) int
 	}
 
 	QuestionOption struct {
@@ -391,11 +398,25 @@ type ComplexityRoot struct {
 		Slug func(childComplexity int) int
 	}
 
+	TagCollection struct {
+		Items      func(childComplexity int) int
+		Page       func(childComplexity int) int
+		PageSize   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
 	Topic struct {
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Name      func(childComplexity int) int
 		Slug      func(childComplexity int) int
+	}
+
+	TopicCollection struct {
+		Items      func(childComplexity int) int
+		Page       func(childComplexity int) int
+		PageSize   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 }
 
@@ -473,11 +494,11 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Health(ctx context.Context) (string, error)
 	Topic(ctx context.Context, id *string, slug *string) (*model.Topic, error)
-	Topics(ctx context.Context, search *string) ([]*model.Topic, error)
+	Topics(ctx context.Context, search *string, page *int, pageSize *int) (*model.TopicCollection, error)
 	Level(ctx context.Context, id *string, code *string) (*model.Level, error)
-	Levels(ctx context.Context, search *string) ([]*model.Level, error)
+	Levels(ctx context.Context, search *string, page *int, pageSize *int) (*model.LevelCollection, error)
 	Tag(ctx context.Context, id *string, slug *string) (*model.Tag, error)
-	Tags(ctx context.Context, search *string) ([]*model.Tag, error)
+	Tags(ctx context.Context, search *string, page *int, pageSize *int) (*model.TagCollection, error)
 	Folder(ctx context.Context, id string) (*model.Folder, error)
 	Folders(ctx context.Context, filter *model.FolderFilterInput, page *int, pageSize *int, orderBy *model.FolderOrderInput) (*model.FolderCollection, error)
 	RootFolders(ctx context.Context) ([]*model.Folder, error)
@@ -1297,6 +1318,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Level.Name(childComplexity), true
 
+	case "LevelCollection.items":
+		if e.complexity.LevelCollection.Items == nil {
+			break
+		}
+
+		return e.complexity.LevelCollection.Items(childComplexity), true
+	case "LevelCollection.page":
+		if e.complexity.LevelCollection.Page == nil {
+			break
+		}
+
+		return e.complexity.LevelCollection.Page(childComplexity), true
+	case "LevelCollection.pageSize":
+		if e.complexity.LevelCollection.PageSize == nil {
+			break
+		}
+
+		return e.complexity.LevelCollection.PageSize(childComplexity), true
+	case "LevelCollection.totalCount":
+		if e.complexity.LevelCollection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.LevelCollection.TotalCount(childComplexity), true
+
 	case "MediaAsset.bytes":
 		if e.complexity.MediaAsset.Bytes == nil {
 			break
@@ -2067,7 +2113,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Levels(childComplexity, args["search"].(*string)), true
+		return e.complexity.Query.Levels(childComplexity, args["search"].(*string), args["page"].(*int), args["pageSize"].(*int)), true
 	case "Query.mediaAsset":
 		if e.complexity.Query.MediaAsset == nil {
 			break
@@ -2161,7 +2207,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Tags(childComplexity, args["search"].(*string)), true
+		return e.complexity.Query.Tags(childComplexity, args["search"].(*string), args["page"].(*int), args["pageSize"].(*int)), true
 	case "Query.topic":
 		if e.complexity.Query.Topic == nil {
 			break
@@ -2183,7 +2229,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Topics(childComplexity, args["search"].(*string)), true
+		return e.complexity.Query.Topics(childComplexity, args["search"].(*string), args["page"].(*int), args["pageSize"].(*int)), true
 
 	case "QuestionOption.feedback":
 		if e.complexity.QuestionOption.Feedback == nil {
@@ -2413,6 +2459,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Tag.Slug(childComplexity), true
 
+	case "TagCollection.items":
+		if e.complexity.TagCollection.Items == nil {
+			break
+		}
+
+		return e.complexity.TagCollection.Items(childComplexity), true
+	case "TagCollection.page":
+		if e.complexity.TagCollection.Page == nil {
+			break
+		}
+
+		return e.complexity.TagCollection.Page(childComplexity), true
+	case "TagCollection.pageSize":
+		if e.complexity.TagCollection.PageSize == nil {
+			break
+		}
+
+		return e.complexity.TagCollection.PageSize(childComplexity), true
+	case "TagCollection.totalCount":
+		if e.complexity.TagCollection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.TagCollection.TotalCount(childComplexity), true
+
 	case "Topic.createdAt":
 		if e.complexity.Topic.CreatedAt == nil {
 			break
@@ -2437,6 +2508,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Topic.Slug(childComplexity), true
+
+	case "TopicCollection.items":
+		if e.complexity.TopicCollection.Items == nil {
+			break
+		}
+
+		return e.complexity.TopicCollection.Items(childComplexity), true
+	case "TopicCollection.page":
+		if e.complexity.TopicCollection.Page == nil {
+			break
+		}
+
+		return e.complexity.TopicCollection.Page(childComplexity), true
+	case "TopicCollection.pageSize":
+		if e.complexity.TopicCollection.PageSize == nil {
+			break
+		}
+
+		return e.complexity.TopicCollection.PageSize(childComplexity), true
+	case "TopicCollection.totalCount":
+		if e.complexity.TopicCollection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.TopicCollection.TotalCount(childComplexity), true
 
 	}
 	return 0, false
@@ -2597,13 +2693,13 @@ type Query {
   health: String!
 
   topic(id: ID, slug: String): Topic
-  topics(search: String): [Topic!]!
+  topics(search: String, page: Int = 1, pageSize: Int = 10): TopicCollection!
 
   level(id: ID, code: String): Level
-  levels(search: String): [Level!]!
+  levels(search: String, page: Int = 1, pageSize: Int = 10): LevelCollection!
 
   tag(id: ID, slug: String): Tag
-  tags(search: String): [Tag!]!
+  tags(search: String, page: Int = 1, pageSize: Int = 10): TagCollection!
 
   folder(id: ID!): Folder
   folders(filter: FolderFilterInput, page: Int = 1, pageSize: Int = 100, orderBy: FolderOrderInput): FolderCollection!
@@ -2700,6 +2796,13 @@ type Topic {
   createdAt: Time!
 }
 
+type TopicCollection {
+  items: [Topic!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
 input CreateTopicInput {
   slug: String!
   name: String!
@@ -2716,6 +2819,13 @@ type Level {
   name: String!
 }
 
+type LevelCollection {
+  items: [Level!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
 input CreateLevelInput {
   code: String!
   name: String!
@@ -2730,6 +2840,13 @@ type Tag {
   id: ID!
   slug: String!
   name: String!
+}
+
+type TagCollection {
+  items: [Tag!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
 }
 
 input CreateTagInput {
@@ -4219,6 +4336,16 @@ func (ec *executionContext) field_Query_levels_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["search"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["page"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["pageSize"] = arg2
 	return args, nil
 }
 
@@ -4377,6 +4504,16 @@ func (ec *executionContext) field_Query_tags_args(ctx context.Context, rawArgs m
 		return nil, err
 	}
 	args["search"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["page"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["pageSize"] = arg2
 	return args, nil
 }
 
@@ -4404,6 +4541,16 @@ func (ec *executionContext) field_Query_topics_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["search"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["page"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["pageSize"] = arg2
 	return args, nil
 }
 
@@ -8486,6 +8633,130 @@ func (ec *executionContext) fieldContext_Level_name(_ context.Context, field gra
 	return fc, nil
 }
 
+func (ec *executionContext) _LevelCollection_items(ctx context.Context, field graphql.CollectedField, obj *model.LevelCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LevelCollection_items,
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		ec.marshalNLevel2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐLevelᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LevelCollection_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LevelCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Level_id(ctx, field)
+			case "code":
+				return ec.fieldContext_Level_code(ctx, field)
+			case "name":
+				return ec.fieldContext_Level_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Level", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LevelCollection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.LevelCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LevelCollection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LevelCollection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LevelCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LevelCollection_page(ctx context.Context, field graphql.CollectedField, obj *model.LevelCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LevelCollection_page,
+		func(ctx context.Context) (any, error) {
+			return obj.Page, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LevelCollection_page(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LevelCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LevelCollection_pageSize(ctx context.Context, field graphql.CollectedField, obj *model.LevelCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LevelCollection_pageSize,
+		func(ctx context.Context) (any, error) {
+			return obj.PageSize, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LevelCollection_pageSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LevelCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _MediaAsset_id(ctx context.Context, field graphql.CollectedField, obj *model.MediaAsset) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -11557,10 +11828,10 @@ func (ec *executionContext) _Query_topics(ctx context.Context, field graphql.Col
 		ec.fieldContext_Query_topics,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Topics(ctx, fc.Args["search"].(*string))
+			return ec.resolvers.Query().Topics(ctx, fc.Args["search"].(*string), fc.Args["page"].(*int), fc.Args["pageSize"].(*int))
 		},
 		nil,
-		ec.marshalNTopic2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐTopicᚄ,
+		ec.marshalNTopicCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐTopicCollection,
 		true,
 		true,
 	)
@@ -11574,16 +11845,16 @@ func (ec *executionContext) fieldContext_Query_topics(ctx context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Topic_id(ctx, field)
-			case "slug":
-				return ec.fieldContext_Topic_slug(ctx, field)
-			case "name":
-				return ec.fieldContext_Topic_name(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Topic_createdAt(ctx, field)
+			case "items":
+				return ec.fieldContext_TopicCollection_items(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_TopicCollection_totalCount(ctx, field)
+			case "page":
+				return ec.fieldContext_TopicCollection_page(ctx, field)
+			case "pageSize":
+				return ec.fieldContext_TopicCollection_pageSize(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Topic", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type TopicCollection", field.Name)
 		},
 	}
 	defer func() {
@@ -11657,10 +11928,10 @@ func (ec *executionContext) _Query_levels(ctx context.Context, field graphql.Col
 		ec.fieldContext_Query_levels,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Levels(ctx, fc.Args["search"].(*string))
+			return ec.resolvers.Query().Levels(ctx, fc.Args["search"].(*string), fc.Args["page"].(*int), fc.Args["pageSize"].(*int))
 		},
 		nil,
-		ec.marshalNLevel2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐLevelᚄ,
+		ec.marshalNLevelCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLevelCollection,
 		true,
 		true,
 	)
@@ -11674,14 +11945,16 @@ func (ec *executionContext) fieldContext_Query_levels(ctx context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Level_id(ctx, field)
-			case "code":
-				return ec.fieldContext_Level_code(ctx, field)
-			case "name":
-				return ec.fieldContext_Level_name(ctx, field)
+			case "items":
+				return ec.fieldContext_LevelCollection_items(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_LevelCollection_totalCount(ctx, field)
+			case "page":
+				return ec.fieldContext_LevelCollection_page(ctx, field)
+			case "pageSize":
+				return ec.fieldContext_LevelCollection_pageSize(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Level", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type LevelCollection", field.Name)
 		},
 	}
 	defer func() {
@@ -11755,10 +12028,10 @@ func (ec *executionContext) _Query_tags(ctx context.Context, field graphql.Colle
 		ec.fieldContext_Query_tags,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Tags(ctx, fc.Args["search"].(*string))
+			return ec.resolvers.Query().Tags(ctx, fc.Args["search"].(*string), fc.Args["page"].(*int), fc.Args["pageSize"].(*int))
 		},
 		nil,
-		ec.marshalNTag2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐTagᚄ,
+		ec.marshalNTagCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐTagCollection,
 		true,
 		true,
 	)
@@ -11772,14 +12045,16 @@ func (ec *executionContext) fieldContext_Query_tags(ctx context.Context, field g
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Tag_id(ctx, field)
-			case "slug":
-				return ec.fieldContext_Tag_slug(ctx, field)
-			case "name":
-				return ec.fieldContext_Tag_name(ctx, field)
+			case "items":
+				return ec.fieldContext_TagCollection_items(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_TagCollection_totalCount(ctx, field)
+			case "page":
+				return ec.fieldContext_TagCollection_page(ctx, field)
+			case "pageSize":
+				return ec.fieldContext_TagCollection_pageSize(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type TagCollection", field.Name)
 		},
 	}
 	defer func() {
@@ -14306,6 +14581,130 @@ func (ec *executionContext) fieldContext_Tag_name(_ context.Context, field graph
 	return fc, nil
 }
 
+func (ec *executionContext) _TagCollection_items(ctx context.Context, field graphql.CollectedField, obj *model.TagCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TagCollection_items,
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		ec.marshalNTag2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐTagᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TagCollection_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TagCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Tag_id(ctx, field)
+			case "slug":
+				return ec.fieldContext_Tag_slug(ctx, field)
+			case "name":
+				return ec.fieldContext_Tag_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TagCollection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.TagCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TagCollection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TagCollection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TagCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TagCollection_page(ctx context.Context, field graphql.CollectedField, obj *model.TagCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TagCollection_page,
+		func(ctx context.Context) (any, error) {
+			return obj.Page, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TagCollection_page(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TagCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TagCollection_pageSize(ctx context.Context, field graphql.CollectedField, obj *model.TagCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TagCollection_pageSize,
+		func(ctx context.Context) (any, error) {
+			return obj.PageSize, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TagCollection_pageSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TagCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Topic_id(ctx context.Context, field graphql.CollectedField, obj *model.Topic) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -14417,6 +14816,132 @@ func (ec *executionContext) fieldContext_Topic_createdAt(_ context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TopicCollection_items(ctx context.Context, field graphql.CollectedField, obj *model.TopicCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TopicCollection_items,
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		ec.marshalNTopic2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐTopicᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TopicCollection_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TopicCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Topic_id(ctx, field)
+			case "slug":
+				return ec.fieldContext_Topic_slug(ctx, field)
+			case "name":
+				return ec.fieldContext_Topic_name(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Topic_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Topic", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TopicCollection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.TopicCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TopicCollection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TopicCollection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TopicCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TopicCollection_page(ctx context.Context, field graphql.CollectedField, obj *model.TopicCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TopicCollection_page,
+		func(ctx context.Context) (any, error) {
+			return obj.Page, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TopicCollection_page(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TopicCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TopicCollection_pageSize(ctx context.Context, field graphql.CollectedField, obj *model.TopicCollection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TopicCollection_pageSize,
+		func(ctx context.Context) (any, error) {
+			return obj.PageSize, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TopicCollection_pageSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TopicCollection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -19459,6 +19984,60 @@ func (ec *executionContext) _Level(ctx context.Context, sel ast.SelectionSet, ob
 	return out
 }
 
+var levelCollectionImplementors = []string{"LevelCollection"}
+
+func (ec *executionContext) _LevelCollection(ctx context.Context, sel ast.SelectionSet, obj *model.LevelCollection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, levelCollectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LevelCollection")
+		case "items":
+			out.Values[i] = ec._LevelCollection_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._LevelCollection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "page":
+			out.Values[i] = ec._LevelCollection_page(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageSize":
+			out.Values[i] = ec._LevelCollection_pageSize(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mediaAssetImplementors = []string{"MediaAsset"}
 
 func (ec *executionContext) _MediaAsset(ctx context.Context, sel ast.SelectionSet, obj *model.MediaAsset) graphql.Marshaler {
@@ -21109,6 +21688,60 @@ func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj 
 	return out
 }
 
+var tagCollectionImplementors = []string{"TagCollection"}
+
+func (ec *executionContext) _TagCollection(ctx context.Context, sel ast.SelectionSet, obj *model.TagCollection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tagCollectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TagCollection")
+		case "items":
+			out.Values[i] = ec._TagCollection_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._TagCollection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "page":
+			out.Values[i] = ec._TagCollection_page(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageSize":
+			out.Values[i] = ec._TagCollection_pageSize(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var topicImplementors = []string{"Topic"}
 
 func (ec *executionContext) _Topic(ctx context.Context, sel ast.SelectionSet, obj *model.Topic) graphql.Marshaler {
@@ -21137,6 +21770,60 @@ func (ec *executionContext) _Topic(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "createdAt":
 			out.Values[i] = ec._Topic_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var topicCollectionImplementors = []string{"TopicCollection"}
+
+func (ec *executionContext) _TopicCollection(ctx context.Context, sel ast.SelectionSet, obj *model.TopicCollection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, topicCollectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TopicCollection")
+		case "items":
+			out.Values[i] = ec._TopicCollection_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._TopicCollection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "page":
+			out.Values[i] = ec._TopicCollection_page(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageSize":
+			out.Values[i] = ec._TopicCollection_pageSize(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -22460,6 +23147,20 @@ func (ec *executionContext) marshalNLevel2ᚖcontentᚑservicesᚋgraphᚋmodel�
 	return ec._Level(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNLevelCollection2contentᚑservicesᚋgraphᚋmodelᚐLevelCollection(ctx context.Context, sel ast.SelectionSet, v model.LevelCollection) graphql.Marshaler {
+	return ec._LevelCollection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLevelCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLevelCollection(ctx context.Context, sel ast.SelectionSet, v *model.LevelCollection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._LevelCollection(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNMap2map(ctx context.Context, v any) (map[string]any, error) {
 	res, err := graphql.UnmarshalMap(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -22885,6 +23586,20 @@ func (ec *executionContext) marshalNTag2ᚖcontentᚑservicesᚋgraphᚋmodelᚐ
 	return ec._Tag(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNTagCollection2contentᚑservicesᚋgraphᚋmodelᚐTagCollection(ctx context.Context, sel ast.SelectionSet, v model.TagCollection) graphql.Marshaler {
+	return ec._TagCollection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTagCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐTagCollection(ctx context.Context, sel ast.SelectionSet, v *model.TagCollection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TagCollection(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {
 	res, err := ec.unmarshalInputTime(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -22950,6 +23665,20 @@ func (ec *executionContext) marshalNTopic2ᚖcontentᚑservicesᚋgraphᚋmodel�
 		return graphql.Null
 	}
 	return ec._Topic(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTopicCollection2contentᚑservicesᚋgraphᚋmodelᚐTopicCollection(ctx context.Context, sel ast.SelectionSet, v model.TopicCollection) graphql.Marshaler {
+	return ec._TopicCollection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTopicCollection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐTopicCollection(ctx context.Context, sel ast.SelectionSet, v *model.TopicCollection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TopicCollection(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateCourseInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateCourseInput(ctx context.Context, v any) (model.UpdateCourseInput, error) {

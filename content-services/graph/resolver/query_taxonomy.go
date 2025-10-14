@@ -38,7 +38,7 @@ func (r *queryResolver) Topic(ctx context.Context, id *string, slug *string) (*m
 }
 
 // Topics is the resolver for the topics field.
-func (r *queryResolver) Topics(ctx context.Context, search *string) ([]*model.Topic, error) {
+func (r *queryResolver) Topics(ctx context.Context, search *string, page *int, pageSize *int) (*model.TopicCollection, error) {
 	if r.Taxonomy == nil {
 		return nil, gqlerror.Errorf("taxonomy store not configured")
 	}
@@ -46,7 +46,16 @@ func (r *queryResolver) Topics(ctx context.Context, search *string) ([]*model.To
 	if search != nil {
 		term = strings.TrimSpace(*search)
 	}
-	topics, err := r.Taxonomy.ListTopics(ctx, term)
+	pageVal := 1
+	if page != nil && *page > 0 {
+		pageVal = *page
+	}
+	pageSizeVal := 10
+	if pageSize != nil && *pageSize > 0 {
+		pageSizeVal = *pageSize
+	}
+
+	topics, total, err := r.Taxonomy.ListTopics(ctx, term, pageVal, pageSizeVal)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +63,12 @@ func (r *queryResolver) Topics(ctx context.Context, search *string) ([]*model.To
 	for _, topic := range topics {
 		result = append(result, mapTopic(&topic))
 	}
-	return result, nil
+	return &model.TopicCollection{
+		Items:      result,
+		TotalCount: int(total),
+		Page:       pageVal,
+		PageSize:   pageSizeVal,
+	}, nil
 }
 
 // Level is the resolver for the level field.
@@ -85,7 +99,7 @@ func (r *queryResolver) Level(ctx context.Context, id *string, code *string) (*m
 }
 
 // Levels is the resolver for the levels field.
-func (r *queryResolver) Levels(ctx context.Context, search *string) ([]*model.Level, error) {
+func (r *queryResolver) Levels(ctx context.Context, search *string, page *int, pageSize *int) (*model.LevelCollection, error) {
 	if r.Taxonomy == nil {
 		return nil, gqlerror.Errorf("taxonomy store not configured")
 	}
@@ -93,7 +107,16 @@ func (r *queryResolver) Levels(ctx context.Context, search *string) ([]*model.Le
 	if search != nil {
 		term = strings.TrimSpace(*search)
 	}
-	levels, err := r.Taxonomy.ListLevels(ctx, term)
+	pageVal := 1
+	if page != nil && *page > 0 {
+		pageVal = *page
+	}
+	pageSizeVal := 10
+	if pageSize != nil && *pageSize > 0 {
+		pageSizeVal = *pageSize
+	}
+
+	levels, total, err := r.Taxonomy.ListLevels(ctx, term, pageVal, pageSizeVal)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +124,12 @@ func (r *queryResolver) Levels(ctx context.Context, search *string) ([]*model.Le
 	for _, level := range levels {
 		result = append(result, mapLevel(&level))
 	}
-	return result, nil
+	return &model.LevelCollection{
+		Items:      result,
+		TotalCount: int(total),
+		Page:       pageVal,
+		PageSize:   pageSizeVal,
+	}, nil
 }
 
 // Tag is the resolver for the tag field.
@@ -132,7 +160,7 @@ func (r *queryResolver) Tag(ctx context.Context, id *string, slug *string) (*mod
 }
 
 // Tags is the resolver for the tags field.
-func (r *queryResolver) Tags(ctx context.Context, search *string) ([]*model.Tag, error) {
+func (r *queryResolver) Tags(ctx context.Context, search *string, page *int, pageSize *int) (*model.TagCollection, error) {
 	if r.Taxonomy == nil {
 		return nil, gqlerror.Errorf("taxonomy store not configured")
 	}
@@ -140,7 +168,16 @@ func (r *queryResolver) Tags(ctx context.Context, search *string) ([]*model.Tag,
 	if search != nil {
 		term = strings.TrimSpace(*search)
 	}
-	tags, err := r.Taxonomy.ListTags(ctx, term)
+	pageVal := 1
+	if page != nil && *page > 0 {
+		pageVal = *page
+	}
+	pageSizeVal := 10
+	if pageSize != nil && *pageSize > 0 {
+		pageSizeVal = *pageSize
+	}
+
+	tags, total, err := r.Taxonomy.ListTags(ctx, term, pageVal, pageSizeVal)
 	if err != nil {
 		return nil, err
 	}
@@ -148,5 +185,10 @@ func (r *queryResolver) Tags(ctx context.Context, search *string) ([]*model.Tag,
 	for _, tag := range tags {
 		result = append(result, mapTag(&tag))
 	}
-	return result, nil
+	return &model.TagCollection{
+		Items:      result,
+		TotalCount: int(total),
+		Page:       pageVal,
+		PageSize:   pageSizeVal,
+	}, nil
 }
