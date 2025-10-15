@@ -1,0 +1,1950 @@
+{
+    "topics": [
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440001",
+            "slug": "english-business",
+            "name": "Business English"
+        },
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440002",
+            "slug": "english-travel",
+            "name": "Travel English"
+        },
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440003",
+            "slug": "english-conversation",
+            "name": "Conversational English"
+        },
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440004",
+            "slug": "english-writing",
+            "name": "Writing Skills"
+        },
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440005",
+            "slug": "english-listening",
+            "name": "Listening Comprehension"
+        },
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440006",
+            "slug": "english-grammar",
+            "name": "Grammar Fundamentals"
+        },
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440007",
+            "slug": "english-vocabulary",
+            "name": "Vocabulary Building"
+        },
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440008",
+            "slug": "english-pronunciation",
+            "name": "Pronunciation"
+        },
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440009",
+            "slug": "english-idioms",
+            "name": "Idioms and Expressions"
+        },
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440010",
+            "slug": "english-exam-prep",
+            "name": "Exam Preparation"
+        }
+    ],
+    "levels": [
+        {
+            "id": "660e8400-e29b-41d4-a716-446655440001",
+            "code": "A1",
+            "name": "Beginner"
+        },
+        {
+            "id": "660e8400-e29b-41d4-a716-446655440002",
+            "code": "A2",
+            "name": "Elementary"
+        },
+        {
+            "id": "660e8400-e29b-41d4-a716-446655440003",
+            "code": "B1",
+            "name": "Intermediate"
+        },
+        {
+            "id": "660e8400-e29b-41d4-a716-446655440004",
+            "code": "B2",
+            "name": "Upper Intermediate"
+        },
+        {
+            "id": "660e8400-e29b-41d4-a716-446655440005",
+            "code": "C1",
+            "name": "Advanced"
+        },
+        {
+            "id": "660e8400-e29b-41d4-a716-446655440006",
+            "code": "C2",
+            "name": "Mastery"
+        }
+    ],
+    "tags": [
+        {
+            "id": "770e8400-e29b-41d4-a716-446655440001",
+            "slug": "grammar",
+            "name": "Grammar"
+        },
+        {
+            "id": "770e8400-e29b-41d4-a716-446655440002",
+            "slug": "vocabulary",
+            "name": "Vocabulary"
+        },
+        {
+            "id": "770e8400-e29b-41d4-a716-446655440003",
+            "slug": "listening",
+            "name": "Listening"
+        },
+        {
+            "id": "770e8400-e29b-41d4-a716-446655440004",
+            "slug": "speaking",
+            "name": "Speaking"
+        },
+        {
+            "id": "770e8400-e29b-41d4-a716-446655440005",
+            "slug": "reading",
+            "name": "Reading"
+        },
+        {
+            "id": "770e8400-e29b-41d4-a716-446655440006",
+            "slug": "writing",
+            "name": "Writing"
+        },
+        {
+            "id": "770e8400-e29b-41d4-a716-446655440007",
+            "slug": "pronunciation",
+            "name": "Pronunciation"
+        },
+        {
+            "id": "770e8400-e29b-41d4-a716-446655440008",
+            "slug": "idioms",
+            "name": "Idioms"
+        },
+        {
+            "id": "770e8400-e29b-41d4-a716-446655440009",
+            "slug": "phrasal-verbs",
+            "name": "Phrasal Verbs"
+        },
+        {
+            "id": "770e8400-e29b-41d4-a716-446655440010",
+            "slug": "business",
+            "name": "Business"
+        },
+        {
+            "id": "770e8400-e29b-41d4-a716-446655440011",
+            "slug": "travel",
+            "name": "Travel"
+        },
+        {
+            "id": "770e8400-e29b-41d4-a716-446655440012",
+            "slug": "daily-life",
+            "name": "Daily Life"
+        }
+    ],
+    "folders": [
+        {
+            "id": "880e8400-e29b-41d4-a716-446655440001",
+            "name": "Business Materials",
+            "parent_id": null,
+            "depth": 1
+        },
+        {
+            "id": "880e8400-e29b-41d4-a716-446655440002",
+            "name": "Meeting Audio",
+            "parent_id": "880e8400-e29b-41d4-a716-446655440001",
+            "depth": 2
+        },
+        {
+            "id": "880e8400-e29b-41d4-a716-446655440003",
+            "name": "Presentation Slides",
+            "parent_id": "880e8400-e29b-41d4-a716-446655440001",
+            "depth": 2
+        },
+        {
+            "id": "880e8400-e29b-41d4-a716-446655440004",
+            "name": "Q1 Documents",
+            "parent_id": "880e8400-e29b-41d4-a716-446655440003",
+            "depth": 3
+        },
+        {
+            "id": "880e8400-e29b-41d4-a716-446655440005",
+            "name": "Travel Scenarios",
+            "parent_id": null,
+            "depth": 1
+        },
+        {
+            "id": "880e8400-e29b-41d4-a716-446655440006",
+            "name": "Airport Conversations",
+            "parent_id": "880e8400-e29b-41d4-a716-446655440005",
+            "depth": 2
+        },
+        {
+            "id": "880e8400-e29b-41d4-a716-446655440007",
+            "name": "Hotel Dialogues",
+            "parent_id": "880e8400-e29b-41d4-a716-446655440005",
+            "depth": 2
+        },
+        {
+            "id": "880e8400-e29b-41d4-a716-446655440008",
+            "name": "Grammar Exercises",
+            "parent_id": null,
+            "depth": 1
+        },
+        {
+            "id": "880e8400-e29b-41d4-a716-446655440009",
+            "name": "Verb Tenses",
+            "parent_id": "880e8400-e29b-41d4-a716-446655440008",
+            "depth": 2
+        },
+        {
+            "id": "880e8400-e29b-41d4-a716-446655440010",
+            "name": "Conversation Videos",
+            "parent_id": null,
+            "depth": 1
+        }
+    ],
+    "media_assets": [
+        {
+            "id": "990e8400-e29b-41d4-a716-446655440001",
+            "storage_key": "s3://bucket/business-meeting.jpg",
+            "kind": "image",
+            "mime_type": "image/jpeg",
+            "folder_id": "880e8400-e29b-41d4-a716-446655440002",
+            "original_name": "business-meeting.jpg",
+            "thumbnail_url": "s3://bucket/thumbs/business-meeting-thumb.jpg",
+            "bytes": 256000,
+            "sha256": "abc123def456abc123def456abc123def456abc123def456abc123def456"
+        },
+        {
+            "id": "990e8400-e29b-41d4-a716-446655440002",
+            "storage_key": "s3://bucket/greetings.mp3",
+            "kind": "audio",
+            "mime_type": "audio/mpeg",
+            "folder_id": "880e8400-e29b-41d4-a716-446655440002",
+            "original_name": "greetings.mp3",
+            "bytes": 128000,
+            "duration_ms": 45000,
+            "sha256": "xyz789uvw012xyz789uvw012xyz789uvw012xyz789uvw012xyz789uvw012"
+        },
+        {
+            "id": "990e8400-e29b-41d4-a716-446655440003",
+            "storage_key": "s3://bucket/presentation-slide-1.jpg",
+            "kind": "image",
+            "mime_type": "image/jpeg",
+            "folder_id": "880e8400-e29b-41d4-a716-446655440004",
+            "original_name": "presentation-slide-1.jpg",
+            "thumbnail_url": "s3://bucket/thumbs/presentation-slide-1-thumb.jpg",
+            "bytes": 512000,
+            "sha256": "def456ghi789def456ghi789def456ghi789def456ghi789def456ghi789"
+        },
+        {
+            "id": "990e8400-e29b-41d4-a716-446655440004",
+            "storage_key": "s3://bucket/airport-check-in.mp3",
+            "kind": "audio",
+            "mime_type": "audio/mpeg",
+            "folder_id": "880e8400-e29b-41d4-a716-446655440006",
+            "original_name": "airport-check-in.mp3",
+            "bytes": 256000,
+            "duration_ms": 120000,
+            "sha256": "ghi789jkl012ghi789jkl012ghi789jkl012ghi789jkl012ghi789jkl012"
+        },
+        {
+            "id": "990e8400-e29b-41d4-a716-446655440005",
+            "storage_key": "s3://bucket/hotel-booking.mp3",
+            "kind": "audio",
+            "mime_type": "audio/mpeg",
+            "folder_id": "880e8400-e29b-41d4-a716-446655440007",
+            "original_name": "hotel-booking.mp3",
+            "bytes": 234000,
+            "duration_ms": 89000,
+            "sha256": "jkl012mno345jkl012mno345jkl012mno345jkl012mno345jkl012mno345"
+        },
+        {
+            "id": "990e8400-e29b-41d4-a716-446655440006",
+            "storage_key": "s3://bucket/restaurant-ordering.mp3",
+            "kind": "audio",
+            "mime_type": "audio/mpeg",
+            "folder_id": "880e8400-e29b-41d4-a716-446655440007",
+            "original_name": "restaurant-ordering.mp3",
+            "bytes": 198000,
+            "duration_ms": 75000,
+            "sha256": "mno345pqr678mno345pqr678mno345pqr678mno345pqr678mno345pqr678"
+        },
+        {
+            "id": "990e8400-e29b-41d4-a716-446655440007",
+            "storage_key": "s3://bucket/verb-tenses-visual.jpg",
+            "kind": "image",
+            "mime_type": "image/jpeg",
+            "folder_id": "880e8400-e29b-41d4-a716-446655440009",
+            "original_name": "verb-tenses-visual.jpg",
+            "thumbnail_url": "s3://bucket/thumbs/verb-tenses-visual-thumb.jpg",
+            "bytes": 340000,
+            "sha256": "pqr678stu901pqr678stu901pqr678stu901pqr678stu901pqr678stu901"
+        },
+        {
+            "id": "990e8400-e29b-41d4-a716-446655440008",
+            "storage_key": "s3://bucket/tense-pronunciation.mp3",
+            "kind": "audio",
+            "mime_type": "audio/mpeg",
+            "folder_id": "880e8400-e29b-41d4-a716-446655440009",
+            "original_name": "tense-pronunciation.mp3",
+            "bytes": 145000,
+            "duration_ms": 52000,
+            "sha256": "stu901vwx234stu901vwx234stu901vwx234stu901vwx234stu901vwx234"
+        },
+        {
+            "id": "990e8400-e29b-41d4-a716-446655440009",
+            "storage_key": "s3://bucket/conversation-native-1.mp3",
+            "kind": "audio",
+            "mime_type": "audio/mpeg",
+            "folder_id": "880e8400-e29b-41d4-a716-446655440010",
+            "original_name": "conversation-native-1.mp3",
+            "bytes": 512000,
+            "duration_ms": 180000,
+            "sha256": "vwx234yza567vwx234yza567vwx234yza567vwx234yza567vwx234yza567"
+        },
+        {
+            "id": "990e8400-e29b-41d4-a716-446655440010",
+            "storage_key": "s3://bucket/conversation-native-2.mp3",
+            "kind": "audio",
+            "mime_type": "audio/mpeg",
+            "folder_id": "880e8400-e29b-41d4-a716-446655440010",
+            "original_name": "conversation-native-2.mp3",
+            "bytes": 480000,
+            "duration_ms": 165000,
+            "sha256": "yza567bcd890yza567bcd890yza567bcd890yza567bcd890yza567bcd890"
+        },
+        {
+            "id": "990e8400-e29b-41d4-a716-446655440011",
+            "storage_key": "s3://bucket/business-email-template.jpg",
+            "kind": "image",
+            "mime_type": "image/jpeg",
+            "folder_id": "880e8400-e29b-41d4-a716-446655440003",
+            "original_name": "business-email-template.jpg",
+            "thumbnail_url": "s3://bucket/thumbs/business-email-template-thumb.jpg",
+            "bytes": 220000,
+            "sha256": "bcd890efg123bcd890efg123bcd890efg123bcd890efg123bcd890efg123"
+        },
+        {
+            "id": "990e8400-e29b-41d4-a716-446655440012",
+            "storage_key": "s3://bucket/formal-tone.mp3",
+            "kind": "audio",
+            "mime_type": "audio/mpeg",
+            "folder_id": "880e8400-e29b-41d4-a716-446655440001",
+            "original_name": "formal-tone.mp3",
+            "bytes": 156000,
+            "duration_ms": 58000,
+            "sha256": "efg123hij456efg123hij456efg123hij456efg123hij456efg123hij456"
+        }
+    ],
+    "lessons": [
+        {
+            "id": "aa0e8400-e29b-41d4-a716-446655440001",
+            "code": "BUS-001",
+            "title": "Office Introductions",
+            "description": "Learn how to introduce yourself in a business setting",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440001",
+            "level_id": "660e8400-e29b-41d4-a716-446655440001",
+            "is_published": true,
+            "version": 1
+        },
+        {
+            "id": "aa0e8400-e29b-41d4-a716-446655440002",
+            "code": "BUS-002",
+            "title": "Business Email Writing",
+            "description": "Master the art of professional email communication",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440001",
+            "level_id": "660e8400-e29b-41d4-a716-446655440003",
+            "is_published": true,
+            "version": 1
+        },
+        {
+            "id": "aa0e8400-e29b-41d4-a716-446655440003",
+            "code": "BUS-003",
+            "title": "Conference Call Etiquette",
+            "description": "Understand the rules and best practices for conference calls",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440001",
+            "level_id": "660e8400-e29b-41d4-a716-446655440003",
+            "is_published": true,
+            "version": 2
+        },
+        {
+            "id": "aa0e8400-e29b-41d4-a716-446655440004",
+            "code": "TRAV-001",
+            "title": "Airport Conversations",
+            "description": "Common phrases and dialogues at the airport",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440002",
+            "level_id": "660e8400-e29b-41d4-a716-446655440001",
+            "is_published": true,
+            "version": 1
+        },
+        {
+            "id": "aa0e8400-e29b-41d4-a716-446655440005",
+            "code": "TRAV-002",
+            "title": "Hotel Check-in and Booking",
+            "description": "Everything you need to know about booking and checking into a hotel",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440002",
+            "level_id": "660e8400-e29b-41d4-a716-446655440002",
+            "is_published": true,
+            "version": 1
+        },
+        {
+            "id": "aa0e8400-e29b-41d4-a716-446655440006",
+            "code": "TRAV-003",
+            "title": "Ordering Food at Restaurants",
+            "description": "Learn dining vocabulary and how to order meals in English",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440002",
+            "level_id": "660e8400-e29b-41d4-a716-446655440002",
+            "is_published": true,
+            "version": 1
+        },
+        {
+            "id": "aa0e8400-e29b-41d4-a716-446655440007",
+            "code": "GRAM-001",
+            "title": "Present Simple Tense",
+            "description": "Understanding and using the present simple tense",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440006",
+            "level_id": "660e8400-e29b-41d4-a716-446655440001",
+            "is_published": true,
+            "version": 1
+        },
+        {
+            "id": "aa0e8400-e29b-41d4-a716-446655440008",
+            "code": "GRAM-002",
+            "title": "Past Tenses Overview",
+            "description": "Exploring the different past tenses in English",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440006",
+            "level_id": "660e8400-e29b-41d4-a716-446655440003",
+            "is_published": true,
+            "version": 1
+        },
+        {
+            "id": "aa0e8400-e29b-41d4-a716-446655440009",
+            "code": "CONV-001",
+            "title": "Casual Daily Conversations",
+            "description": "Practice natural English conversation for everyday situations",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440003",
+            "level_id": "660e8400-e29b-41d4-a716-446655440002",
+            "is_published": true,
+            "version": 1
+        },
+        {
+            "id": "aa0e8400-e29b-41d4-a716-446655440010",
+            "code": "CONV-002",
+            "title": "Advanced Native Speaker Conversations",
+            "description": "Immerse yourself with native speaker conversations",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440003",
+            "level_id": "660e8400-e29b-41d4-a716-446655440005",
+            "is_published": true,
+            "version": 1
+        },
+        {
+            "id": "aa0e8400-e29b-41d4-a716-446655440011",
+            "code": "VOCAB-001",
+            "title": "Business Vocabulary Essentials",
+            "description": "Essential business vocabulary you need to know",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440007",
+            "level_id": "660e8400-e29b-41d4-a716-446655440003",
+            "is_published": true,
+            "version": 1
+        },
+        {
+            "id": "aa0e8400-e29b-41d4-a716-446655440012",
+            "code": "VOCAB-002",
+            "title": "Travel and Tourism Vocabulary",
+            "description": "Vocabulary specific to travel and tourism situations",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440007",
+            "level_id": "660e8400-e29b-41d4-a716-446655440002",
+            "is_published": true,
+            "version": 1
+        }
+    ],
+    "lesson_sections": [
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440001",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440001",
+            "ord": 1,
+            "type": "text",
+            "body": {
+                "content": "In a business setting, it's important to introduce yourself professionally. A proper introduction sets the tone for your business relationships.",
+                "tips": [
+                    "Be concise",
+                    "Maintain eye contact",
+                    "Use a firm handshake"
+                ]
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440002",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440001",
+            "ord": 2,
+            "type": "audio",
+            "body": {
+                "media_id": "990e8400-e29b-41d4-a716-446655440002",
+                "transcript": "Hello, my name is John Smith. I'm a senior manager at ABC Corporation, specializing in digital marketing."
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440003",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440001",
+            "ord": 3,
+            "type": "dialog",
+            "body": {
+                "lines": [
+                    {
+                        "speaker": "Person A",
+                        "text": "Hello, I'm Sarah Johnson from Marketing."
+                    },
+                    {
+                        "speaker": "Person B",
+                        "text": "Nice to meet you, Sarah. I'm Tom from Sales."
+                    },
+                    {
+                        "speaker": "Person A",
+                        "text": "It's great to meet you too. What's your area of focus?"
+                    },
+                    {
+                        "speaker": "Person B",
+                        "text": "I primarily handle enterprise clients and large accounts."
+                    }
+                ]
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440004",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440001",
+            "ord": 4,
+            "type": "image",
+            "body": {
+                "media_id": "990e8400-e29b-41d4-a716-446655440001",
+                "caption": "Professional business meeting scenario"
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440005",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440002",
+            "ord": 1,
+            "type": "text",
+            "body": {
+                "content": "Professional email writing is a crucial skill in the business world. Your emails represent you and your organization.",
+                "key_points": [
+                    "Use formal greeting",
+                    "Clear subject line",
+                    "Professional closing"
+                ]
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440006",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440002",
+            "ord": 2,
+            "type": "image",
+            "body": {
+                "media_id": "990e8400-e29b-41d4-a716-446655440011",
+                "caption": "Example of a well-formatted business email"
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440007",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440002",
+            "ord": 3,
+            "type": "dialog",
+            "body": {
+                "lines": [
+                    {
+                        "speaker": "Email Template",
+                        "text": "Dear Mr. Johnson,\n\nI hope this email finds you well. I am writing to follow up on our discussion regarding the Q3 marketing strategy.\n\nBest regards,\nAlex Chen"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440008",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440003",
+            "ord": 1,
+            "type": "text",
+            "body": {
+                "content": "Conference calls are a regular part of modern business. Understanding proper etiquette ensures professional communication.",
+                "rules": [
+                    "Arrive on time",
+                    "Mute when not speaking",
+                    "Use formal language"
+                ]
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440009",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440003",
+            "ord": 2,
+            "type": "audio",
+            "body": {
+                "media_id": "990e8400-e29b-41d4-a716-446655440012",
+                "transcript": "Good morning everyone. Thank you for joining today's conference call. We have a lot to cover."
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440010",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440004",
+            "ord": 1,
+            "type": "text",
+            "body": {
+                "content": "Traveling to a new country can be exciting but also challenging. Learning common airport phrases will help you navigate with confidence."
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440011",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440004",
+            "ord": 2,
+            "type": "audio",
+            "body": {
+                "media_id": "990e8400-e29b-41d4-a716-446655440004",
+                "transcript": "Passenger: Good morning. I'd like to check in for my flight to London, please.\nAgent: Of course. May I see your passport and ticket?"
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440012",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440004",
+            "ord": 3,
+            "type": "dialog",
+            "body": {
+                "lines": [
+                    {
+                        "speaker": "Agent",
+                        "text": "Will you be checking any luggage today?"
+                    },
+                    {
+                        "speaker": "Passenger",
+                        "text": "Yes, I have two bags."
+                    },
+                    {
+                        "speaker": "Agent",
+                        "text": "That will be fine. Here are your boarding passes."
+                    }
+                ]
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440013",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440005",
+            "ord": 1,
+            "type": "text",
+            "body": {
+                "content": "Booking a hotel can be easy once you know the right phrases and vocabulary. This lesson covers everything from reservations to check-in."
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440014",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440005",
+            "ord": 2,
+            "type": "audio",
+            "body": {
+                "media_id": "990e8400-e29b-41d4-a716-446655440005",
+                "transcript": "Receptionist: Good evening. Welcome to the Grand Hotel. Do you have a reservation?\nGuest: Yes, I have a booking under the name Wilson for three nights."
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440015",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440005",
+            "ord": 3,
+            "type": "dialog",
+            "body": {
+                "lines": [
+                    {
+                        "speaker": "Receptionist",
+                        "text": "Could you fill in this registration form, please?"
+                    },
+                    {
+                        "speaker": "Guest",
+                        "text": "Of course. What information do you need?"
+                    },
+                    {
+                        "speaker": "Receptionist",
+                        "text": "Your full name, address, and passport number will suffice."
+                    }
+                ]
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440016",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440006",
+            "ord": 1,
+            "type": "text",
+            "body": {
+                "content": "Dining out while traveling is a wonderful experience. Learn the vocabulary and phrases needed to order food at restaurants."
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440017",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440006",
+            "ord": 2,
+            "type": "audio",
+            "body": {
+                "media_id": "990e8400-e29b-41d4-a716-446655440006",
+                "transcript": "Waiter: Good evening. How many guests are dining with us tonight?\nCustomer: Good evening. There are four of us. Do you have a table available?"
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440018",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440006",
+            "ord": 3,
+            "type": "dialog",
+            "body": {
+                "lines": [
+                    {
+                        "speaker": "Waiter",
+                        "text": "Are you ready to order, or do you need more time?"
+                    },
+                    {
+                        "speaker": "Customer",
+                        "text": "I'd like the grilled salmon with vegetables, please."
+                    },
+                    {
+                        "speaker": "Waiter",
+                        "text": "Excellent choice. And to drink?"
+                    },
+                    {
+                        "speaker": "Customer",
+                        "text": "I'll have a glass of white wine, please."
+                    }
+                ]
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440019",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440007",
+            "ord": 1,
+            "type": "text",
+            "body": {
+                "content": "The present simple tense is used for facts, habits, and regular occurrences. It's the foundation of English grammar.",
+                "usage": [
+                    "Facts: The Earth is round",
+                    "Habits: I drink coffee every morning",
+                    "Regular events: They play tennis on Fridays"
+                ]
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440020",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440007",
+            "ord": 2,
+            "type": "image",
+            "body": {
+                "media_id": "990e8400-e29b-41d4-a716-446655440007",
+                "caption": "Present Simple Tense formation and examples"
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440021",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440007",
+            "ord": 3,
+            "type": "audio",
+            "body": {
+                "media_id": "990e8400-e29b-41d4-a716-446655440008",
+                "transcript": "Affirmative: I play tennis. Negative: I do not play tennis. Question: Do you play tennis?"
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440022",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440008",
+            "ord": 1,
+            "type": "text",
+            "body": {
+                "content": "Past tenses in English can be tricky. This lesson covers the simple past, past continuous, past perfect, and past perfect continuous."
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440023",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440008",
+            "ord": 2,
+            "type": "dialog",
+            "body": {
+                "lines": [
+                    {
+                        "speaker": "Teacher",
+                        "text": "When did you arrive in London?"
+                    },
+                    {
+                        "speaker": "Student",
+                        "text": "I arrived last Monday."
+                    },
+                    {
+                        "speaker": "Teacher",
+                        "text": "What were you doing when I called?"
+                    },
+                    {
+                        "speaker": "Student",
+                        "text": "I was studying for my exam."
+                    }
+                ]
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440024",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440009",
+            "ord": 1,
+            "type": "text",
+            "body": {
+                "content": "Casual conversations are more relaxed than formal ones. Learn how to engage in natural, everyday English conversations."
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440025",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440009",
+            "ord": 2,
+            "type": "dialog",
+            "body": {
+                "lines": [
+                    {
+                        "speaker": "Person A",
+                        "text": "Hey, how are you doing?"
+                    },
+                    {
+                        "speaker": "Person B",
+                        "text": "I'm good, thanks. How about you?"
+                    },
+                    {
+                        "speaker": "Person A",
+                        "text": "Pretty well. Did you catch the game last night?"
+                    },
+                    {
+                        "speaker": "Person B",
+                        "text": "Yeah, it was amazing! What did you think?"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440026",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440010",
+            "ord": 1,
+            "type": "audio",
+            "body": {
+                "media_id": "990e8400-e29b-41d4-a716-446655440009",
+                "transcript": "Two native speakers discuss travel plans, using natural pronunciation and colloquial expressions."
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440027",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440010",
+            "ord": 2,
+            "type": "audio",
+            "body": {
+                "media_id": "990e8400-e29b-41d4-a716-446655440010",
+                "transcript": "Native speakers discussing workplace challenges and professional development opportunities."
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440028",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440011",
+            "ord": 1,
+            "type": "text",
+            "body": {
+                "content": "Business vocabulary is essential for professional success. Master terms related to finance, management, HR, and operations."
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440029",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440011",
+            "ord": 2,
+            "type": "dialog",
+            "body": {
+                "lines": [
+                    {
+                        "speaker": "Manager",
+                        "text": "We need to increase our ROI by 15% this quarter."
+                    },
+                    {
+                        "speaker": "Team Lead",
+                        "text": "We can achieve that by optimizing our supply chain and cutting overhead costs."
+                    },
+                    {
+                        "speaker": "Manager",
+                        "text": "Good. Prepare a proposal for the quarterly board meeting."
+                    }
+                ]
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440030",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440012",
+            "ord": 1,
+            "type": "text",
+            "body": {
+                "content": "Travel vocabulary includes terms for accommodations, transportation, attractions, and experiences. Expand your ability to discuss travel scenarios."
+            }
+        },
+        {
+            "id": "bb0e8400-e29b-41d4-a716-446655440031",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440012",
+            "ord": 2,
+            "type": "dialog",
+            "body": {
+                "lines": [
+                    {
+                        "speaker": "Tourist",
+                        "text": "Excuse me, how do I get to the main tourist information center?"
+                    },
+                    {
+                        "speaker": "Local",
+                        "text": "It's about two blocks down this street, on your left. You can't miss it."
+                    },
+                    {
+                        "speaker": "Tourist",
+                        "text": "Great, thanks! Are there any popular attractions nearby?"
+                    },
+                    {
+                        "speaker": "Local",
+                        "text": "Yes, the old cathedral is just behind the information center. It's definitely worth visiting."
+                    }
+                ]
+            }
+        }
+    ],
+    "courses": [
+        {
+            "id": "cc0e8400-e29b-41d4-a716-446655440001",
+            "title": "Business English Fundamentals",
+            "description": "Master the basics of business English communication including introductions, emails, and professional etiquette",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440001",
+            "level_id": "660e8400-e29b-41d4-a716-446655440001",
+            "thumbnail_url": "s3://bucket/course-thumbs/business-fundamentals.jpg",
+            "is_published": true,
+            "is_featured": true,
+            "price": 49.99,
+            "duration_hours": 12,
+            "average_rating": 4.8,
+            "review_count": 245
+        },
+        {
+            "id": "cc0e8400-e29b-41d4-a716-446655440002",
+            "title": "Travel English for Adventurers",
+            "description": "Learn essential English for traveling including airport, hotel, restaurant, and emergency situations",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440002",
+            "level_id": "660e8400-e29b-41d4-a716-446655440002",
+            "thumbnail_url": "s3://bucket/course-thumbs/travel-english.jpg",
+            "is_published": true,
+            "is_featured": true,
+            "price": 39.99,
+            "duration_hours": 10,
+            "average_rating": 4.7,
+            "review_count": 189
+        },
+        {
+            "id": "cc0e8400-e29b-41d4-a716-446655440003",
+            "title": "Grammar Mastery: A Complete Guide",
+            "description": "Comprehensive grammar course covering all tenses and fundamental grammar rules",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440006",
+            "level_id": "660e8400-e29b-41d4-a716-446655440001",
+            "thumbnail_url": "s3://bucket/course-thumbs/grammar-mastery.jpg",
+            "is_published": true,
+            "is_featured": false,
+            "price": 29.99,
+            "duration_hours": 15,
+            "average_rating": 4.6,
+            "review_count": 312
+        },
+        {
+            "id": "cc0e8400-e29b-41d4-a716-446655440004",
+            "title": "Native Speaker Conversations",
+            "description": "Immerse yourself in real native speaker conversations at various difficulty levels",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440003",
+            "level_id": "660e8400-e29b-41d4-a716-446655440004",
+            "thumbnail_url": "s3://bucket/course-thumbs/native-conversations.jpg",
+            "is_published": true,
+            "is_featured": true,
+            "price": 59.99,
+            "duration_hours": 20,
+            "average_rating": 4.9,
+            "review_count": 567
+        },
+        {
+            "id": "cc0e8400-e29b-41d4-a716-446655440005",
+            "title": "Business Vocabulary Power Pack",
+            "description": "Expand your professional vocabulary with industry-specific terms and expressions",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440007",
+            "level_id": "660e8400-e29b-41d4-a716-446655440003",
+            "thumbnail_url": "s3://bucket/course-thumbs/business-vocab.jpg",
+            "is_published": true,
+            "is_featured": false,
+            "price": 34.99,
+            "duration_hours": 8,
+            "average_rating": 4.5,
+            "review_count": 178
+        }
+    ],
+    "course_lessons": [
+        {
+            "id": "dd0e8400-e29b-41d4-a716-446655440001",
+            "course_id": "cc0e8400-e29b-41d4-a716-446655440001",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440001",
+            "ord": 1,
+            "is_required": true
+        },
+        {
+            "id": "dd0e8400-e29b-41d4-a716-446655440002",
+            "course_id": "cc0e8400-e29b-41d4-a716-446655440001",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440002",
+            "ord": 2,
+            "is_required": true
+        },
+        {
+            "id": "dd0e8400-e29b-41d4-a716-446655440003",
+            "course_id": "cc0e8400-e29b-41d4-a716-446655440001",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440003",
+            "ord": 3,
+            "is_required": true
+        },
+        {
+            "id": "dd0e8400-e29b-41d4-a716-446655440004",
+            "course_id": "cc0e8400-e29b-41d4-a716-446655440002",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440004",
+            "ord": 1,
+            "is_required": true
+        },
+        {
+            "id": "dd0e8400-e29b-41d4-a716-446655440005",
+            "course_id": "cc0e8400-e29b-41d4-a716-446655440002",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440005",
+            "ord": 2,
+            "is_required": true
+        },
+        {
+            "id": "dd0e8400-e29b-41d4-a716-446655440006",
+            "course_id": "cc0e8400-e29b-41d4-a716-446655440002",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440006",
+            "ord": 3,
+            "is_required": false
+        },
+        {
+            "id": "dd0e8400-e29b-41d4-a716-446655440007",
+            "course_id": "cc0e8400-e29b-41d4-a716-446655440003",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440007",
+            "ord": 1,
+            "is_required": true
+        },
+        {
+            "id": "dd0e8400-e29b-41d4-a716-446655440008",
+            "course_id": "cc0e8400-e29b-41d4-a716-446655440003",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440008",
+            "ord": 2,
+            "is_required": true
+        },
+        {
+            "id": "dd0e8400-e29b-41d4-a716-446655440009",
+            "course_id": "cc0e8400-e29b-41d4-a716-446655440004",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440009",
+            "ord": 1,
+            "is_required": true
+        },
+        {
+            "id": "dd0e8400-e29b-41d4-a716-446655440010",
+            "course_id": "cc0e8400-e29b-41d4-a716-446655440004",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440010",
+            "ord": 2,
+            "is_required": true
+        },
+        {
+            "id": "dd0e8400-e29b-41d4-a716-446655440011",
+            "course_id": "cc0e8400-e29b-41d4-a716-446655440005",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440011",
+            "ord": 1,
+            "is_required": true
+        },
+        {
+            "id": "dd0e8400-e29b-41d4-a716-446655440012",
+            "course_id": "cc0e8400-e29b-41d4-a716-446655440005",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440012",
+            "ord": 2,
+            "is_required": true
+        }
+    ],
+    "flashcard_sets": [
+        {
+            "id": "ee0e8400-e29b-41d4-a716-446655440001",
+            "title": "Business Vocabulary Set 1",
+            "description": "Essential business terms and phrases for professional communication",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440001",
+            "level_id": "660e8400-e29b-41d4-a716-446655440003"
+        },
+        {
+            "id": "ee0e8400-e29b-41d4-a716-446655440002",
+            "title": "Business Vocabulary Set 2",
+            "description": "Advanced business terminology for senior professionals",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440001",
+            "level_id": "660e8400-e29b-41d4-a716-446655440004"
+        },
+        {
+            "id": "ee0e8400-e29b-41d4-a716-446655440003",
+            "title": "Travel Vocabulary Essentials",
+            "description": "Must-know words and phrases for travelers",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440002",
+            "level_id": "660e8400-e29b-41d4-a716-446655440002"
+        },
+        {
+            "id": "ee0e8400-e29b-41d4-a716-446655440004",
+            "title": "Phrasal Verbs Collection",
+            "description": "Common phrasal verbs used in everyday English",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440009",
+            "level_id": "660e8400-e29b-41d4-a716-446655440003"
+        },
+        {
+            "id": "ee0e8400-e29b-41d4-a716-446655440005",
+            "title": "Idioms You Should Know",
+            "description": "Popular English idioms and their meanings",
+            "topic_id": "550e8400-e29b-41d4-a716-446655440009",
+            "level_id": "660e8400-e29b-41d4-a716-446655440004"
+        }
+    ],
+    "flashcards": [
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440001",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440001",
+            "front_text": "What does ROI stand for?",
+            "back_text": "Return On Investment - a measure of financial performance",
+            "ord": 1,
+            "hints": [
+                "Financial",
+                "Performance metric"
+            ]
+        },
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440002",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440001",
+            "front_text": "What is a deadline?",
+            "back_text": "The final date or time by which something must be completed",
+            "ord": 2,
+            "hints": [
+                "Time-related",
+                "Project management"
+            ]
+        },
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440003",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440001",
+            "front_text": "Define leverage in business context",
+            "back_text": "Using resources strategically to achieve maximum effect with minimum effort",
+            "ord": 3,
+            "hints": [
+                "Strategy",
+                "Efficiency"
+            ]
+        },
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440004",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440001",
+            "front_text": "What is a stakeholder?",
+            "back_text": "Any person or organization with an interest in a business or project",
+            "ord": 4,
+            "hints": [
+                "Business relationship",
+                "Interested party"
+            ]
+        },
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440005",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440002",
+            "front_text": "What does synergy mean?",
+            "back_text": "The interaction of elements that produce a combined effect greater than the sum of individual elements",
+            "ord": 1,
+            "hints": [
+                "Collaboration",
+                "Combined effect"
+            ]
+        },
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440006",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440002",
+            "front_text": "Define strategic alignment",
+            "back_text": "Ensuring that business activities are aligned with the organization's strategy and goals",
+            "ord": 2,
+            "hints": [
+                "Management",
+                "Goals"
+            ]
+        },
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440007",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440003",
+            "front_text": "What do you say when checking luggage at the airport?",
+            "back_text": "Do you have any luggage to check? / I have two bags to check.",
+            "ord": 1,
+            "hints": [
+                "Airport",
+                "Travel phrases"
+            ]
+        },
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440008",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440003",
+            "front_text": "How do you ask for a room with a view at a hotel?",
+            "back_text": "Could I have a room with a view? / Do you have any rooms with a view available?",
+            "ord": 2,
+            "hints": [
+                "Hotel",
+                "Room preferences"
+            ]
+        },
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440009",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440003",
+            "front_text": "What's a common way to ask for directions?",
+            "back_text": "Excuse me, how do I get to...? / Could you direct me to...?",
+            "ord": 3,
+            "hints": [
+                "Navigation",
+                "Polite requests"
+            ]
+        },
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440010",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440004",
+            "front_text": "What does 'break down' mean as a phrasal verb?",
+            "back_text": "To stop functioning; to analyze into components; to reduce into smaller parts",
+            "ord": 1,
+            "hints": [
+                "Phrasal verb",
+                "Multiple meanings"
+            ]
+        },
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440011",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440004",
+            "front_text": "Explain 'call off'",
+            "back_text": "To cancel or postpone something that was planned",
+            "ord": 2,
+            "hints": [
+                "Cancel",
+                "Plan"
+            ]
+        },
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440012",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440004",
+            "front_text": "What does 'figure out' mean?",
+            "back_text": "To solve a problem; to understand something; to calculate",
+            "ord": 3,
+            "hints": [
+                "Problem-solving",
+                "Understanding"
+            ]
+        },
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440013",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440005",
+            "front_text": "What does 'break the ice' mean?",
+            "back_text": "To start a conversation or make someone feel comfortable in a new situation",
+            "ord": 1,
+            "hints": [
+                "Social interaction",
+                "Conversation starter"
+            ]
+        },
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440014",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440005",
+            "front_text": "What is 'rain or shine'?",
+            "back_text": "No matter what the weather or circumstances are; definitely",
+            "ord": 2,
+            "hints": [
+                "Weather",
+                "Commitment"
+            ]
+        },
+        {
+            "id": "ff0e8400-e29b-41d4-a716-446655440015",
+            "set_id": "ee0e8400-e29b-41d4-a716-446655440005",
+            "front_text": "Explain 'cost an arm and a leg'",
+            "back_text": "To be very expensive",
+            "ord": 3,
+            "hints": [
+                "Money",
+                "Expensive"
+            ]
+        }
+    ],
+    "quizzes": [
+        {
+            "id": "gg0e8400-e29b-41d4-a716-446655440001",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440001",
+            "title": "Office Introductions Quiz",
+            "description": "Test your knowledge of professional office introductions",
+            "total_points": 10,
+            "time_limit_s": 600,
+            "topic_id": "550e8400-e29b-41d4-a716-446655440001",
+            "level_id": "660e8400-e29b-41d4-a716-446655440001"
+        },
+        {
+            "id": "gg0e8400-e29b-41d4-a716-446655440002",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440002",
+            "title": "Business Email Writing Quiz",
+            "description": "Assess your professional email writing skills",
+            "total_points": 15,
+            "time_limit_s": 900,
+            "topic_id": "550e8400-e29b-41d4-a716-446655440001",
+            "level_id": "660e8400-e29b-41d4-a716-446655440003"
+        },
+        {
+            "id": "gg0e8400-e29b-41d4-a716-446655440003",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440004",
+            "title": "Airport Conversations Quiz",
+            "description": "Test your airport-related vocabulary and phrases",
+            "total_points": 10,
+            "time_limit_s": 480,
+            "topic_id": "550e8400-e29b-41d4-a716-446655440002",
+            "level_id": "660e8400-e29b-41d4-a716-446655440001"
+        },
+        {
+            "id": "gg0e8400-e29b-41d4-a716-446655440004",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440007",
+            "title": "Present Simple Tense Quiz",
+            "description": "Quiz on present simple tense formation and usage",
+            "total_points": 12,
+            "time_limit_s": 720,
+            "topic_id": "550e8400-e29b-41d4-a716-446655440006",
+            "level_id": "660e8400-e29b-41d4-a716-446655440001"
+        },
+        {
+            "id": "gg0e8400-e29b-41d4-a716-446655440005",
+            "lesson_id": "aa0e8400-e29b-41d4-a716-446655440008",
+            "title": "Past Tenses Quiz",
+            "description": "Test your understanding of all past tenses",
+            "total_points": 20,
+            "time_limit_s": 1200,
+            "topic_id": "550e8400-e29b-41d4-a716-446655440006",
+            "level_id": "660e8400-e29b-41d4-a716-446655440003"
+        }
+    ],
+    "quiz_questions": [
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440001",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440001",
+            "ord": 1,
+            "type": "mcq",
+            "prompt": "What is the correct way to introduce yourself in a business meeting?",
+            "points": 2,
+            "metadata": {
+                "hint": "Start with a greeting and your full name"
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440002",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440001",
+            "ord": 2,
+            "type": "fill_blank",
+            "prompt": "My name is ____ and I work in the Marketing department.",
+            "points": 1,
+            "metadata": {
+                "correct_answers": [
+                    "John",
+                    "Sarah",
+                    "Tom",
+                    "Alex"
+                ]
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440003",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440001",
+            "ord": 3,
+            "type": "mcq",
+            "prompt": "How should you greet your boss in a formal setting?",
+            "points": 2,
+            "metadata": {
+                "hint": "Use their title and last name"
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440004",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440001",
+            "ord": 4,
+            "type": "multi_select",
+            "prompt": "Which phrases are appropriate for a professional introduction? (Select all that apply)",
+            "points": 3,
+            "metadata": {
+                "correct_answers": [
+                    "Nice to meet you",
+                    "I'm pleased to make your acquaintance",
+                    "It's a pleasure"
+                ]
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440005",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440001",
+            "ord": 5,
+            "type": "fill_blank",
+            "prompt": "I would like to ____ myself. I'm the new project manager.",
+            "points": 2,
+            "metadata": {
+                "correct_answers": [
+                    "introduce"
+                ]
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440006",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440002",
+            "ord": 1,
+            "type": "mcq",
+            "prompt": "What should be the first line of a professional email?",
+            "points": 2,
+            "metadata": {
+                "hint": "Include a formal greeting"
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440007",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440002",
+            "ord": 2,
+            "type": "fill_blank",
+            "prompt": "Dear ____, I hope this email finds you well.",
+            "points": 1,
+            "metadata": {
+                "correct_answers": [
+                    "Mr. Johnson",
+                    "Ms. Smith",
+                    "Dr. Brown"
+                ]
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440008",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440002",
+            "ord": 3,
+            "type": "mcq",
+            "prompt": "How should you end a formal business email?",
+            "points": 2,
+            "metadata": {
+                "hint": "Use a professional closing"
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440009",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440002",
+            "ord": 4,
+            "type": "mcq",
+            "prompt": "What is the purpose of the subject line in an email?",
+            "points": 2,
+            "metadata": {
+                "hint": "It should be clear and concise"
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440010",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440002",
+            "ord": 5,
+            "type": "fill_blank",
+            "prompt": "I am writing to ____ on our meeting from last week.",
+            "points": 1,
+            "metadata": {
+                "correct_answers": [
+                    "follow up"
+                ]
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440011",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440002",
+            "ord": 6,
+            "type": "mcq",
+            "prompt": "What should you avoid in professional emails?",
+            "points": 2,
+            "metadata": {
+                "hint": "Think about tone and formality"
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440012",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440003",
+            "ord": 1,
+            "type": "mcq",
+            "prompt": "What do you say at the airport check-in counter?",
+            "points": 2,
+            "metadata": {
+                "hint": "Mention your reservation"
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440013",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440003",
+            "ord": 2,
+            "type": "fill_blank",
+            "prompt": "I have a booking under the name ____.",
+            "points": 1,
+            "metadata": {
+                "correct_answers": [
+                    "Wilson",
+                    "Smith",
+                    "Johnson"
+                ]
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440014",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440003",
+            "ord": 3,
+            "type": "mcq",
+            "prompt": "How many bags are you checking?",
+            "points": 2,
+            "metadata": {
+                "hint": "Common question at the airport"
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440015",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440003",
+            "ord": 4,
+            "type": "fill_blank",
+            "prompt": "Do I have a ____ seat?",
+            "points": 1,
+            "metadata": {
+                "correct_answers": [
+                    "window",
+                    "aisle"
+                ]
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440016",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440004",
+            "ord": 1,
+            "type": "mcq",
+            "prompt": "The simple present is used for:",
+            "points": 2,
+            "metadata": {
+                "hint": "Think about habits and facts"
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440017",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440004",
+            "ord": 2,
+            "type": "fill_blank",
+            "prompt": "He ____ (go) to work every day.",
+            "points": 1,
+            "metadata": {
+                "correct_answers": [
+                    "goes"
+                ]
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440018",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440004",
+            "ord": 3,
+            "type": "mcq",
+            "prompt": "Form the negative: 'I like pizza'",
+            "points": 2,
+            "metadata": {
+                "hint": "Use the negative auxiliary"
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440019",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440004",
+            "ord": 4,
+            "type": "fill_blank",
+            "prompt": "Do you ____ (understand) English?",
+            "points": 1,
+            "metadata": {
+                "correct_answers": [
+                    "understand"
+                ]
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440020",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440005",
+            "ord": 1,
+            "type": "mcq",
+            "prompt": "Which past tense is used for a completed action at a specific time?",
+            "points": 2,
+            "metadata": {
+                "hint": "Simple past"
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440021",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440005",
+            "ord": 2,
+            "type": "fill_blank",
+            "prompt": "I ____ (go) to the store yesterday.",
+            "points": 1,
+            "metadata": {
+                "correct_answers": [
+                    "went"
+                ]
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440022",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440005",
+            "ord": 3,
+            "type": "mcq",
+            "prompt": "What does past continuous express?",
+            "points": 2,
+            "metadata": {
+                "hint": "An action in progress at a specific past time"
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440023",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440005",
+            "ord": 4,
+            "type": "fill_blank",
+            "prompt": "When you called, I ____ (watch) a movie.",
+            "points": 1,
+            "metadata": {
+                "correct_answers": [
+                    "was watching"
+                ]
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440024",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440005",
+            "ord": 5,
+            "type": "mcq",
+            "prompt": "Use past perfect: By the time she arrived, I ____",
+            "points": 2,
+            "metadata": {
+                "hint": "An action completed before another past action"
+            }
+        },
+        {
+            "id": "hh0e8400-e29b-41d4-a716-446655440025",
+            "quiz_id": "gg0e8400-e29b-41d4-a716-446655440005",
+            "ord": 6,
+            "type": "mcq",
+            "prompt": "Form the question: 'Did you go to the party?'",
+            "points": 2,
+            "metadata": {
+                "hint": "Past simple question formation"
+            }
+        }
+    ],
+    "question_options": [
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440001",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440001",
+            "ord": 1,
+            "label": "Hello, I'm [Your Name] from [Department]",
+            "is_correct": true,
+            "feedback": "Correct! This is a professional and clear introduction."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440002",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440001",
+            "ord": 2,
+            "label": "Hey, what's up?",
+            "is_correct": false,
+            "feedback": "Too casual for a business setting."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440003",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440001",
+            "ord": 3,
+            "label": "Just call me by my first name",
+            "is_correct": false,
+            "feedback": "While friendly, this doesn't provide complete information."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440004",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440003",
+            "ord": 1,
+            "label": "Dear Sir/Madam",
+            "is_correct": false,
+            "feedback": "Too formal and outdated for most business settings."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440005",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440003",
+            "ord": 2,
+            "label": "Mr./Ms. [Last Name]",
+            "is_correct": true,
+            "feedback": "Correct! This shows respect and is appropriate in formal settings."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440006",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440003",
+            "ord": 3,
+            "label": "[First Name]",
+            "is_correct": false,
+            "feedback": "May be too informal depending on the context."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440007",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440006",
+            "ord": 1,
+            "label": "A greeting followed by your name and purpose",
+            "is_correct": true,
+            "feedback": "Excellent! This structure immediately sets a professional tone."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440008",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440006",
+            "ord": 2,
+            "label": "A joke to break the ice",
+            "is_correct": false,
+            "feedback": "Not recommended for professional emails."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440009",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440006",
+            "ord": 3,
+            "label": "Casual greeting like 'Hey'",
+            "is_correct": false,
+            "feedback": "Too informal for professional communication."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440010",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440008",
+            "ord": 1,
+            "label": "Best regards",
+            "is_correct": true,
+            "feedback": "Correct! This is a professional and widely accepted closing."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440011",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440008",
+            "ord": 2,
+            "label": "Your buddy",
+            "is_correct": false,
+            "feedback": "Far too casual for business emails."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440012",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440008",
+            "ord": 3,
+            "label": "Cheers",
+            "is_correct": false,
+            "feedback": "Too informal for formal business communication."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440013",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440009",
+            "ord": 1,
+            "label": "To make the email visually appealing",
+            "is_correct": false,
+            "feedback": "The subject line serves a more practical purpose."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440014",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440009",
+            "ord": 2,
+            "label": "To summarize the email content and help with organization",
+            "is_correct": true,
+            "feedback": "Correct! A clear subject line helps recipients understand and organize emails."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440015",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440009",
+            "ord": 3,
+            "label": "It's not really important",
+            "is_correct": false,
+            "feedback": "Subject lines are crucial for professional communication."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440016",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440012",
+            "ord": 1,
+            "label": "Good afternoon, I'd like to check in for my flight.",
+            "is_correct": true,
+            "feedback": "Perfect! This is polite and clear at the airport."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440017",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440012",
+            "ord": 2,
+            "label": "I'm getting on your plane.",
+            "is_correct": false,
+            "feedback": "Too informal for the airport environment."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440018",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440012",
+            "ord": 3,
+            "label": "Where's the counter?",
+            "is_correct": false,
+            "feedback": "This doesn't indicate your purpose."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440019",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440016",
+            "ord": 1,
+            "label": "For habits and regular routines",
+            "is_correct": true,
+            "feedback": "Correct! Simple present is perfect for describing habits and routines."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440020",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440016",
+            "ord": 2,
+            "label": "For past events only",
+            "is_correct": false,
+            "feedback": "Simple present is for current actions and habits, not past events."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440021",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440016",
+            "ord": 3,
+            "label": "For future plans only",
+            "is_correct": false,
+            "feedback": "Simple present describes regular actions, not specifically future plans."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440022",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440020",
+            "ord": 1,
+            "label": "Simple past",
+            "is_correct": true,
+            "feedback": "Correct! Simple past is used for completed actions at a specific time."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440023",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440020",
+            "ord": 2,
+            "label": "Past continuous",
+            "is_correct": false,
+            "feedback": "Past continuous is for actions in progress during a past period."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440024",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440020",
+            "ord": 3,
+            "label": "Present perfect",
+            "is_correct": false,
+            "feedback": "Present perfect connects past and present, not specific past time."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440025",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440022",
+            "ord": 1,
+            "label": "An action at a specific moment in the past",
+            "is_correct": false,
+            "feedback": "That's simple past, not past continuous."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440026",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440022",
+            "ord": 2,
+            "label": "An action in progress at a specific past time",
+            "is_correct": true,
+            "feedback": "Excellent! This is exactly what past continuous expresses."
+        },
+        {
+            "id": "ii0e8400-e29b-41d4-a716-446655440027",
+            "question_id": "hh0e8400-e29b-41d4-a716-446655440022",
+            "ord": 3,
+            "label": "A repeated action in the past",
+            "is_correct": false,
+            "feedback": "That would be simple past with frequency indicators."
+        }
+    ],
+    "content_tags": [
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440001",
+            "kind": "lesson",
+            "object_id": "aa0e8400-e29b-41d4-a716-446655440007"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440001",
+            "kind": "lesson",
+            "object_id": "aa0e8400-e29b-41d4-a716-446655440008"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440002",
+            "kind": "flashcard_set",
+            "object_id": "ee0e8400-e29b-41d4-a716-446655440001"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440002",
+            "kind": "flashcard_set",
+            "object_id": "ee0e8400-e29b-41d4-a716-446655440003"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440003",
+            "kind": "lesson",
+            "object_id": "aa0e8400-e29b-41d4-a716-446655440010"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440004",
+            "kind": "lesson",
+            "object_id": "aa0e8400-e29b-41d4-a716-446655440001"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440005",
+            "kind": "lesson",
+            "object_id": "aa0e8400-e29b-41d4-a716-446655440009"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440006",
+            "kind": "lesson",
+            "object_id": "aa0e8400-e29b-41d4-a716-446655440002"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440007",
+            "kind": "lesson",
+            "object_id": "aa0e8400-e29b-41d4-a716-446655440001"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440008",
+            "kind": "flashcard_set",
+            "object_id": "ee0e8400-e29b-41d4-a716-446655440005"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440009",
+            "kind": "flashcard_set",
+            "object_id": "ee0e8400-e29b-41d4-a716-446655440004"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440010",
+            "kind": "lesson",
+            "object_id": "aa0e8400-e29b-41d4-a716-446655440001"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440010",
+            "kind": "lesson",
+            "object_id": "aa0e8400-e29b-41d4-a716-446655440002"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440011",
+            "kind": "lesson",
+            "object_id": "aa0e8400-e29b-41d4-a716-446655440004"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440011",
+            "kind": "lesson",
+            "object_id": "aa0e8400-e29b-41d4-a716-446655440005"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440012",
+            "kind": "lesson",
+            "object_id": "aa0e8400-e29b-41d4-a716-446655440009"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440001",
+            "kind": "quiz",
+            "object_id": "gg0e8400-e29b-41d4-a716-446655440004"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440001",
+            "kind": "quiz",
+            "object_id": "gg0e8400-e29b-41d4-a716-446655440005"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440010",
+            "kind": "quiz",
+            "object_id": "gg0e8400-e29b-41d4-a716-446655440001"
+        },
+        {
+            "tag_id": "770e8400-e29b-41d4-a716-446655440006",
+            "kind": "quiz",
+            "object_id": "gg0e8400-e29b-41d4-a716-446655440002"
+        }
+    ]
+}
