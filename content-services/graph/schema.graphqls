@@ -242,8 +242,8 @@ type Lesson {
   createdAt: Time!
   updatedAt: Time!
   publishedAt: Time
-  tags: [Tag!]!
-  sections: [LessonSection!]!
+  tags: [Tag]
+  sections: [LessonSection]
 }
 
 input CreateLessonInput {

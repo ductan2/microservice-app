@@ -5,7 +5,7 @@ networks:
   backend:
     driver: bridge
     name: english-app-backend
-    internal: true  # Isolate backend network
+    internal: false  # Isolate backend network
 
 services:
   # =====================

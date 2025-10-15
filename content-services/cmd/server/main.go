@@ -55,6 +55,7 @@ func main() {
 	courseReviewRepo := repository.NewCourseReviewRepository(database)
 	quizRepo := repository.NewQuizRepository(database)
 	quizQuestionRepo := repository.NewQuizQuestionRepository(database)
+	optionRepo := repository.NewQuestionOptionRepository(database)
 	flashcardSetRepo := repository.NewFlashcardSetRepository(database)
 	flashcardRepo := repository.NewFlashcardRepository(database)
 	// Note: outboxRepo would need a separate database connection for transactional outbox pattern
@@ -79,7 +80,7 @@ func main() {
 	lessonService := service.NewLessonService(lessonRepo, sectionRepo, outboxRepo)
 	courseService := service.NewCourseService(courseRepo, courseLessonRepo, lessonRepo)
 	courseReviewService := service.NewCourseReviewService(courseReviewRepo, courseRepo, courseEnrollmentRepo)
-	quizService := service.NewQuizService(quizRepo, quizQuestionRepo, nil, tagRepo, outboxRepo)
+	quizService := service.NewQuizService(quizRepo, quizQuestionRepo, optionRepo, tagRepo, outboxRepo)
 	flashcardService := service.NewFlashcardService(flashcardSetRepo, flashcardRepo, tagRepo)
 
 	resolver := &gqlresolver.Resolver{

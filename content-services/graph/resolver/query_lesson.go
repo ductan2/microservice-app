@@ -3,6 +3,7 @@ package resolver
 import (
 	"content-services/graph/model"
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -68,6 +69,9 @@ func (r *queryResolver) Lessons(ctx context.Context, filter *model.LessonFilterI
 	}
 
 	lessons, total, err := lessonService.ListLessons(ctx, lessonFilter, lessonSort, pageVal, pageSizeVal)
+	fmt.Println("lessons", lessons)
+	fmt.Println("total", total)
+	fmt.Println("err", err)
 	if err != nil {
 		return nil, mapLessonError(err)
 	}
@@ -76,6 +80,7 @@ func (r *queryResolver) Lessons(ctx context.Context, filter *model.LessonFilterI
 	for i := range lessons {
 		items = append(items, mapLesson(&lessons[i]))
 	}
+	fmt.Println("items", items)
 
 	return &model.LessonCollection{
 		Items:      items,

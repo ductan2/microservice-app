@@ -2928,8 +2928,8 @@ type Lesson {
   createdAt: Time!
   updatedAt: Time!
   publishedAt: Time
-  tags: [Tag!]!
-  sections: [LessonSection!]!
+  tags: [Tag]
+  sections: [LessonSection]
 }
 
 input CreateLessonInput {
@@ -8026,9 +8026,9 @@ func (ec *executionContext) _Lesson_tags(ctx context.Context, field graphql.Coll
 			return ec.resolvers.Lesson().Tags(ctx, obj)
 		},
 		nil,
-		ec.marshalNTag2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐTagᚄ,
+		ec.marshalOTag2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐTag,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8063,9 +8063,9 @@ func (ec *executionContext) _Lesson_sections(ctx context.Context, field graphql.
 			return obj.Sections, nil
 		},
 		nil,
-		ec.marshalNLessonSection2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSectionᚄ,
+		ec.marshalOLessonSection2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSection,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -19702,16 +19702,13 @@ func (ec *executionContext) _Lesson(ctx context.Context, sel ast.SelectionSet, o
 		case "tags":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Lesson_tags(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -19737,9 +19734,6 @@ func (ec *executionContext) _Lesson(ctx context.Context, sel ast.SelectionSet, o
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "sections":
 			out.Values[i] = ec._Lesson_sections(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -24284,6 +24278,54 @@ func (ec *executionContext) unmarshalOLessonOrderInput2ᚖcontentᚑservicesᚋg
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalOLessonSection2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSection(ctx context.Context, sel ast.SelectionSet, v []*model.LessonSection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOLessonSection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSection(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOLessonSection2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSection(ctx context.Context, sel ast.SelectionSet, v *model.LessonSection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._LessonSection(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOLessonSectionFilterInput2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLessonSectionFilterInput(ctx context.Context, v any) (*model.LessonSectionFilterInput, error) {
 	if v == nil {
 		return nil, nil
@@ -24463,6 +24505,47 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	_ = ctx
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOTag2ᚕᚖcontentᚑservicesᚋgraphᚋmodelᚐTag(ctx context.Context, sel ast.SelectionSet, v []*model.Tag) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOTag2ᚖcontentᚑservicesᚋgraphᚋmodelᚐTag(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
 func (ec *executionContext) marshalOTag2ᚖcontentᚑservicesᚋgraphᚋmodelᚐTag(ctx context.Context, sel ast.SelectionSet, v *model.Tag) graphql.Marshaler {

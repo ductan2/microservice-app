@@ -314,8 +314,8 @@ type Lesson struct {
 	CreatedAt   time.Time        `json:"createdAt"`
 	UpdatedAt   time.Time        `json:"updatedAt"`
 	PublishedAt *time.Time       `json:"publishedAt,omitempty"`
-	Tags        []*Tag           `json:"tags"`
-	Sections    []*LessonSection `json:"sections"`
+	Tags        []*Tag           `json:"tags,omitempty"`
+	Sections    []*LessonSection `json:"sections,omitempty"`
 }
 
 type LessonCollection struct {

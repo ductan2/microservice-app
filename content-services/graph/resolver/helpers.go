@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/google/uuid"
@@ -163,6 +164,12 @@ func mapLesson(l *models.Lesson) *model.Lesson {
 	if l.Code != "" {
 		code = &l.Code
 	}
+	if l.CreatedAt.IsZero() {
+		l.CreatedAt = time.Now()
+	}
+	if l.UpdatedAt.IsZero() {
+		l.UpdatedAt = l.CreatedAt
+	}
 
 	var createdBy *string
 	if l.CreatedBy != nil {
@@ -180,6 +187,8 @@ func mapLesson(l *models.Lesson) *model.Lesson {
 		CreatedBy:   createdBy,
 		CreatedAt:   l.CreatedAt,
 		UpdatedAt:   l.UpdatedAt,
+		Tags:        []*model.Tag{},     
+        Sections:    []*model.LessonSection{},
 	}
 
 	if l.PublishedAt.Valid {

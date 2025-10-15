@@ -31,6 +31,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Add authentication middleware (except for health check)
 app.add_middleware(InternalAuthRequired)
 
