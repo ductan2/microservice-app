@@ -7,13 +7,13 @@ type Query {
   health: String!
 
   topic(id: ID, slug: String): Topic
-  topics(search: String): [Topic!]!
+  topics(search: String, page: Int = 1, pageSize: Int = 10): TopicCollection!
 
   level(id: ID, code: String): Level
-  levels(search: String): [Level!]!
+  levels(search: String, page: Int = 1, pageSize: Int = 10): LevelCollection!
 
   tag(id: ID, slug: String): Tag
-  tags(search: String): [Tag!]!
+  tags(search: String, page: Int = 1, pageSize: Int = 10): TagCollection!
 
   folder(id: ID!): Folder
   folders(filter: FolderFilterInput, page: Int = 1, pageSize: Int = 100, orderBy: FolderOrderInput): FolderCollection!
@@ -110,6 +110,13 @@ type Topic {
   createdAt: Time!
 }
 
+type TopicCollection {
+  items: [Topic!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
 input CreateTopicInput {
   slug: String!
   name: String!
@@ -126,6 +133,13 @@ type Level {
   name: String!
 }
 
+type LevelCollection {
+  items: [Level!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+}
+
 input CreateLevelInput {
   code: String!
   name: String!
@@ -140,6 +154,13 @@ type Tag {
   id: ID!
   slug: String!
   name: String!
+}
+
+type TagCollection {
+  items: [Tag!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
 }
 
 input CreateTagInput {

@@ -224,7 +224,7 @@ func (s *Store) GetTopicBySlug(ctx context.Context, slug string) (*Topic, error)
 }
 
 // ListTopics returns all topics sorted by creation date (newest first).
-func (s *Store) ListTopics(ctx context.Context, search string) ([]Topic, error) {
+func (s *Store) ListTopics(ctx context.Context, search string, page, pageSize int) ([]Topic, int64, error) {
 	filter := bson.D{}
 	if strings.TrimSpace(search) != "" {
 		regex := bson.D{{Key: "$regex", Value: search}, {Key: "$options", Value: "i"}}
@@ -234,10 +234,26 @@ func (s *Store) ListTopics(ctx context.Context, search string) ([]Topic, error) 
 		}})
 	}
 
-	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+	if page < 1 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+
+	total, err := s.topics.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	opts := options.Find().
+		SetSort(bson.D{{Key: "created_at", Value: -1}}).
+		SetSkip(int64((page - 1) * pageSize)).
+		SetLimit(int64(pageSize))
+
 	cursor, err := s.topics.Find(ctx, filter, opts)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer cursor.Close(ctx)
 
@@ -245,14 +261,14 @@ func (s *Store) ListTopics(ctx context.Context, search string) ([]Topic, error) 
 	for cursor.Next(ctx) {
 		var doc Topic
 		if err := cursor.Decode(&doc); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		topics = append(topics, doc)
 	}
 	if err := cursor.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return topics, nil
+	return topics, total, nil
 }
 
 // DeleteTopic removes a topic by its identifier.
@@ -341,7 +357,7 @@ func (s *Store) GetLevelByCode(ctx context.Context, code string) (*Level, error)
 }
 
 // ListLevels returns all levels sorted alphabetically by code.
-func (s *Store) ListLevels(ctx context.Context, search string) ([]Level, error) {
+func (s *Store) ListLevels(ctx context.Context, search string, page, pageSize int) ([]Level, int64, error) {
 	filter := bson.D{}
 	if strings.TrimSpace(search) != "" {
 		regex := bson.D{{Key: "$regex", Value: search}, {Key: "$options", Value: "i"}}
@@ -351,10 +367,26 @@ func (s *Store) ListLevels(ctx context.Context, search string) ([]Level, error) 
 		}})
 	}
 
-	opts := options.Find().SetSort(bson.D{{Key: "code", Value: 1}})
+	if page < 1 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+
+	total, err := s.levels.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	opts := options.Find().
+		SetSort(bson.D{{Key: "code", Value: 1}}).
+		SetSkip(int64((page - 1) * pageSize)).
+		SetLimit(int64(pageSize))
+
 	cursor, err := s.levels.Find(ctx, filter, opts)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer cursor.Close(ctx)
 
@@ -362,14 +394,14 @@ func (s *Store) ListLevels(ctx context.Context, search string) ([]Level, error) 
 	for cursor.Next(ctx) {
 		var doc Level
 		if err := cursor.Decode(&doc); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		levels = append(levels, doc)
 	}
 	if err := cursor.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return levels, nil
+	return levels, total, nil
 }
 
 // DeleteLevel removes a level by its identifier.
@@ -458,7 +490,7 @@ func (s *Store) GetTagBySlug(ctx context.Context, slug string) (*Tag, error) {
 }
 
 // ListTags returns all tags sorted alphabetically by name.
-func (s *Store) ListTags(ctx context.Context, search string) ([]Tag, error) {
+func (s *Store) ListTags(ctx context.Context, search string, page, pageSize int) ([]Tag, int64, error) {
 	filter := bson.D{}
 	if strings.TrimSpace(search) != "" {
 		regex := bson.D{{Key: "$regex", Value: search}, {Key: "$options", Value: "i"}}
@@ -468,10 +500,26 @@ func (s *Store) ListTags(ctx context.Context, search string) ([]Tag, error) {
 		}})
 	}
 
-	opts := options.Find().SetSort(bson.D{{Key: "name", Value: 1}})
+	if page < 1 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+
+	total, err := s.tags.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	opts := options.Find().
+		SetSort(bson.D{{Key: "name", Value: 1}}).
+		SetSkip(int64((page - 1) * pageSize)).
+		SetLimit(int64(pageSize))
+
 	cursor, err := s.tags.Find(ctx, filter, opts)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer cursor.Close(ctx)
 
@@ -479,14 +527,14 @@ func (s *Store) ListTags(ctx context.Context, search string) ([]Tag, error) {
 	for cursor.Next(ctx) {
 		var doc Tag
 		if err := cursor.Decode(&doc); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		tags = append(tags, doc)
 	}
 	if err := cursor.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return tags, nil
+	return tags, total, nil
 }
 
 // DeleteTag removes a tag by its identifier.
