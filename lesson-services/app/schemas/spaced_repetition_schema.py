@@ -47,7 +47,6 @@ class SRCardStatsResponse(BaseModel):
 
 # Spaced Repetition Review Schemas
 class SRReviewBase(BaseModel):
-    user_id: UUID
     flashcard_id: UUID
     quality: int = Field(..., ge=0, le=5)
     prev_interval: Optional[int] = None

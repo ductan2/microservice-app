@@ -1,12 +1,13 @@
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
 from app.schemas.spaced_repetition_schema import SRCardCreate, SRCardResponse, SRCardStatsResponse
 from app.services.sr_card_service import SRCardService
+from app.middlewares.auth_middleware import get_current_user_id
 
 router = APIRouter(prefix="/api/spaced-repetition/cards", tags=["Spaced Repetition Cards"])
 
@@ -18,22 +19,20 @@ def get_sr_card_service(db: Session = Depends(get_db)) -> SRCardService:
 
 @router.get("/user/me", response_model=List[SRCardResponse])
 def get_user_cards(
-    request: Request,
     suspended: Optional[bool] = Query(None),
     due_only: bool = Query(False),
+    user_id: UUID = Depends(get_current_user_id),
     service: SRCardService = Depends(get_sr_card_service),
 ) -> List[SRCardResponse]:
-    user_id: UUID = request.state.user_id
     cards = service.get_user_cards(user_id, suspended=suspended, due_only=due_only)
     return [SRCardResponse.model_validate(card, from_attributes=True) for card in cards]
 
 
 @router.get("/user/me/due", response_model=List[SRCardResponse])
 def get_due_cards(
-    request: Request,
+    user_id: UUID = Depends(get_current_user_id),
     service: SRCardService = Depends(get_sr_card_service)
 ) -> List[SRCardResponse]:
-    user_id: UUID = request.state.user_id
     cards = service.get_due_cards(user_id)
     return [SRCardResponse.model_validate(card, from_attributes=True) for card in cards]
 
@@ -93,9 +92,8 @@ def delete_card(
 
 @router.get("/user/me/stats", response_model=SRCardStatsResponse)
 def get_user_card_stats(
-    request: Request,
+    user_id: UUID = Depends(get_current_user_id),
     service: SRCardService = Depends(get_sr_card_service)
 ) -> SRCardStatsResponse:
-    user_id: UUID = request.state.user_id
     stats = service.get_user_stats(user_id)
     return SRCardStatsResponse(**stats)

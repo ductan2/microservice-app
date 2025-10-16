@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from uuid import UUID
@@ -13,6 +13,7 @@ from app.schemas.user_streak_schema import (
     UserStreakStatusResponse,
 )
 from app.services.user_streak_service import UserStreakService
+from app.middlewares.auth_middleware import get_current_user_id
 
 
 router = APIRouter(prefix="/api/streaks", tags=["User Streaks"])
@@ -24,30 +25,27 @@ def get_user_streak_service(db: Session = Depends(get_db)) -> UserStreakService:
 
 @router.get("/user/me", response_model=UserStreakResponse)
 def get_user_streak(
-    request: Request,
+    user_id: UUID = Depends(get_current_user_id),
     service: UserStreakService = Depends(get_user_streak_service),
 ) -> UserStreakResponse:
-    user_id: UUID = request.state.user_id
     return service.get_or_create_streak(user_id)
 
 
 @router.post("/user/me/check", response_model=UserStreakResponse)
 def check_user_streak(
-    request: Request,
     payload: Optional[StreakCheckRequest] = None,
+    user_id: UUID = Depends(get_current_user_id),
     service: UserStreakService = Depends(get_user_streak_service),
 ) -> UserStreakResponse:
-    user_id: UUID = request.state.user_id
     activity_date = payload.activity_date if payload else None
     return service.check_and_update_streak(user_id, activity_date=activity_date)
 
 
 @router.get("/user/me/status", response_model=UserStreakStatusResponse)
 def get_streak_status(
-    request: Request,
+    user_id: UUID = Depends(get_current_user_id),
     service: UserStreakService = Depends(get_user_streak_service),
 ) -> UserStreakStatusResponse:
-    user_id: UUID = request.state.user_id
     status_data = service.get_streak_status(user_id)
     return UserStreakStatusResponse(**status_data)
 

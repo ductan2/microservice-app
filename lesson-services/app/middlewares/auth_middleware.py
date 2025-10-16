@@ -46,3 +46,8 @@ class InternalAuthRequired(BaseHTTPMiddleware):
 
         response = await call_next(request)
         return response
+
+
+def get_current_user_id(request: Request) -> UUID:
+    """Dependency to extract user_id from request state set by auth middleware."""
+    return request.state.user_id

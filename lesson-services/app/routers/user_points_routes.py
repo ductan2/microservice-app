@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
@@ -13,6 +13,7 @@ from app.schemas.user_points_schema import (
     UserPointsResponse,
 )
 from app.services.user_points_service import UserPointsService
+from app.middlewares.auth_middleware import get_current_user_id
 
 
 router = APIRouter(prefix="/api/points", tags=["User Points"])
@@ -24,21 +25,19 @@ def get_user_points_service(db: Session = Depends(get_db)) -> UserPointsService:
 
 @router.get("/user/me", response_model=UserPointsResponse)
 def get_user_points(
-    request: Request,
+    user_id: UUID = Depends(get_current_user_id),
     service: UserPointsService = Depends(get_user_points_service),
 ) -> UserPointsResponse:
-    user_id: UUID = request.state.user_id
     return service.get_or_create_points(user_id)
 
 
 @router.post("/user/me/add", response_model=UserPointsResponse)
 def add_user_points(
-    request: Request,
     payload: PointsAdjustmentRequest,
+    user_id: UUID = Depends(get_current_user_id),
     service: UserPointsService = Depends(get_user_points_service),
 ) -> UserPointsResponse:
     try:
-        user_id: UUID = request.state.user_id
         return service.add_points(user_id, payload.points)
     except ValueError as exc:  # pragma: no cover - defensive validation
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
@@ -46,12 +45,11 @@ def add_user_points(
 
 @router.post("/user/me/subtract", response_model=UserPointsResponse)
 def subtract_user_points(
-    request: Request,
     payload: PointsAdjustmentRequest,
+    user_id: UUID = Depends(get_current_user_id),
     service: UserPointsService = Depends(get_user_points_service),
 ) -> UserPointsResponse:
     try:
-        user_id: UUID = request.state.user_id
         return service.subtract_points(user_id, payload.points)
     except ValueError as exc:  # pragma: no cover - defensive validation
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
@@ -118,10 +116,9 @@ def reset_monthly_points(
 
 @router.get("/user/me/rank", response_model=UserPointsRankResponse)
 def get_user_rank(
-    request: Request,
+    user_id: UUID = Depends(get_current_user_id),
     service: UserPointsService = Depends(get_user_points_service),
 ) -> UserPointsRankResponse:
-    user_id: UUID = request.state.user_id
     ranks = service.get_user_ranks(user_id)
     if ranks is None:
         service.initialize_user_points(user_id)

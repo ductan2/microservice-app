@@ -11,14 +11,9 @@ from app.schemas.dim_user_schema import (
     DimUserUpdate,
 )
 from app.services.dim_user_service import DimUserService
-
+from app.middlewares.auth_middleware import get_current_user_id
 
 router = APIRouter(prefix="/api/users", tags=["User Preferences"])
-
-
-def get_current_user_id(request: Request) -> UUID:
-    """Dependency to extract user_id from request state set by auth middleware."""
-    return request.state.user_id
 
 
 def get_dim_user_service(db: Session = Depends(get_db)) -> DimUserService:

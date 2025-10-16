@@ -20,18 +20,18 @@ class SRReviewService:
         self.card_service = SRCardService(db)
         self.activity_service = DailyActivityService(db)
 
-    def create_review(self, review_data: SRReviewCreate) -> SRReview:
+    def create_review(self, user_id: UUID, review_data: SRReviewCreate) -> SRReview:
         quality = review_data.quality
         if quality < 0 or quality > 5:
             raise ValueError("Quality must be between 0 and 5")
 
         card = self.card_service.get_card_by_flashcard(
-            review_data.user_id, review_data.flashcard_id
+            user_id, review_data.flashcard_id
         )
         if card is None:
             card = self.card_service.create_card(
                 SRCardCreate(
-                    user_id=review_data.user_id,
+                    user_id=user_id,
                     flashcard_id=review_data.flashcard_id,
                 )
             )
@@ -42,7 +42,7 @@ class SRReviewService:
             raise ValueError("Unable to update spaced repetition card")
 
         review = SRReview(
-            user_id=review_data.user_id,
+            user_id=user_id,
             flashcard_id=review_data.flashcard_id,
             quality=quality,
             prev_interval=prev_interval,
@@ -56,10 +56,10 @@ class SRReviewService:
 
         today = review.reviewed_at.date()
         self.activity_service.increment_activity(
-            review.user_id, today, "minutes", REVIEW_MINUTES_PER_CARD
+            user_id, today, "minutes", REVIEW_MINUTES_PER_CARD
         )
         self.activity_service.increment_activity(
-            review.user_id, today, "points", REVIEW_POINTS
+            user_id, today, "points", REVIEW_POINTS
         )
 
         self.db.refresh(review)

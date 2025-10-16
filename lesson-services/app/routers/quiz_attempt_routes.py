@@ -1,7 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
@@ -12,6 +12,7 @@ from app.schemas.quiz_schema import (
     QuizAttemptSubmit,
 )
 from app.services.quiz_attempt_service import QuizAttemptService
+from app.middlewares.auth_middleware import get_current_user_id
 
 
 router = APIRouter(prefix="/api/quiz-attempts", tags=["Quiz Attempts"])
@@ -60,33 +61,30 @@ def submit_quiz_attempt(
 
 @router.get("/user/me/quiz/{quiz_id}", response_model=List[QuizAttemptResponse])
 def get_user_quiz_attempts(
-    request: Request,
     quiz_id: UUID,
+    user_id: UUID = Depends(get_current_user_id),
     service: QuizAttemptService = Depends(get_quiz_attempt_service),
 ) -> List[QuizAttemptResponse]:
-    user_id: UUID = request.state.user_id
     return service.get_user_quiz_attempts(user_id, quiz_id)
 
 
 @router.get("/user/me/history", response_model=List[QuizAttemptResponse])
 def get_user_quiz_history(
-    request: Request,
     passed: Optional[bool] = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
+    user_id: UUID = Depends(get_current_user_id),
     service: QuizAttemptService = Depends(get_quiz_attempt_service),
 ) -> List[QuizAttemptResponse]:
-    user_id: UUID = request.state.user_id
     return service.get_user_quiz_history(user_id, passed=passed, limit=limit, offset=offset)
 
 
 @router.get("/lesson/{lesson_id}/user/me", response_model=List[QuizAttemptResponse])
 def get_lesson_quiz_attempts(
     lesson_id: UUID,
-    request: Request,
+    user_id: UUID = Depends(get_current_user_id),
     service: QuizAttemptService = Depends(get_quiz_attempt_service),
 ) -> List[QuizAttemptResponse]:
-    user_id: UUID = request.state.user_id
     return service.get_lesson_quiz_attempts(lesson_id, user_id)
 
 

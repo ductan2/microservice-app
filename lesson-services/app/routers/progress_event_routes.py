@@ -2,7 +2,7 @@ from datetime import date
 from typing import Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
@@ -11,6 +11,7 @@ from app.schemas.progress_event_schema import (
     ProgressEventResponse,
 )
 from app.services.progress_event_service import ProgressEventService
+from app.middlewares.auth_middleware import get_current_user_id
 
 
 router = APIRouter(prefix="/api/progress-events", tags=["Progress Events"])
@@ -23,12 +24,12 @@ def get_progress_event_service(db: Session = Depends(get_db)) -> ProgressEventSe
 
 @router.get("/user/me", response_model=List[ProgressEventResponse])
 def get_user_events(
-    request: Request,
     event_type: Optional[str] = Query(None, alias="type"),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     date_from: Optional[date] = Query(None),
     date_to: Optional[date] = Query(None),
+    user_id: UUID = Depends(get_current_user_id),
     service: ProgressEventService = Depends(get_progress_event_service),
 ) -> List[ProgressEventResponse]:
     if date_from and date_to and date_from > date_to:
@@ -36,8 +37,6 @@ def get_user_events(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="date_from must be before or equal to date_to",
         )
-
-    user_id: UUID = request.state.user_id
     return service.get_user_events(
         user_id=user_id,
         event_type=event_type,
@@ -69,13 +68,12 @@ def create_event(
 
 @router.get("/user/me/type/{event_type}", response_model=List[ProgressEventResponse])
 def get_events_by_type(
-    request: Request,
     event_type: str,
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
+    user_id: UUID = Depends(get_current_user_id),
     service: ProgressEventService = Depends(get_progress_event_service),
 ) -> List[ProgressEventResponse]:
-    user_id: UUID = request.state.user_id
     return service.get_events_by_type(
         user_id=user_id,
         event_type=event_type,
@@ -86,11 +84,10 @@ def get_events_by_type(
 
 @router.get("/user/me/recent", response_model=List[ProgressEventResponse])
 def get_recent_events(
-    request: Request,
     limit: int = Query(50, ge=1, le=200),
+    user_id: UUID = Depends(get_current_user_id),
     service: ProgressEventService = Depends(get_progress_event_service),
 ) -> List[ProgressEventResponse]:
-    user_id: UUID = request.state.user_id
     return service.get_recent_events(user_id=user_id, limit=limit)
 
 

@@ -247,8 +247,26 @@ func (r *lessonRepository) Update(ctx context.Context, lesson *models.Lesson) er
 	doc := fromModel(lesson)
 	doc.UpdatedAt = time.Now().UTC()
 
+	// Exclude version from $set since we're handling it with $inc
+	updateDoc := bson.M{
+		"title":        doc.Title,
+		"description":  doc.Description,
+		"topic_id":     doc.TopicID,
+		"level_id":     doc.LevelID,
+		"is_published": doc.IsPublished,
+		"created_by":   doc.CreatedBy,
+		"created_at":   doc.CreatedAt,
+		"updated_at":   doc.UpdatedAt,
+		"published_at": doc.PublishedAt,
+	}
+
+	// Handle code field separately since it can be nil
+	if doc.Code != nil {
+		updateDoc["code"] = doc.Code
+	}
+
 	update := bson.M{
-		"$set": doc,
+		"$set": updateDoc,
 		"$inc": bson.M{"version": 1},
 	}
 

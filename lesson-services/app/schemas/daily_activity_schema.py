@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import date
 from uuid import UUID
 
@@ -54,7 +54,6 @@ class DailyActivitySummary(BaseModel):
 
 
 class DailyActivityIncrementRequest(BaseModel):
-    user_id: UUID
-    activity_dt: date
+    activity_dt: Optional[date] = None
     field: str  # 'lessons_completed', 'quizzes_completed', 'minutes', 'points'
-    amount: int
+    amount: int = Field(default=1, ge=1)

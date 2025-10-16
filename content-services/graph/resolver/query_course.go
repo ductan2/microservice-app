@@ -3,6 +3,7 @@ package resolver
 import (
 	"content-services/graph/model"
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -20,6 +21,8 @@ func (r *queryResolver) Course(ctx context.Context, id string) (*model.Course, e
 	}
 
 	course, err := r.CourseService.GetCourseByID(ctx, courseID)
+	fmt.Println("course", course)
+	fmt.Println("err", err)
 	if err != nil {
 		return nil, mapCourseError(err)
 	}

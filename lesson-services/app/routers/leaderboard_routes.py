@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
@@ -11,6 +11,7 @@ from app.schemas.leaderboard_schema import (
     LeaderboardSnapshotCreate,
 )
 from app.services.leaderboard_service import LeaderboardService
+from app.middlewares.auth_middleware import get_current_user_id
 
 
 router = APIRouter(prefix="/api/leaderboards", tags=["Leaderboards"])
@@ -87,10 +88,9 @@ def create_monthly_snapshot(
 
 @router.get("/user/me/history", response_model=Dict[str, List[LeaderboardResponse]])
 def get_user_history(
-    request: Request,
+    user_id: UUID = Depends(get_current_user_id),
     service: LeaderboardService = Depends(get_leaderboard_service),
 ) -> Dict[str, List[LeaderboardResponse]]:
-    user_id: UUID = request.state.user_id
     return service.get_user_leaderboard_history(user_id)
 
 
