@@ -1,7 +1,4 @@
-package controllers	
-
-import (
-)
+package controllers
 
 // Controllers holds all initialized controllers
 type Controllers struct {
@@ -11,4 +8,5 @@ type Controllers struct {
 	Session      *SessionController
 	Content      *ContentController
 	Notification *NotificationController
+	Lesson       *LessonController
 }

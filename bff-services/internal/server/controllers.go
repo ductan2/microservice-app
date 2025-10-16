@@ -29,5 +29,9 @@ func initControllers(deps Deps) *controllers.Controllers {
 		ctrl.Notification = controllers.NewNotificationController(deps.NotificationService)
 	}
 
+	if deps.LessonService != nil {
+		ctrl.Lesson = controllers.NewLessonController(deps.LessonService)
+	}
+
 	return ctrl
 }

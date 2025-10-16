@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
+	"bff-services/internal/api/dto"
 	"bff-services/internal/types"
 )
 
@@ -17,6 +19,18 @@ import (
 type LessonService interface {
 	GetUserPoints(ctx context.Context, userID string) (*types.HTTPResponse, error)
 	GetUserStreak(ctx context.Context, userID string) (*types.HTTPResponse, error)
+	GetDailyActivityToday(ctx context.Context, token string) (*types.HTTPResponse, error)
+	GetDailyActivityByDate(ctx context.Context, token, activityDate string) (*types.HTTPResponse, error)
+	GetDailyActivityRange(ctx context.Context, token, dateFrom, dateTo string) (*types.HTTPResponse, error)
+	GetDailyActivityWeek(ctx context.Context, token string) (*types.HTTPResponse, error)
+	GetDailyActivityMonth(ctx context.Context, token, year, month string) (*types.HTTPResponse, error)
+	GetDailyActivitySummary(ctx context.Context, token string) (*types.HTTPResponse, error)
+	IncrementDailyActivity(ctx context.Context, token string, payload dto.DailyActivityIncrementRequest) (*types.HTTPResponse, error)
+	GetUserPreferences(ctx context.Context, token string) (*types.HTTPResponse, error)
+	CreateUserPreferences(ctx context.Context, token string, payload dto.DimUserCreateRequest) (*types.HTTPResponse, error)
+	UpdateUserPreferences(ctx context.Context, token string, payload dto.DimUserUpdateRequest) (*types.HTTPResponse, error)
+	UpdateUserLocale(ctx context.Context, token string, payload dto.DimUserLocaleUpdateRequest) (*types.HTTPResponse, error)
+	DeleteUserPreferences(ctx context.Context, token string) (*types.HTTPResponse, error)
 }
 
 // LessonServiceClient implements LessonService against a remote HTTP REST endpoint.
@@ -51,6 +65,80 @@ func (c *LessonServiceClient) GetUserStreak(ctx context.Context, userID string) 
 	}
 	path := "/api/streaks/user/" + userID
 	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
+}
+
+func (c *LessonServiceClient) GetDailyActivityToday(ctx context.Context, token string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodGet, "/api/daily-activity/user/me/today", nil, authHeader(token))
+}
+
+func (c *LessonServiceClient) GetDailyActivityByDate(ctx context.Context, token, activityDate string) (*types.HTTPResponse, error) {
+	if activityDate == "" {
+		return nil, fmt.Errorf("activity date is required")
+	}
+	path := "/api/daily-activity/user/me/date/" + activityDate
+	return c.doRequest(ctx, http.MethodGet, path, nil, authHeader(token))
+}
+
+func (c *LessonServiceClient) GetDailyActivityRange(ctx context.Context, token, dateFrom, dateTo string) (*types.HTTPResponse, error) {
+	path := "/api/daily-activity/user/me/range"
+	query := url.Values{}
+	if dateFrom != "" {
+		query.Add("date_from", dateFrom)
+	}
+	if dateTo != "" {
+		query.Add("date_to", dateTo)
+	}
+	if len(query) > 0 {
+		path += "?" + query.Encode()
+	}
+	return c.doRequest(ctx, http.MethodGet, path, nil, authHeader(token))
+}
+
+func (c *LessonServiceClient) GetDailyActivityWeek(ctx context.Context, token string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodGet, "/api/daily-activity/user/me/week", nil, authHeader(token))
+}
+
+func (c *LessonServiceClient) GetDailyActivityMonth(ctx context.Context, token, year, month string) (*types.HTTPResponse, error) {
+	path := "/api/daily-activity/user/me/month"
+	query := url.Values{}
+	if year != "" {
+		query.Add("year", year)
+	}
+	if month != "" {
+		query.Add("month", month)
+	}
+	if len(query) > 0 {
+		path += "?" + query.Encode()
+	}
+	return c.doRequest(ctx, http.MethodGet, path, nil, authHeader(token))
+}
+
+func (c *LessonServiceClient) GetDailyActivitySummary(ctx context.Context, token string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodGet, "/api/daily-activity/user/me/stats/summary", nil, authHeader(token))
+}
+
+func (c *LessonServiceClient) IncrementDailyActivity(ctx context.Context, token string, payload dto.DailyActivityIncrementRequest) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/daily-activity/increment", payload, authHeader(token))
+}
+
+func (c *LessonServiceClient) GetUserPreferences(ctx context.Context, token string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodGet, "/api/users/me", nil, authHeader(token))
+}
+
+func (c *LessonServiceClient) CreateUserPreferences(ctx context.Context, token string, payload dto.DimUserCreateRequest) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/users", payload, authHeader(token))
+}
+
+func (c *LessonServiceClient) UpdateUserPreferences(ctx context.Context, token string, payload dto.DimUserUpdateRequest) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPut, "/api/users/me", payload, authHeader(token))
+}
+
+func (c *LessonServiceClient) UpdateUserLocale(ctx context.Context, token string, payload dto.DimUserLocaleUpdateRequest) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPatch, "/api/users/me/locale", payload, authHeader(token))
+}
+
+func (c *LessonServiceClient) DeleteUserPreferences(ctx context.Context, token string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodDelete, "/api/users/me", nil, authHeader(token))
 }
 
 func (c *LessonServiceClient) doRequest(ctx context.Context, method, path string, payload interface{}, headers http.Header) (*types.HTTPResponse, error) {
@@ -99,4 +187,13 @@ func (c *LessonServiceClient) doRequest(ctx context.Context, method, path string
 		Body:       respBody,
 		Headers:    resp.Header.Clone(),
 	}, nil
+}
+
+func authHeader(token string) http.Header {
+	if strings.TrimSpace(token) == "" {
+		return nil
+	}
+	header := http.Header{}
+	header.Set("Authorization", "Bearer "+strings.TrimSpace(token))
+	return header
 }
