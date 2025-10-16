@@ -57,6 +57,7 @@ func setupAPIRoutes(r *gin.Engine, controllers *controllers.Controllers, session
 	routes.SetupMFARoutes(api, controllers)
 	routes.SetupSessionRoutes(api, controllers)
 	routes.SetupContentRoutes(api, controllers)
+	routes.SetupLessonRoutes(api, controllers, sessionCache)
 	routes.SetupUserRoutes(api, controllers, sessionCache)
 	routes.SetupNotificationRoutes(api, controllers)
 }
