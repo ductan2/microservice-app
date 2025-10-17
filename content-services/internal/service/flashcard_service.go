@@ -20,6 +20,7 @@ type FlashcardService interface {
 
 	// Cards
 	AddCard(ctx context.Context, setID uuid.UUID, card *models.Flashcard) (*models.Flashcard, error)
+	GetCardByID(ctx context.Context, id uuid.UUID) (*models.Flashcard, error)
 	UpdateCard(ctx context.Context, id uuid.UUID, updates *models.Flashcard) (*models.Flashcard, error)
 	ReorderCards(ctx context.Context, setID uuid.UUID, cardIDs []uuid.UUID) ([]models.Flashcard, error)
 	DeleteCard(ctx context.Context, id uuid.UUID) error
@@ -137,6 +138,10 @@ func (s *flashcardService) AddCard(ctx context.Context, setID uuid.UUID, card *m
 		return nil, err
 	}
 	return card, nil
+}
+
+func (s *flashcardService) GetCardByID(ctx context.Context, id uuid.UUID) (*models.Flashcard, error) {
+	return s.cardRepo.GetByID(ctx, id)
 }
 
 func (s *flashcardService) UpdateCard(ctx context.Context, id uuid.UUID, updates *models.Flashcard) (*models.Flashcard, error) {

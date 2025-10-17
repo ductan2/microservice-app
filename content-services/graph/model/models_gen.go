@@ -533,6 +533,23 @@ type UpdateCourseLessonInput struct {
 	IsRequired *bool `json:"isRequired,omitempty"`
 }
 
+type UpdateFlashcardInput struct {
+	FrontText    *string  `json:"frontText,omitempty"`
+	BackText     *string  `json:"backText,omitempty"`
+	FrontMediaID *string  `json:"frontMediaId,omitempty"`
+	BackMediaID  *string  `json:"backMediaId,omitempty"`
+	Ord          *int     `json:"ord,omitempty"`
+	Hints        []string `json:"hints,omitempty"`
+}
+
+type UpdateFlashcardSetInput struct {
+	Title       *string `json:"title,omitempty"`
+	Description *string `json:"description,omitempty"`
+	TopicID     *string `json:"topicId,omitempty"`
+	LevelID     *string `json:"levelId,omitempty"`
+	CreatedBy   *string `json:"createdBy,omitempty"`
+}
+
 type UpdateFolderInput struct {
 	Name string `json:"name"`
 }

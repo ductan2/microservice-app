@@ -284,6 +284,8 @@ type ComplexityRoot struct {
 		CreateTopic          func(childComplexity int, input model.CreateTopicInput) int
 		DeleteCourse         func(childComplexity int, id string) int
 		DeleteCourseReview   func(childComplexity int, courseID string) int
+		DeleteFlashcard      func(childComplexity int, id string) int
+		DeleteFlashcardSet   func(childComplexity int, id string) int
 		DeleteFolder         func(childComplexity int, id string) int
 		DeleteLesson         func(childComplexity int, id string) int
 		DeleteLessonSection  func(childComplexity int, id string) int
@@ -303,6 +305,8 @@ type ComplexityRoot struct {
 		UnpublishLesson      func(childComplexity int, id string) int
 		UpdateCourse         func(childComplexity int, id string, input model.UpdateCourseInput) int
 		UpdateCourseLesson   func(childComplexity int, id string, input model.UpdateCourseLessonInput) int
+		UpdateFlashcard      func(childComplexity int, id string, input model.UpdateFlashcardInput) int
+		UpdateFlashcardSet   func(childComplexity int, id string, input model.UpdateFlashcardSetInput) int
 		UpdateFolder         func(childComplexity int, id string, input model.UpdateFolderInput) int
 		UpdateLesson         func(childComplexity int, id string, input model.UpdateLessonInput) int
 		UpdateLessonSection  func(childComplexity int, id string, input model.UpdateLessonSectionInput) int
@@ -486,7 +490,11 @@ type MutationResolver interface {
 	UpdateLessonSection(ctx context.Context, id string, input model.UpdateLessonSectionInput) (*model.LessonSection, error)
 	DeleteLessonSection(ctx context.Context, id string) (bool, error)
 	CreateFlashcardSet(ctx context.Context, input model.CreateFlashcardSetInput) (*model.FlashcardSet, error)
+	UpdateFlashcardSet(ctx context.Context, id string, input model.UpdateFlashcardSetInput) (*model.FlashcardSet, error)
+	DeleteFlashcardSet(ctx context.Context, id string) (bool, error)
 	AddFlashcard(ctx context.Context, input model.AddFlashcardInput) (*model.Flashcard, error)
+	UpdateFlashcard(ctx context.Context, id string, input model.UpdateFlashcardInput) (*model.Flashcard, error)
+	DeleteFlashcard(ctx context.Context, id string) (bool, error)
 	CreateQuiz(ctx context.Context, input model.CreateQuizInput) (*model.Quiz, error)
 	UpdateQuiz(ctx context.Context, id string, input model.UpdateQuizInput) (*model.Quiz, error)
 	DeleteQuiz(ctx context.Context, id string) (bool, error)
@@ -1641,6 +1649,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteCourseReview(childComplexity, args["courseId"].(string)), true
+	case "Mutation.deleteFlashcard":
+		if e.complexity.Mutation.DeleteFlashcard == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteFlashcard_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteFlashcard(childComplexity, args["id"].(string)), true
+	case "Mutation.deleteFlashcardSet":
+		if e.complexity.Mutation.DeleteFlashcardSet == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteFlashcardSet_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteFlashcardSet(childComplexity, args["id"].(string)), true
 	case "Mutation.deleteFolder":
 		if e.complexity.Mutation.DeleteFolder == nil {
 			break
@@ -1850,6 +1880,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateCourseLesson(childComplexity, args["id"].(string), args["input"].(model.UpdateCourseLessonInput)), true
+	case "Mutation.updateFlashcard":
+		if e.complexity.Mutation.UpdateFlashcard == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateFlashcard_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateFlashcard(childComplexity, args["id"].(string), args["input"].(model.UpdateFlashcardInput)), true
+	case "Mutation.updateFlashcardSet":
+		if e.complexity.Mutation.UpdateFlashcardSet == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateFlashcardSet_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateFlashcardSet(childComplexity, args["id"].(string), args["input"].(model.UpdateFlashcardSetInput)), true
 	case "Mutation.updateFolder":
 		if e.complexity.Mutation.UpdateFolder == nil {
 			break
@@ -2596,6 +2648,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSubmitCourseReviewInput,
 		ec.unmarshalInputUpdateCourseInput,
 		ec.unmarshalInputUpdateCourseLessonInput,
+		ec.unmarshalInputUpdateFlashcardInput,
+		ec.unmarshalInputUpdateFlashcardSetInput,
 		ec.unmarshalInputUpdateFolderInput,
 		ec.unmarshalInputUpdateLessonInput,
 		ec.unmarshalInputUpdateLessonSectionInput,
@@ -2792,7 +2846,11 @@ type Mutation {
   deleteLessonSection(id: ID!): Boolean!
 
   createFlashcardSet(input: CreateFlashcardSetInput!): FlashcardSet!
+  updateFlashcardSet(id: ID!, input: UpdateFlashcardSetInput!): FlashcardSet!
+  deleteFlashcardSet(id: ID!): Boolean!
   addFlashcard(input: AddFlashcardInput!): Flashcard!
+  updateFlashcard(id: ID!, input: UpdateFlashcardInput!): Flashcard!
+  deleteFlashcard(id: ID!): Boolean!
 
   createQuiz(input: CreateQuizInput!): Quiz!
   updateQuiz(id: ID!, input: UpdateQuizInput!): Quiz!
@@ -3402,12 +3460,29 @@ input CreateFlashcardSetInput {
   createdBy: ID
 }
 
+input UpdateFlashcardSetInput {
+  title: String
+  description: String
+  topicId: ID
+  levelId: ID
+  createdBy: ID
+}
+
 input AddFlashcardInput {
   setId: ID!
   frontText: String!
   backText: String!
   frontMediaId: ID
   backMediaId: ID
+  hints: [String!]
+}
+
+input UpdateFlashcardInput {
+  frontText: String
+  backText: String
+  frontMediaId: ID
+  backMediaId: ID
+  ord: Int
   hints: [String!]
 }
 
@@ -3684,6 +3759,28 @@ func (ec *executionContext) field_Mutation_deleteCourse_args(ctx context.Context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteFlashcardSet_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteFlashcard_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteFolder_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3901,6 +3998,38 @@ func (ec *executionContext) field_Mutation_updateCourse_args(ctx context.Context
 	}
 	args["id"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateCourseInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateCourseInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateFlashcardSet_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateFlashcardSetInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateFlashcardSetInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateFlashcard_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateFlashcardInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateFlashcardInput)
 	if err != nil {
 		return nil, err
 	}
@@ -11308,6 +11437,112 @@ func (ec *executionContext) fieldContext_Mutation_createFlashcardSet(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateFlashcardSet(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateFlashcardSet,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateFlashcardSet(ctx, fc.Args["id"].(string), fc.Args["input"].(model.UpdateFlashcardSetInput))
+		},
+		nil,
+		ec.marshalNFlashcardSet2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcardSet,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateFlashcardSet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_FlashcardSet_id(ctx, field)
+			case "title":
+				return ec.fieldContext_FlashcardSet_title(ctx, field)
+			case "description":
+				return ec.fieldContext_FlashcardSet_description(ctx, field)
+			case "topicId":
+				return ec.fieldContext_FlashcardSet_topicId(ctx, field)
+			case "topic":
+				return ec.fieldContext_FlashcardSet_topic(ctx, field)
+			case "levelId":
+				return ec.fieldContext_FlashcardSet_levelId(ctx, field)
+			case "level":
+				return ec.fieldContext_FlashcardSet_level(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_FlashcardSet_createdAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_FlashcardSet_createdBy(ctx, field)
+			case "tags":
+				return ec.fieldContext_FlashcardSet_tags(ctx, field)
+			case "cards":
+				return ec.fieldContext_FlashcardSet_cards(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type FlashcardSet", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateFlashcardSet_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteFlashcardSet(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteFlashcardSet,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteFlashcardSet(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteFlashcardSet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteFlashcardSet_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_addFlashcard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -11363,6 +11598,108 @@ func (ec *executionContext) fieldContext_Mutation_addFlashcard(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_addFlashcard_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateFlashcard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateFlashcard,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateFlashcard(ctx, fc.Args["id"].(string), fc.Args["input"].(model.UpdateFlashcardInput))
+		},
+		nil,
+		ec.marshalNFlashcard2ᚖcontentᚑservicesᚋgraphᚋmodelᚐFlashcard,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateFlashcard(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Flashcard_id(ctx, field)
+			case "setId":
+				return ec.fieldContext_Flashcard_setId(ctx, field)
+			case "frontText":
+				return ec.fieldContext_Flashcard_frontText(ctx, field)
+			case "backText":
+				return ec.fieldContext_Flashcard_backText(ctx, field)
+			case "frontMediaId":
+				return ec.fieldContext_Flashcard_frontMediaId(ctx, field)
+			case "backMediaId":
+				return ec.fieldContext_Flashcard_backMediaId(ctx, field)
+			case "ord":
+				return ec.fieldContext_Flashcard_ord(ctx, field)
+			case "hints":
+				return ec.fieldContext_Flashcard_hints(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Flashcard_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Flashcard", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateFlashcard_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteFlashcard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteFlashcard,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteFlashcard(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteFlashcard(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteFlashcard_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -18125,6 +18462,123 @@ func (ec *executionContext) unmarshalInputUpdateCourseLessonInput(ctx context.Co
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateFlashcardInput(ctx context.Context, obj any) (model.UpdateFlashcardInput, error) {
+	var it model.UpdateFlashcardInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"frontText", "backText", "frontMediaId", "backMediaId", "ord", "hints"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "frontText":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("frontText"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FrontText = data
+		case "backText":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backText"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BackText = data
+		case "frontMediaId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("frontMediaId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FrontMediaID = data
+		case "backMediaId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backMediaId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BackMediaID = data
+		case "ord":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ord"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Ord = data
+		case "hints":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hints"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Hints = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateFlashcardSetInput(ctx context.Context, obj any) (model.UpdateFlashcardSetInput, error) {
+	var it model.UpdateFlashcardSetInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"title", "description", "topicId", "levelId", "createdBy"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "topicId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("topicId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TopicID = data
+		case "levelId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("levelId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LevelID = data
+		case "createdBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdBy"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedBy = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateFolderInput(ctx context.Context, obj any) (model.UpdateFolderInput, error) {
 	var it model.UpdateFolderInput
 	asMap := map[string]any{}
@@ -20604,9 +21058,37 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "updateFlashcardSet":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateFlashcardSet(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteFlashcardSet":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteFlashcardSet(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "addFlashcard":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_addFlashcard(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateFlashcard":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateFlashcard(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteFlashcard":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteFlashcard(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -23856,6 +24338,16 @@ func (ec *executionContext) unmarshalNUpdateCourseInput2contentᚑservicesᚋgra
 
 func (ec *executionContext) unmarshalNUpdateCourseLessonInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateCourseLessonInput(ctx context.Context, v any) (model.UpdateCourseLessonInput, error) {
 	res, err := ec.unmarshalInputUpdateCourseLessonInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateFlashcardInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateFlashcardInput(ctx context.Context, v any) (model.UpdateFlashcardInput, error) {
+	res, err := ec.unmarshalInputUpdateFlashcardInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateFlashcardSetInput2contentᚑservicesᚋgraphᚋmodelᚐUpdateFlashcardSetInput(ctx context.Context, v any) (model.UpdateFlashcardSetInput, error) {
+	res, err := ec.unmarshalInputUpdateFlashcardSetInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
