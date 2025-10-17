@@ -88,7 +88,11 @@ type Mutation {
   deleteLessonSection(id: ID!): Boolean!
 
   createFlashcardSet(input: CreateFlashcardSetInput!): FlashcardSet!
+  updateFlashcardSet(id: ID!, input: UpdateFlashcardSetInput!): FlashcardSet!
+  deleteFlashcardSet(id: ID!): Boolean!
   addFlashcard(input: AddFlashcardInput!): Flashcard!
+  updateFlashcard(id: ID!, input: UpdateFlashcardInput!): Flashcard!
+  deleteFlashcard(id: ID!): Boolean!
 
   createQuiz(input: CreateQuizInput!): Quiz!
   updateQuiz(id: ID!, input: UpdateQuizInput!): Quiz!
@@ -698,12 +702,29 @@ input CreateFlashcardSetInput {
   createdBy: ID
 }
 
+input UpdateFlashcardSetInput {
+  title: String
+  description: String
+  topicId: ID
+  levelId: ID
+  createdBy: ID
+}
+
 input AddFlashcardInput {
   setId: ID!
   frontText: String!
   backText: String!
   frontMediaId: ID
   backMediaId: ID
+  hints: [String!]
+}
+
+input UpdateFlashcardInput {
+  frontText: String
+  backText: String
+  frontMediaId: ID
+  backMediaId: ID
+  ord: Int
   hints: [String!]
 }
 
