@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"bff-services/internal/api/dto"
+	middleware "bff-services/internal/middlewares"
 	"bff-services/internal/services"
 	"bff-services/internal/utils"
 
@@ -51,7 +52,7 @@ func (p *PasswordController) ConfirmReset(c *gin.Context) {
 }
 
 func (p *PasswordController) ChangePassword(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
@@ -62,7 +63,7 @@ func (p *PasswordController) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	resp, err := p.userService.ChangePassword(c.Request.Context(), token, req)
+	resp, err := p.userService.ChangePassword(c.Request.Context(), userID, email, sessionID, req)
 	if err != nil {
 		utils.Fail(c, "Unable to change password", http.StatusBadGateway, err.Error())
 		return

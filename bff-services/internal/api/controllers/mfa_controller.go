@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"bff-services/internal/api/dto"
+	middleware "bff-services/internal/middlewares"
 	"bff-services/internal/services"
 	"bff-services/internal/utils"
 
@@ -19,7 +20,7 @@ func NewMFAController(userService services.UserService) *MFAController {
 }
 
 func (m *MFAController) Setup(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
@@ -30,7 +31,7 @@ func (m *MFAController) Setup(c *gin.Context) {
 		return
 	}
 
-	resp, err := m.userService.SetupMFA(c.Request.Context(), token, req)
+	resp, err := m.userService.SetupMFA(c.Request.Context(), userID, email, sessionID, req)
 	if err != nil {
 		utils.Fail(c, "Unable to setup MFA", http.StatusBadGateway, err.Error())
 		return
@@ -40,7 +41,7 @@ func (m *MFAController) Setup(c *gin.Context) {
 }
 
 func (m *MFAController) Verify(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
@@ -51,7 +52,7 @@ func (m *MFAController) Verify(c *gin.Context) {
 		return
 	}
 
-	resp, err := m.userService.VerifyMFA(c.Request.Context(), token, req)
+	resp, err := m.userService.VerifyMFA(c.Request.Context(), userID, email, sessionID, req)
 	if err != nil {
 		utils.Fail(c, "Unable to verify MFA", http.StatusBadGateway, err.Error())
 		return
@@ -61,7 +62,7 @@ func (m *MFAController) Verify(c *gin.Context) {
 }
 
 func (m *MFAController) Disable(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
@@ -72,7 +73,7 @@ func (m *MFAController) Disable(c *gin.Context) {
 		return
 	}
 
-	resp, err := m.userService.DisableMFA(c.Request.Context(), token, req)
+	resp, err := m.userService.DisableMFA(c.Request.Context(), userID, email, sessionID, req)
 	if err != nil {
 		utils.Fail(c, "Unable to disable MFA", http.StatusBadGateway, err.Error())
 		return
@@ -82,12 +83,12 @@ func (m *MFAController) Disable(c *gin.Context) {
 }
 
 func (m *MFAController) Methods(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
 
-	resp, err := m.userService.GetMFAMethods(c.Request.Context(), token)
+	resp, err := m.userService.GetMFAMethods(c.Request.Context(), userID, email, sessionID)
 	if err != nil {
 		utils.Fail(c, "Unable to fetch MFA methods", http.StatusBadGateway, err.Error())
 		return

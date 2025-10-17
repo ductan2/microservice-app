@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -52,12 +53,44 @@ func GetNotificationServiceURL() string {
 	return "http://localhost:8003"
 }
 
-// GetCORSOrigin returns allowed CORS origin from env CORS_URL; default http://localhost:3000
-func GetCORSOrigin() string {
-	if v := os.Getenv("CORS_URL"); v != "" {
-		return v
+// GetCORSOrigins returns allowed CORS origins from env CORS_URLS (comma-separated)
+// Falls back to single env CORS_URL, then default http://localhost:3000.
+func GetCORSOrigins() []string {
+	// Highest priority: CORS_URLS (comma-separated)
+	if v := os.Getenv("CORS_URLS"); v != "" {
+		parts := strings.Split(v, ",")
+		allowed := make([]string, 0, len(parts))
+		for _, p := range parts {
+			trimmed := strings.TrimSpace(p)
+			if trimmed != "" {
+				allowed = append(allowed, trimmed)
+			}
+		}
+		if len(allowed) > 0 {
+			return allowed
+		}
 	}
-	return "http://localhost:3000"
+
+	// Next: legacy/single CORS_URL
+	if v := os.Getenv("CORS_URL"); v != "" {
+		return []string{v}
+	}
+
+	// Default
+	return []string{"http://localhost:3000"}
+}
+
+// IsOriginAllowed checks whether the provided origin is in the configured allowlist.
+func IsOriginAllowed(origin string) bool {
+	if origin == "" {
+		return false
+	}
+	for _, allowed := range GetCORSOrigins() {
+		if origin == allowed {
+			return true
+		}
+	}
+	return false
 }
 
 // Redis

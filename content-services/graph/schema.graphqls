@@ -624,7 +624,9 @@ type FlashcardSet {
   title: String!
   description: String
   topicId: ID
+  topic: Topic
   levelId: ID
+  level: Level
   createdAt: Time!
   createdBy: ID
   tags: [Tag!]!

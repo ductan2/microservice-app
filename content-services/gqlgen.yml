@@ -57,6 +57,10 @@ models:
         resolver: true
   FlashcardSet:
     fields:
+      topic:
+        resolver: true
+      level:
+        resolver: true
       cards:
         resolver: true
       tags:

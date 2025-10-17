@@ -20,12 +20,12 @@ func NewLessonController(lessonService services.LessonService) *LessonController
 }
 
 func (l *LessonController) GetDailyActivityToday(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
 
-	resp, err := l.lessonService.GetDailyActivityToday(c.Request.Context(), token)
+	resp, err := l.lessonService.GetDailyActivityToday(c.Request.Context(), userID, email, sessionID)
 	if err != nil {
 		utils.Fail(c, "Unable to fetch today's activity", http.StatusBadGateway, err.Error())
 		return
@@ -35,7 +35,7 @@ func (l *LessonController) GetDailyActivityToday(c *gin.Context) {
 }
 
 func (l *LessonController) GetDailyActivityByDate(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
@@ -46,7 +46,7 @@ func (l *LessonController) GetDailyActivityByDate(c *gin.Context) {
 		return
 	}
 
-	resp, err := l.lessonService.GetDailyActivityByDate(c.Request.Context(), token, activityDate)
+	resp, err := l.lessonService.GetDailyActivityByDate(c.Request.Context(), userID, email, sessionID, activityDate)
 	if err != nil {
 		utils.Fail(c, "Unable to fetch activity", http.StatusBadGateway, err.Error())
 		return
@@ -56,14 +56,14 @@ func (l *LessonController) GetDailyActivityByDate(c *gin.Context) {
 }
 
 func (l *LessonController) GetDailyActivityRange(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
 
 	resp, err := l.lessonService.GetDailyActivityRange(
 		c.Request.Context(),
-		token,
+		userID, email, sessionID,
 		c.Query("date_from"),
 		c.Query("date_to"),
 	)
@@ -76,12 +76,12 @@ func (l *LessonController) GetDailyActivityRange(c *gin.Context) {
 }
 
 func (l *LessonController) GetDailyActivityWeek(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
 
-	resp, err := l.lessonService.GetDailyActivityWeek(c.Request.Context(), token)
+	resp, err := l.lessonService.GetDailyActivityWeek(c.Request.Context(), userID, email, sessionID)
 	if err != nil {
 		utils.Fail(c, "Unable to fetch weekly activity", http.StatusBadGateway, err.Error())
 		return
@@ -91,14 +91,14 @@ func (l *LessonController) GetDailyActivityWeek(c *gin.Context) {
 }
 
 func (l *LessonController) GetDailyActivityMonth(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
 
 	resp, err := l.lessonService.GetDailyActivityMonth(
 		c.Request.Context(),
-		token,
+		userID, email, sessionID,
 		c.Query("year"),
 		c.Query("month"),
 	)
@@ -111,12 +111,12 @@ func (l *LessonController) GetDailyActivityMonth(c *gin.Context) {
 }
 
 func (l *LessonController) GetDailyActivitySummary(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
 
-	resp, err := l.lessonService.GetDailyActivitySummary(c.Request.Context(), token)
+	resp, err := l.lessonService.GetDailyActivitySummary(c.Request.Context(), userID, email, sessionID)
 	if err != nil {
 		utils.Fail(c, "Unable to fetch activity summary", http.StatusBadGateway, err.Error())
 		return
@@ -126,7 +126,7 @@ func (l *LessonController) GetDailyActivitySummary(c *gin.Context) {
 }
 
 func (l *LessonController) IncrementDailyActivity(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
@@ -137,7 +137,7 @@ func (l *LessonController) IncrementDailyActivity(c *gin.Context) {
 		return
 	}
 
-	resp, err := l.lessonService.IncrementDailyActivity(c.Request.Context(), token, req)
+	resp, err := l.lessonService.IncrementDailyActivity(c.Request.Context(), userID, email, sessionID, req)
 	if err != nil {
 		utils.Fail(c, "Unable to update activity", http.StatusBadGateway, err.Error())
 		return
@@ -147,12 +147,12 @@ func (l *LessonController) IncrementDailyActivity(c *gin.Context) {
 }
 
 func (l *LessonController) GetUserPreferences(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
 
-	resp, err := l.lessonService.GetUserPreferences(c.Request.Context(), token)
+	resp, err := l.lessonService.GetUserPreferences(c.Request.Context(), userID, email, sessionID)
 	if err != nil {
 		utils.Fail(c, "Unable to fetch user preferences", http.StatusBadGateway, err.Error())
 		return
@@ -162,12 +162,7 @@ func (l *LessonController) GetUserPreferences(c *gin.Context) {
 }
 
 func (l *LessonController) CreateUserPreferences(c *gin.Context) {
-	token, ok := requireBearerToken(c)
-	if !ok {
-		return
-	}
-
-	userID, _, _, ok := middleware.GetUserContextFromMiddleware(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
@@ -179,7 +174,7 @@ func (l *LessonController) CreateUserPreferences(c *gin.Context) {
 	}
 	req.UserID = userID
 
-	resp, err := l.lessonService.CreateUserPreferences(c.Request.Context(), token, req)
+	resp, err := l.lessonService.CreateUserPreferences(c.Request.Context(), userID, email, sessionID, req)
 	if err != nil {
 		utils.Fail(c, "Unable to create user preferences", http.StatusBadGateway, err.Error())
 		return
@@ -189,7 +184,7 @@ func (l *LessonController) CreateUserPreferences(c *gin.Context) {
 }
 
 func (l *LessonController) UpdateUserPreferences(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
@@ -205,7 +200,7 @@ func (l *LessonController) UpdateUserPreferences(c *gin.Context) {
 		return
 	}
 
-	resp, err := l.lessonService.UpdateUserPreferences(c.Request.Context(), token, req)
+	resp, err := l.lessonService.UpdateUserPreferences(c.Request.Context(), userID, email, sessionID, req)
 	if err != nil {
 		utils.Fail(c, "Unable to update user preferences", http.StatusBadGateway, err.Error())
 		return
@@ -215,7 +210,7 @@ func (l *LessonController) UpdateUserPreferences(c *gin.Context) {
 }
 
 func (l *LessonController) UpdateUserLocale(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
@@ -226,7 +221,7 @@ func (l *LessonController) UpdateUserLocale(c *gin.Context) {
 		return
 	}
 
-	resp, err := l.lessonService.UpdateUserLocale(c.Request.Context(), token, req)
+	resp, err := l.lessonService.UpdateUserLocale(c.Request.Context(), userID, email, sessionID, req)
 	if err != nil {
 		utils.Fail(c, "Unable to update user locale", http.StatusBadGateway, err.Error())
 		return
@@ -236,12 +231,12 @@ func (l *LessonController) UpdateUserLocale(c *gin.Context) {
 }
 
 func (l *LessonController) DeleteUserPreferences(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
 
-	resp, err := l.lessonService.DeleteUserPreferences(c.Request.Context(), token)
+	resp, err := l.lessonService.DeleteUserPreferences(c.Request.Context(), userID, email, sessionID)
 	if err != nil {
 		utils.Fail(c, "Unable to delete user preferences", http.StatusBadGateway, err.Error())
 		return

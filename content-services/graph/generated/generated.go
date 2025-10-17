@@ -151,9 +151,11 @@ type ComplexityRoot struct {
 		CreatedBy   func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
+		Level       func(childComplexity int) int
 		LevelID     func(childComplexity int) int
 		Tags        func(childComplexity int) int
 		Title       func(childComplexity int) int
+		Topic       func(childComplexity int) int
 		TopicID     func(childComplexity int) int
 	}
 
@@ -429,6 +431,10 @@ type CourseLessonResolver interface {
 	Lesson(ctx context.Context, obj *model.CourseLesson) (*model.Lesson, error)
 }
 type FlashcardSetResolver interface {
+	Topic(ctx context.Context, obj *model.FlashcardSet) (*model.Topic, error)
+
+	Level(ctx context.Context, obj *model.FlashcardSet) (*model.Level, error)
+
 	Tags(ctx context.Context, obj *model.FlashcardSet) ([]*model.Tag, error)
 	Cards(ctx context.Context, obj *model.FlashcardSet) ([]*model.Flashcard, error)
 }
@@ -978,6 +984,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.FlashcardSet.ID(childComplexity), true
+	case "FlashcardSet.level":
+		if e.complexity.FlashcardSet.Level == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSet.Level(childComplexity), true
 	case "FlashcardSet.levelId":
 		if e.complexity.FlashcardSet.LevelID == nil {
 			break
@@ -996,6 +1008,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.FlashcardSet.Title(childComplexity), true
+	case "FlashcardSet.topic":
+		if e.complexity.FlashcardSet.Topic == nil {
+			break
+		}
+
+		return e.complexity.FlashcardSet.Topic(childComplexity), true
 	case "FlashcardSet.topicId":
 		if e.complexity.FlashcardSet.TopicID == nil {
 			break
@@ -3310,7 +3328,9 @@ type FlashcardSet {
   title: String!
   description: String
   topicId: ID
+  topic: Topic
   levelId: ID
+  level: Level
   createdAt: Time!
   createdBy: ID
   tags: [Tag!]!
@@ -6783,6 +6803,45 @@ func (ec *executionContext) fieldContext_FlashcardSet_topicId(_ context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _FlashcardSet_topic(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSet_topic,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.FlashcardSet().Topic(ctx, obj)
+		},
+		nil,
+		ec.marshalOTopic2ᚖcontentᚑservicesᚋgraphᚋmodelᚐTopic,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSet_topic(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSet",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Topic_id(ctx, field)
+			case "slug":
+				return ec.fieldContext_Topic_slug(ctx, field)
+			case "name":
+				return ec.fieldContext_Topic_name(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Topic_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Topic", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _FlashcardSet_levelId(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSet) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6807,6 +6866,43 @@ func (ec *executionContext) fieldContext_FlashcardSet_levelId(_ context.Context,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FlashcardSet_level(ctx context.Context, field graphql.CollectedField, obj *model.FlashcardSet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FlashcardSet_level,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.FlashcardSet().Level(ctx, obj)
+		},
+		nil,
+		ec.marshalOLevel2ᚖcontentᚑservicesᚋgraphᚋmodelᚐLevel,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_FlashcardSet_level(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FlashcardSet",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Level_id(ctx, field)
+			case "code":
+				return ec.fieldContext_Level_code(ctx, field)
+			case "name":
+				return ec.fieldContext_Level_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Level", field.Name)
 		},
 	}
 	return fc, nil
@@ -6988,8 +7084,12 @@ func (ec *executionContext) fieldContext_FlashcardSetList_items(_ context.Contex
 				return ec.fieldContext_FlashcardSet_description(ctx, field)
 			case "topicId":
 				return ec.fieldContext_FlashcardSet_topicId(ctx, field)
+			case "topic":
+				return ec.fieldContext_FlashcardSet_topic(ctx, field)
 			case "levelId":
 				return ec.fieldContext_FlashcardSet_levelId(ctx, field)
+			case "level":
+				return ec.fieldContext_FlashcardSet_level(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_FlashcardSet_createdAt(ctx, field)
 			case "createdBy":
@@ -11176,8 +11276,12 @@ func (ec *executionContext) fieldContext_Mutation_createFlashcardSet(ctx context
 				return ec.fieldContext_FlashcardSet_description(ctx, field)
 			case "topicId":
 				return ec.fieldContext_FlashcardSet_topicId(ctx, field)
+			case "topic":
+				return ec.fieldContext_FlashcardSet_topic(ctx, field)
 			case "levelId":
 				return ec.fieldContext_FlashcardSet_levelId(ctx, field)
+			case "level":
+				return ec.fieldContext_FlashcardSet_level(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_FlashcardSet_createdAt(ctx, field)
 			case "createdBy":
@@ -13064,8 +13168,12 @@ func (ec *executionContext) fieldContext_Query_flashcardSet(ctx context.Context,
 				return ec.fieldContext_FlashcardSet_description(ctx, field)
 			case "topicId":
 				return ec.fieldContext_FlashcardSet_topicId(ctx, field)
+			case "topic":
+				return ec.fieldContext_FlashcardSet_topic(ctx, field)
 			case "levelId":
 				return ec.fieldContext_FlashcardSet_levelId(ctx, field)
+			case "level":
+				return ec.fieldContext_FlashcardSet_level(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_FlashcardSet_createdAt(ctx, field)
 			case "createdBy":
@@ -19129,8 +19237,74 @@ func (ec *executionContext) _FlashcardSet(ctx context.Context, sel ast.Selection
 			out.Values[i] = ec._FlashcardSet_description(ctx, field, obj)
 		case "topicId":
 			out.Values[i] = ec._FlashcardSet_topicId(ctx, field, obj)
+		case "topic":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._FlashcardSet_topic(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "levelId":
 			out.Values[i] = ec._FlashcardSet_levelId(ctx, field, obj)
+		case "level":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._FlashcardSet_level(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "createdAt":
 			out.Values[i] = ec._FlashcardSet_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

@@ -11,25 +11,25 @@ import (
 	"strings"
 	"time"
 
-	"bff-services/internal/types"
 	"bff-services/internal/api/dto"
+	"bff-services/internal/types"
 )
 
 type UserService interface {
 	Register(ctx context.Context, payload dto.RegisterRequest) (*types.HTTPResponse, error)
 	Login(ctx context.Context, payload dto.LoginRequest, userAgent, clientIP string) (*types.HTTPResponse, error)
-	Logout(ctx context.Context, token string) (*types.HTTPResponse, error)
+	Logout(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
 	VerifyEmail(ctx context.Context, token string) (*types.HTTPResponse, error)
 	RequestPasswordReset(ctx context.Context, payload dto.PasswordResetRequest) (*types.HTTPResponse, error)
 	ConfirmPasswordReset(ctx context.Context, payload dto.PasswordResetConfirmRequest) (*types.HTTPResponse, error)
-	ChangePassword(ctx context.Context, token string, payload dto.ChangePasswordRequest) (*types.HTTPResponse, error)
-	SetupMFA(ctx context.Context, token string, payload dto.MFASetupRequest) (*types.HTTPResponse, error)
-	VerifyMFA(ctx context.Context, token string, payload dto.MFAVerifyRequest) (*types.HTTPResponse, error)
-	DisableMFA(ctx context.Context, token string, payload dto.MFADisableRequest) (*types.HTTPResponse, error)
-	GetMFAMethods(ctx context.Context, token string) (*types.HTTPResponse, error)
-	GetSessions(ctx context.Context, token string) (*types.HTTPResponse, error)
-	DeleteSession(ctx context.Context, token, sessionID string) (*types.HTTPResponse, error)
-	RevokeAllSessions(ctx context.Context, token string) (*types.HTTPResponse, error)
+	ChangePassword(ctx context.Context, userID, email, sessionID string, payload dto.ChangePasswordRequest) (*types.HTTPResponse, error)
+	SetupMFA(ctx context.Context, userID, email, sessionID string, payload dto.MFASetupRequest) (*types.HTTPResponse, error)
+	VerifyMFA(ctx context.Context, userID, email, sessionID string, payload dto.MFAVerifyRequest) (*types.HTTPResponse, error)
+	DisableMFA(ctx context.Context, userID, email, sessionID string, payload dto.MFADisableRequest) (*types.HTTPResponse, error)
+	GetMFAMethods(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
+	GetSessions(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
+	DeleteSession(ctx context.Context, userID, email, sessionID, deleteSessionID string) (*types.HTTPResponse, error)
+	RevokeAllSessions(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
 	GetUsers(ctx context.Context, page, pageSize, status, search, userID, email, sessionID string) (*types.HTTPResponse, error)
 	GetUserById(ctx context.Context, userID, email, sessionID, UserFindID string) (*types.HTTPResponse, error)
 	// New methods for internal communication with user context
@@ -42,7 +42,6 @@ type UserServiceClient struct {
 	baseURL    string
 	httpClient *http.Client
 }
-
 
 func NewUserServiceClient(baseURL string, httpClient *http.Client) *UserServiceClient {
 	trimmed := strings.TrimRight(baseURL, "/")
@@ -70,8 +69,8 @@ func (c *UserServiceClient) Login(ctx context.Context, payload dto.LoginRequest,
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/login", payload, headers)
 }
 
-func (c *UserServiceClient) Logout(ctx context.Context, token string) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/logout", nil, authHeader(token))
+func (c *UserServiceClient) Logout(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/logout", nil, internalAuthHeaders(userID, email, sessionID))
 }
 
 func (c *UserServiceClient) VerifyEmail(ctx context.Context, token string) (*types.HTTPResponse, error) {
@@ -91,40 +90,40 @@ func (c *UserServiceClient) ConfirmPasswordReset(ctx context.Context, payload dt
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/password/reset/confirm", payload, nil)
 }
 
-func (c *UserServiceClient) ChangePassword(ctx context.Context, token string, payload dto.ChangePasswordRequest) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/password/change", payload, authHeader(token))
+func (c *UserServiceClient) ChangePassword(ctx context.Context, userID, email, sessionID string, payload dto.ChangePasswordRequest) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/users/password/change", payload, internalAuthHeaders(userID, email, sessionID))
 }
 
-func (c *UserServiceClient) SetupMFA(ctx context.Context, token string, payload dto.MFASetupRequest) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/mfa/setup", payload, authHeader(token))
+func (c *UserServiceClient) SetupMFA(ctx context.Context, userID, email, sessionID string, payload dto.MFASetupRequest) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/mfa/setup", payload, internalAuthHeaders(userID, email, sessionID))
 }
 
-func (c *UserServiceClient) VerifyMFA(ctx context.Context, token string, payload dto.MFAVerifyRequest) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/mfa/verify", payload, authHeader(token))
+func (c *UserServiceClient) VerifyMFA(ctx context.Context, userID, email, sessionID string, payload dto.MFAVerifyRequest) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/mfa/verify", payload, internalAuthHeaders(userID, email, sessionID))
 }
 
-func (c *UserServiceClient) DisableMFA(ctx context.Context, token string, payload dto.MFADisableRequest) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/mfa/disable", payload, authHeader(token))
+func (c *UserServiceClient) DisableMFA(ctx context.Context, userID, email, sessionID string, payload dto.MFADisableRequest) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/mfa/disable", payload, internalAuthHeaders(userID, email, sessionID))
 }
 
-func (c *UserServiceClient) GetMFAMethods(ctx context.Context, token string) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodGet, "/api/v1/mfa/methods", nil, authHeader(token))
+func (c *UserServiceClient) GetMFAMethods(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodGet, "/api/v1/mfa/methods", nil, internalAuthHeaders(userID, email, sessionID))
 }
 
-func (c *UserServiceClient) GetSessions(ctx context.Context, token string) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodGet, "/api/v1/sessions", nil, authHeader(token))
+func (c *UserServiceClient) GetSessions(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodGet, "/api/v1/sessions", nil, internalAuthHeaders(userID, email, sessionID))
 }
 
-func (c *UserServiceClient) DeleteSession(ctx context.Context, token, sessionID string) (*types.HTTPResponse, error) {
-	if sessionID == "" {
+func (c *UserServiceClient) DeleteSession(ctx context.Context, userID, email, sessionID, deleteSessionID string) (*types.HTTPResponse, error) {
+	if deleteSessionID == "" {
 		return nil, fmt.Errorf("session id is required")
 	}
-	path := "/api/v1/sessions/" + sessionID
-	return c.doRequest(ctx, http.MethodDelete, path, nil, authHeader(token))
+	path := "/api/v1/sessions/" + deleteSessionID
+	return c.doRequest(ctx, http.MethodDelete, path, nil, internalAuthHeaders(userID, email, sessionID))
 }
 
-func (c *UserServiceClient) RevokeAllSessions(ctx context.Context, token string) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/sessions/revoke-all", nil, authHeader(token))
+func (c *UserServiceClient) RevokeAllSessions(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/sessions/revoke-all", nil, internalAuthHeaders(userID, email, sessionID))
 }
 
 func (c *UserServiceClient) GetUsers(ctx context.Context, page, pageSize, status, search, userID, email, sessionID string) (*types.HTTPResponse, error) {
@@ -199,15 +198,6 @@ func (c *UserServiceClient) doRequest(ctx context.Context, method, path string, 
 		Body:       respBody,
 		Headers:    resp.Header.Clone(),
 	}, nil
-}
-
-func authHeader(token string) http.Header {
-	if token == "" {
-		return nil
-	}
-	header := http.Header{}
-	header.Set("Authorization", "Bearer "+token)
-	return header
 }
 
 // internalAuthHeaders creates headers for internal microservice communication

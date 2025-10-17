@@ -16,7 +16,7 @@ func (r *flashcardSetResolver) Cards(ctx context.Context, obj *model.FlashcardSe
 	}
 
 	setID, err := uuid.Parse(obj.ID)
-	if err != nil {	
+	if err != nil {
 		return nil, gqlerror.Errorf("invalid flashcard set id")
 	}
 
@@ -26,6 +26,30 @@ func (r *flashcardSetResolver) Cards(ctx context.Context, obj *model.FlashcardSe
 	}
 
 	return mapFlashcards(cards), nil
+}
+
+// Topic is the resolver for the topic field.
+func (r *flashcardSetResolver) Topic(ctx context.Context, obj *model.FlashcardSet) (*model.Topic, error) {
+	if r.Taxonomy == nil || obj.TopicID == nil || *obj.TopicID == "" {
+		return nil, nil
+	}
+	topic, err := r.Taxonomy.GetTopicByID(ctx, *obj.TopicID)
+	if err != nil {
+		return nil, mapTaxonomyError("topic", err)
+	}
+	return mapTopic(topic), nil
+}
+
+// Level is the resolver for the level field.
+func (r *flashcardSetResolver) Level(ctx context.Context, obj *model.FlashcardSet) (*model.Level, error) {
+	if r.Taxonomy == nil || obj.LevelID == nil || *obj.LevelID == "" {
+		return nil, nil
+	}
+	level, err := r.Taxonomy.GetLevelByID(ctx, *obj.LevelID)
+	if err != nil {
+		return nil, mapTaxonomyError("level", err)
+	}
+	return mapLevel(level), nil
 }
 
 // FlashcardSet returns generated.FlashcardSetResolver implementation.

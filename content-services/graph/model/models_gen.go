@@ -239,7 +239,9 @@ type FlashcardSet struct {
 	Title       string       `json:"title"`
 	Description *string      `json:"description,omitempty"`
 	TopicID     *string      `json:"topicId,omitempty"`
+	Topic       *Topic       `json:"topic,omitempty"`
 	LevelID     *string      `json:"levelId,omitempty"`
+	Level       *Level       `json:"level,omitempty"`
 	CreatedAt   time.Time    `json:"createdAt"`
 	CreatedBy   *string      `json:"createdBy,omitempty"`
 	Tags        []*Tag       `json:"tags"`

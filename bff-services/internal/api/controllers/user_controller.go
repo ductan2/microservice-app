@@ -59,12 +59,12 @@ func (u *UserController) Login(c *gin.Context) {
 }
 
 func (u *UserController) Logout(c *gin.Context) {
-	token, ok := requireBearerToken(c)
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
 		return
 	}
 
-	resp, err := u.userService.Logout(c.Request.Context(), token)
+	resp, err := u.userService.Logout(c.Request.Context(), userID, email, sessionID)
 	if err != nil {
 		utils.Fail(c, "Unable to logout", http.StatusBadGateway, err.Error())
 		return
@@ -330,4 +330,3 @@ func (u *UserController) UpdateUserRole(ctx *gin.Context) {
 
 	respondWithServiceResponse(ctx, userResp)
 }
-
