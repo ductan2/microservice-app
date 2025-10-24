@@ -226,3 +226,10 @@ class QuizAttemptService:
             .first()
         )
 
+    def get_quiz_attempts_by_user_id(self, user_id: UUID) -> List[QuizAttempt]:
+        return (
+            self.db.query(QuizAttempt)
+            .filter(QuizAttempt.user_id == user_id)
+            .order_by(desc(QuizAttempt.submitted_at), desc(QuizAttempt.started_at))
+            .all()
+        )

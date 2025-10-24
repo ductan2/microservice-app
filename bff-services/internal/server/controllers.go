@@ -33,5 +33,9 @@ func initControllers(deps Deps) *controllers.Controllers {
 		ctrl.Lesson = controllers.NewLessonController(deps.LessonService)
 	}
 
+	if deps.QuizAttemptService != nil {
+		ctrl.QuizAttempt = controllers.NewQuizAttemptController(deps.QuizAttemptService)
+	}
+
 	return ctrl
 }

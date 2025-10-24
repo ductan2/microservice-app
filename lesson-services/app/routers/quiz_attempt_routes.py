@@ -15,7 +15,7 @@ from app.services.quiz_attempt_service import QuizAttemptService
 from app.middlewares.auth_middleware import get_current_user_id
 
 
-router = APIRouter(prefix="/api/quiz-attempts", tags=["Quiz Attempts"])
+router = APIRouter(prefix="/quiz-attempts", tags=["Quiz Attempts"])
 
 
 def get_quiz_attempt_service(db: Session = Depends(get_db)) -> QuizAttemptService:
@@ -57,6 +57,13 @@ def submit_quiz_attempt(
     if not refreshed:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz attempt not found")
     return QuizAttemptDetailResponse.model_validate(refreshed, from_attributes=True)
+
+@router.get("/user/{user_id}", response_model=List[QuizAttemptResponse])
+def get_quiz_attempts_by_user_id(
+    user_id: UUID,
+    service: QuizAttemptService = Depends(get_quiz_attempt_service),
+) -> List[QuizAttemptResponse]:
+    return service.get_quiz_attempts_by_user_id(user_id)
 
 
 @router.get("/user/me/quiz/{quiz_id}", response_model=List[QuizAttemptResponse])

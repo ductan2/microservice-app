@@ -9,4 +9,5 @@ type Controllers struct {
 	Content      *ContentController
 	Notification *NotificationController
 	Lesson       *LessonController
+	QuizAttempt  *QuizAttemptController
 }

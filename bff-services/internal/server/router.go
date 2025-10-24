@@ -13,6 +13,7 @@ type Deps struct {
 	UserService         services.UserService
 	ContentService      services.ContentService
 	LessonService       services.LessonService
+	QuizAttemptService  services.QuizAttemptService
 	NotificationService services.NotificationService
 	SessionCache        *cache.SessionCache
 }
@@ -58,6 +59,7 @@ func setupAPIRoutes(r *gin.Engine, controllers *controllers.Controllers, session
 	routes.SetupSessionRoutes(api, controllers)
 	routes.SetupContentRoutes(api, controllers)
 	routes.SetupLessonRoutes(api, controllers, sessionCache)
+	routes.SetupQuizAttemptRoutes(api, controllers, sessionCache)
 	routes.SetupUserRoutes(api, controllers, sessionCache)
 	routes.SetupNotificationRoutes(api, controllers)
 }

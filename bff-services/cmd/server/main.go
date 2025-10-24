@@ -46,6 +46,7 @@ func main() {
 	userService := services.NewUserServiceClient(config.GetUserServiceURL(), nil)
 	contentService := services.NewContentServiceClient(config.GetContentServiceURL(), nil)
 	lessonService := services.NewLessonServiceClient(config.GetLessonServiceURL(), nil)
+	quizAttemptService := services.NewQuizAttemptServiceClient(config.GetLessonServiceURL(), nil)
 	notificationService := services.NewNotificationServiceClient(config.GetNotificationServiceURL(), nil)
 
 	addr := ":" + port
@@ -53,6 +54,7 @@ func main() {
 		UserService:         userService,
 		ContentService:      contentService,
 		LessonService:       lessonService,
+		QuizAttemptService:  quizAttemptService,
 		NotificationService: notificationService,
 		SessionCache:        sessionCache,
 	})
