@@ -16,7 +16,7 @@ from app.services.user_points_service import UserPointsService
 from app.middlewares.auth_middleware import get_current_user_id
 
 
-router = APIRouter(prefix="/api/points", tags=["User Points"])
+router = APIRouter(prefix="/progress/points", tags=["User Points"])
 
 
 def get_user_points_service(db: Session = Depends(get_db)) -> UserPointsService:
@@ -29,6 +29,14 @@ def get_user_points(
     service: UserPointsService = Depends(get_user_points_service),
 ) -> UserPointsResponse:
     return service.get_or_create_points(user_id)
+
+
+@router.get("/user/{target_user_id}", response_model=UserPointsResponse)
+def get_user_points_by_id(
+    target_user_id: UUID,
+    service: UserPointsService = Depends(get_user_points_service),
+) -> UserPointsResponse:
+    return service.get_or_create_points(target_user_id)
 
 
 @router.post("/user/me/add", response_model=UserPointsResponse)

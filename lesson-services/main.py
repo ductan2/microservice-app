@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.middlewares.auth_middleware import InternalAuthRequired
 from app.routers import (
     daily_activity_routes,
-    dim_user_routes,
     health_routes,
     leaderboard_routes,
     outbox_routes,
@@ -37,7 +36,6 @@ app.add_middleware(InternalAuthRequired)
 
 app.include_router(health_routes.router, prefix="/api/v1", tags=["health"])
 app.include_router(daily_activity_routes.router, prefix="/api/v1", tags=["daily-activity"])
-app.include_router(dim_user_routes.router, prefix="/api/v1", tags=["dim-user"])
 app.include_router(leaderboard_routes.router, prefix="/api/v1", tags=["leaderboard"])
 app.include_router(outbox_routes.router, prefix="/api/v1", tags=["outbox"])
 app.include_router(progress_event_routes.router, prefix="/api/v1", tags=["progress-event"])

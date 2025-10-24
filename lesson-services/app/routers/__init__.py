@@ -5,7 +5,6 @@ Contains all API route definitions organized by feature.
 
 from . import (
     daily_activity_routes,
-    dim_user_routes,
     health_routes,
     leaderboard_routes,
     outbox_routes,
@@ -21,7 +20,6 @@ from . import (
 
 __all__ = [
     "daily_activity_routes",
-    "dim_user_routes", 
     "health_routes",
     "leaderboard_routes",
     "outbox_routes",

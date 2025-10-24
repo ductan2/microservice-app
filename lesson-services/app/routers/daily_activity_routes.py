@@ -17,7 +17,7 @@ from app.services.daily_activity_service import DailyActivityService
 from app.middlewares.auth_middleware import get_current_user_id
 
 
-router = APIRouter(prefix="/api/daily-activity", tags=["Daily Activity"])
+router = APIRouter(prefix="/progress/daily-activity", tags=["Daily Activity"])
 
 
 def get_daily_activity_service(db: Session = Depends(get_db)) -> DailyActivityService:
@@ -150,4 +150,3 @@ def increment_activity(
         ) from exc
 
     return DailyActivityResponse.model_validate(activity)
-

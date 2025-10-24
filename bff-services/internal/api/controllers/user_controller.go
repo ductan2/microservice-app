@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -75,6 +76,7 @@ func (u *UserController) Logout(c *gin.Context) {
 
 func (u *UserController) VerifyEmail(c *gin.Context) {
 	token := c.Query("token")
+	fmt.Println("token", token)
 	if token == "" {
 		utils.Fail(c, "Verification token is required", http.StatusBadRequest, "missing token")
 		return

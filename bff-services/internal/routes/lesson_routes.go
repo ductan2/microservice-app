@@ -13,8 +13,10 @@ func SetupLessonRoutes(api *gin.RouterGroup, controllers *controllers.Controller
 		return
 	}
 
-	daily := api.Group("/daily-activity")
-	daily.Use(middleware.AuthRequired(sessionCache))
+	progress := api.Group("/progress")
+	progress.Use(middleware.AuthRequired(sessionCache))
+
+	daily := progress.Group("/daily-activity")
 	{
 		daily.GET("/user/me/today", controllers.Lesson.GetDailyActivityToday)
 		daily.GET("/user/me/date/:activity_date", controllers.Lesson.GetDailyActivityByDate)
@@ -23,15 +25,5 @@ func SetupLessonRoutes(api *gin.RouterGroup, controllers *controllers.Controller
 		daily.GET("/user/me/month", controllers.Lesson.GetDailyActivityMonth)
 		daily.GET("/user/me/stats/summary", controllers.Lesson.GetDailyActivitySummary)
 		daily.POST("/increment", controllers.Lesson.IncrementDailyActivity)
-	}
-
-	dimUser := api.Group("/users")
-	dimUser.Use(middleware.AuthRequired(sessionCache))
-	{
-		dimUser.GET("/me", controllers.Lesson.GetUserPreferences)
-		dimUser.POST("", controllers.Lesson.CreateUserPreferences)
-		dimUser.PUT("/me", controllers.Lesson.UpdateUserPreferences)
-		dimUser.PATCH("/me/locale", controllers.Lesson.UpdateUserLocale)
-		dimUser.DELETE("/me", controllers.Lesson.DeleteUserPreferences)
 	}
 }

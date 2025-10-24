@@ -16,7 +16,7 @@ from app.services.user_streak_service import UserStreakService
 from app.middlewares.auth_middleware import get_current_user_id
 
 
-router = APIRouter(prefix="/api/streaks", tags=["User Streaks"])
+router = APIRouter(prefix="/progress/streaks", tags=["User Streaks"])
 
 
 def get_user_streak_service(db: Session = Depends(get_db)) -> UserStreakService:
@@ -29,6 +29,14 @@ def get_user_streak(
     service: UserStreakService = Depends(get_user_streak_service),
 ) -> UserStreakResponse:
     return service.get_or_create_streak(user_id)
+
+
+@router.get("/user/{target_user_id}", response_model=UserStreakResponse)
+def get_user_streak_by_id(
+    target_user_id: UUID,
+    service: UserStreakService = Depends(get_user_streak_service),
+) -> UserStreakResponse:
+    return service.get_or_create_streak(target_user_id)
 
 
 @router.post("/user/me/check", response_model=UserStreakResponse)

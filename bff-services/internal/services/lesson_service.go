@@ -26,11 +26,6 @@ type LessonService interface {
 	GetDailyActivityMonth(ctx context.Context, userID, email, sessionID, year, month string) (*types.HTTPResponse, error)
 	GetDailyActivitySummary(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
 	IncrementDailyActivity(ctx context.Context, userID, email, sessionID string, payload dto.DailyActivityIncrementRequest) (*types.HTTPResponse, error)
-	GetUserPreferences(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
-	CreateUserPreferences(ctx context.Context, userID, email, sessionID string, payload dto.DimUserCreateRequest) (*types.HTTPResponse, error)
-	UpdateUserPreferences(ctx context.Context, userID, email, sessionID string, payload dto.DimUserUpdateRequest) (*types.HTTPResponse, error)
-	UpdateUserLocale(ctx context.Context, userID, email, sessionID string, payload dto.DimUserLocaleUpdateRequest) (*types.HTTPResponse, error)
-	DeleteUserPreferences(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
 }
 
 // LessonServiceClient implements LessonService against a remote HTTP REST endpoint.
@@ -55,7 +50,7 @@ func (c *LessonServiceClient) GetUserPoints(ctx context.Context, userID string) 
 	if userID == "" {
 		return nil, fmt.Errorf("user ID is required")
 	}
-	path := "/api/points/user/" + userID
+	path := "/api/v1/progress/points/user/" + userID
 	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
 }
 
@@ -63,24 +58,24 @@ func (c *LessonServiceClient) GetUserStreak(ctx context.Context, userID string) 
 	if userID == "" {
 		return nil, fmt.Errorf("user ID is required")
 	}
-	path := "/api/streaks/user/" + userID
+	path := "/api/v1/progress/streaks/user/" + userID
 	return c.doRequest(ctx, http.MethodGet, path, nil, nil)
 }
 
 func (c *LessonServiceClient) GetDailyActivityToday(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodGet, "/api/daily-activity/user/me/today", nil, internalAuthHeaders(userID, email, sessionID))
+	return c.doRequest(ctx, http.MethodGet, "/api/v1/progress/daily-activity/user/me/today", nil, internalAuthHeaders(userID, email, sessionID))
 }
 
 func (c *LessonServiceClient) GetDailyActivityByDate(ctx context.Context, userID, email, sessionID, activityDate string) (*types.HTTPResponse, error) {
 	if activityDate == "" {
 		return nil, fmt.Errorf("activity date is required")
 	}
-	path := "/api/daily-activity/user/me/date/" + activityDate
+	path := "/api/v1/progress/daily-activity/user/me/date/" + activityDate
 	return c.doRequest(ctx, http.MethodGet, path, nil, internalAuthHeaders(userID, email, sessionID))
 }
 
 func (c *LessonServiceClient) GetDailyActivityRange(ctx context.Context, userID, email, sessionID, dateFrom, dateTo string) (*types.HTTPResponse, error) {
-	path := "/api/daily-activity/user/me/range"
+	path := "/api/v1/progress/daily-activity/user/me/range"
 	query := url.Values{}
 	if dateFrom != "" {
 		query.Add("date_from", dateFrom)
@@ -95,11 +90,11 @@ func (c *LessonServiceClient) GetDailyActivityRange(ctx context.Context, userID,
 }
 
 func (c *LessonServiceClient) GetDailyActivityWeek(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodGet, "/api/daily-activity/user/me/week", nil, internalAuthHeaders(userID, email, sessionID))
+	return c.doRequest(ctx, http.MethodGet, "/api/v1/progress/daily-activity/user/me/week", nil, internalAuthHeaders(userID, email, sessionID))
 }
 
 func (c *LessonServiceClient) GetDailyActivityMonth(ctx context.Context, userID, email, sessionID, year, month string) (*types.HTTPResponse, error) {
-	path := "/api/daily-activity/user/me/month"
+	path := "/api/v1/progress/daily-activity/user/me/month"
 	query := url.Values{}
 	if year != "" {
 		query.Add("year", year)
@@ -114,31 +109,11 @@ func (c *LessonServiceClient) GetDailyActivityMonth(ctx context.Context, userID,
 }
 
 func (c *LessonServiceClient) GetDailyActivitySummary(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodGet, "/api/daily-activity/user/me/stats/summary", nil, internalAuthHeaders(userID, email, sessionID))
+	return c.doRequest(ctx, http.MethodGet, "/api/v1/progress/daily-activity/user/me/stats/summary", nil, internalAuthHeaders(userID, email, sessionID))
 }
 
 func (c *LessonServiceClient) IncrementDailyActivity(ctx context.Context, userID, email, sessionID string, payload dto.DailyActivityIncrementRequest) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/daily-activity/increment", payload, internalAuthHeaders(userID, email, sessionID))
-}
-
-func (c *LessonServiceClient) GetUserPreferences(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodGet, "/api/users/me", nil, internalAuthHeaders(userID, email, sessionID))
-}
-
-func (c *LessonServiceClient) CreateUserPreferences(ctx context.Context, userID, email, sessionID string, payload dto.DimUserCreateRequest) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/users", payload, internalAuthHeaders(userID, email, sessionID))
-}
-
-func (c *LessonServiceClient) UpdateUserPreferences(ctx context.Context, userID, email, sessionID string, payload dto.DimUserUpdateRequest) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPut, "/api/users/me", payload, internalAuthHeaders(userID, email, sessionID))
-}
-
-func (c *LessonServiceClient) UpdateUserLocale(ctx context.Context, userID, email, sessionID string, payload dto.DimUserLocaleUpdateRequest) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPatch, "/api/users/me/locale", payload, internalAuthHeaders(userID, email, sessionID))
-}
-
-func (c *LessonServiceClient) DeleteUserPreferences(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodDelete, "/api/users/me", nil, internalAuthHeaders(userID, email, sessionID))
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/progress/daily-activity/increment", payload, internalAuthHeaders(userID, email, sessionID))
 }
 
 
