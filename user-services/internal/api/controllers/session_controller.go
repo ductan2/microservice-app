@@ -108,3 +108,19 @@ func (c *SessionController) RevokeAllSessions(ctx *gin.Context) {
 
 	ctx.Status(http.StatusNoContent)
 }
+
+func (c *SessionController) ListSessionsByUserID(ctx *gin.Context) {
+	userID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		utils.Fail(ctx, "Invalid user ID", http.StatusBadRequest, err.Error())
+		return
+	}
+
+	sessions, err := c.sessionService.GetUserSessions(ctx.Request.Context(), userID)
+	if err != nil {
+		utils.Fail(ctx, "Failed to retrieve sessions", http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.Success(ctx, sessions)
+}

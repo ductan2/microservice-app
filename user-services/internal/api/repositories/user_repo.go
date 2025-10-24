@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"user-services/internal/models"
@@ -135,7 +136,7 @@ func (r *userRepository) UpdateLastLogin(ctx context.Context, userID uuid.UUID, 
 	} else {
 		updates["last_login_ip"] = nil
 	}
-
+	fmt.Println("updates", updates)
 	return r.DB.WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", userID).

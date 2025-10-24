@@ -2,7 +2,10 @@ package services
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"math"
+	"time"
 
 	"user-services/internal/api/dto"
 	"user-services/internal/api/repositories"
@@ -12,7 +15,13 @@ import (
 type UserService interface {
 	ListUsers(ctx context.Context, req dto.ListUsersRequest) (*dto.PaginatedResponse, error)
 	UpdateUserRole(ctx context.Context, userID string, role string) (dto.PublicUser, error)
+	LockAccount(ctx context.Context, userID string, reason string) (dto.PublicUser, error)
+	UnlockAccount(ctx context.Context, userID string, reason string) (dto.PublicUser, error)
+	SoftDeleteAccount(ctx context.Context, userID string, reason string) (dto.PublicUser, error)
+	RestoreAccount(ctx context.Context, userID string, reason string) (dto.PublicUser, error)
 }
+
+var ErrUserDeleted = errors.New("user is deleted")
 
 type userService struct {
 	userRepo repositories.UserRepository
@@ -105,6 +114,110 @@ func (s *userService) UpdateUserRole(ctx context.Context, userID string, role st
 	}
 
 	user.Role = role
+	if err := s.userRepo.UpdateUser(ctx, &user); err != nil {
+		return dto.PublicUser{}, err
+	}
+
+	return toPublicUser(user), nil
+}
+
+func (s *userService) LockAccount(ctx context.Context, userID string, reason string) (dto.PublicUser, error) {
+	if reason != "" {
+		// TODO: integrate reason with audit logging
+	}
+
+	user, err := s.userRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return dto.PublicUser{}, err
+	}
+
+	if user.Status == models.StatusDeleted {
+		return dto.PublicUser{}, ErrUserDeleted
+	}
+
+	if user.Status != models.StatusLocked {
+		user.Status = models.StatusLocked
+		user.LockoutUntil = sql.NullTime{}
+
+		if err := s.userRepo.UpdateUser(ctx, &user); err != nil {
+			return dto.PublicUser{}, err
+		}
+	}
+
+	return toPublicUser(user), nil
+}
+
+func (s *userService) UnlockAccount(ctx context.Context, userID string, reason string) (dto.PublicUser, error) {
+	if reason != "" {
+		// TODO: integrate reason with audit logging
+	}
+
+	user, err := s.userRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return dto.PublicUser{}, err
+	}
+
+	if user.Status == models.StatusDeleted {
+		return dto.PublicUser{}, ErrUserDeleted
+	}
+
+	if user.Status != models.StatusActive {
+		user.Status = models.StatusActive
+		user.LockoutUntil = sql.NullTime{}
+
+		if err := s.userRepo.UpdateUser(ctx, &user); err != nil {
+			return dto.PublicUser{}, err
+		}
+	}
+
+	return toPublicUser(user), nil
+}
+
+func (s *userService) SoftDeleteAccount(ctx context.Context, userID string, reason string) (dto.PublicUser, error) {
+	if reason != "" {
+		// TODO: integrate reason with audit logging
+	}
+
+	user, err := s.userRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return dto.PublicUser{}, err
+	}
+
+	if user.Status == models.StatusDeleted && user.DeletedAt.Valid {
+		return toPublicUser(user), nil
+	}
+
+	user.Status = models.StatusDeleted
+	user.DeletedAt = sql.NullTime{
+		Time:  time.Now().UTC(),
+		Valid: true,
+	}
+
+	if err := s.userRepo.UpdateUser(ctx, &user); err != nil {
+		return dto.PublicUser{}, err
+	}
+
+	return toPublicUser(user), nil
+}
+
+func (s *userService) RestoreAccount(ctx context.Context, userID string, reason string) (dto.PublicUser, error) {
+	if reason != "" {
+		// TODO: integrate reason with audit logging
+	}
+
+	user, err := s.userRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return dto.PublicUser{}, err
+	}
+
+	if !user.DeletedAt.Valid && user.Status != models.StatusDeleted {
+		return toPublicUser(user), nil
+	}
+
+	user.Status = models.StatusActive
+	user.DeletedAt = sql.NullTime{}
+	user.LockoutUntil = sql.NullTime{}
+
 	if err := s.userRepo.UpdateUser(ctx, &user); err != nil {
 		return dto.PublicUser{}, err
 	}

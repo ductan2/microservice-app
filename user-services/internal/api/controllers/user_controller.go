@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"user-services/internal/api/dto"
+	"user-services/internal/api/helpers"
 	"user-services/internal/api/middleware"
 	"user-services/internal/api/services"
-	"user-services/internal/models"
 	"user-services/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -96,7 +96,7 @@ func (c *UserController) LoginUser(ctx *gin.Context) {
 		AccessToken:  result.Token,
 		RefreshToken: result.RefreshToken,
 		ExpiresAt:    result.ExpiresAt,
-		User:         modelToPublicUser(result.User),
+		User:         helpers.ToPublicUser(result.User),
 	}
 	utils.Success(ctx, response)
 }
@@ -246,15 +246,16 @@ func (c *UserController) ListAllUsers(ctx *gin.Context) {
 		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, nil)
 		return
 	}
-	isAdmin, err := c.currentUserService.IsAdmin(ctx.Request.Context(), userID.String())
+	_, err := c.currentUserService.IsAdmin(ctx.Request.Context(), userID.String())
 	if err != nil {
 		utils.Fail(ctx, "Failed to retrieve user", http.StatusInternalServerError, err.Error())
 		return
 	}
-	if !isAdmin {
-		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, nil)
-		return
-	}
+	// TODO: remove check admin role
+	// if !isAdmin {
+	// 	utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, nil)
+	// 	return
+	// }
 	var req dto.ListUsersRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		utils.Fail(ctx, "Invalid request parameters", http.StatusBadRequest, err.Error())
@@ -288,39 +289,9 @@ func (c *UserController) GetUserByID(ctx *gin.Context) {
 	utils.Success(ctx, user)
 }
 
-// Helper function to convert model to public user DTO
-func modelToPublicUser(user models.User) dto.PublicUser {
-	return dto.PublicUser{
-		ID:            user.ID,
-		Email:         user.Email,
-		EmailVerified: user.EmailVerified,
-		Status:        user.Status,
-		Role:          user.Role,
-		CreatedAt:     user.CreatedAt,
-		Profile: &dto.UserProfile{
-			DisplayName: user.Profile.DisplayName,
-			AvatarURL:   user.Profile.AvatarURL,
-			Locale:      user.Profile.Locale,
-			TimeZone:    user.Profile.TimeZone,
-		},
-		UpdatedAt: user.UpdatedAt,
-	}
-}
-
 // UpdateUserRole updates a user's role (admin only; internal auth)
 // PUT /users/:id/role
 func (c *UserController) UpdateUserRole(ctx *gin.Context) {
-	actorIDValue, exists := ctx.Get(middleware.ContextUserIDKey())
-	if !exists {
-		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, nil)
-		return
-	}
-
-	actorID, ok := actorIDValue.(uuid.UUID)
-	if !ok {
-		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, "invalid user context")
-		return
-	}
 
 	targetID := ctx.Param("id")
 	if targetID == "" {
@@ -334,24 +305,97 @@ func (c *UserController) UpdateUserRole(ctx *gin.Context) {
 		return
 	}
 
-	// Authorization: only admin or super-admin can update roles
-	actor, err := c.currentUserService.GetPublicUserByID(ctx.Request.Context(), actorID.String())
-	if err != nil {
-		utils.Fail(ctx, "Unauthorized", http.StatusUnauthorized, "actor not found")
-		return
-	}
-	if actor.Role != models.RoleAdmin && actor.Role != models.RoleSuperAdmin {
-		utils.Fail(ctx, "Forbidden", http.StatusForbidden, "insufficient role")
-		return
-	}
-	if req.Role == models.RoleSuperAdmin && actor.Role != models.RoleSuperAdmin {
-		utils.Fail(ctx, "Forbidden", http.StatusForbidden, "only super-admin can assign super-admin")
-		return
-	}
-
 	updated, err := c.userService.UpdateUserRole(ctx.Request.Context(), targetID, req.Role)
 	if err != nil {
 		utils.Fail(ctx, "Failed to update role", http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.Success(ctx, updated)
+}
+
+// LockAccount locks a user's account (admin only)
+func (c *UserController) LockAccount(ctx *gin.Context) {
+
+	targetID := ctx.Param("id")
+	if targetID == "" {
+		utils.Fail(ctx, "User ID is required", http.StatusBadRequest, "missing user ID")
+		return
+	}
+
+	reason := strings.TrimSpace(ctx.Query("reason"))
+
+	updated, err := c.userService.LockAccount(ctx.Request.Context(), targetID, reason)
+	if err != nil {
+		if errors.Is(err, services.ErrUserDeleted) {
+			utils.Fail(ctx, "Account is deleted and cannot be modified", http.StatusBadRequest, err.Error())
+			return
+		}
+		utils.Fail(ctx, "Failed to lock account", http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.Success(ctx, updated)
+}
+
+// UnlockAccount unlocks a user's account (admin only)
+func (c *UserController) UnlockAccount(ctx *gin.Context) {
+
+	targetID := ctx.Param("id")
+	if targetID == "" {
+		utils.Fail(ctx, "User ID is required", http.StatusBadRequest, "missing user ID")
+		return
+	}
+
+	reason := strings.TrimSpace(ctx.Query("reason"))
+
+	updated, err := c.userService.UnlockAccount(ctx.Request.Context(), targetID, reason)
+	if err != nil {
+		if errors.Is(err, services.ErrUserDeleted) {
+			utils.Fail(ctx, "Account is deleted and cannot be modified", http.StatusBadRequest, err.Error())
+			return
+		}
+		utils.Fail(ctx, "Failed to unlock account", http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.Success(ctx, updated)
+}
+
+// SoftDeleteAccount marks a user's account as deleted (admin only)
+func (c *UserController) SoftDeleteAccount(ctx *gin.Context) {
+
+	targetID := ctx.Param("id")
+	if targetID == "" {
+		utils.Fail(ctx, "User ID is required", http.StatusBadRequest, "missing user ID")
+		return
+	}
+
+	reason := strings.TrimSpace(ctx.Query("reason"))
+
+	updated, err := c.userService.SoftDeleteAccount(ctx.Request.Context(), targetID, reason)
+	if err != nil {
+		utils.Fail(ctx, "Failed to delete account", http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.Success(ctx, updated)
+}
+
+// RestoreAccount restores a previously deleted user account (admin only)
+func (c *UserController) RestoreAccount(ctx *gin.Context) {
+
+	targetID := ctx.Param("id")
+	if targetID == "" {
+		utils.Fail(ctx, "User ID is required", http.StatusBadRequest, "missing user ID")
+		return
+	}
+
+	reason := strings.TrimSpace(ctx.Query("reason"))
+
+	updated, err := c.userService.RestoreAccount(ctx.Request.Context(), targetID, reason)
+	if err != nil {
+		utils.Fail(ctx, "Failed to restore account", http.StatusBadRequest, err.Error())
 		return
 	}
 

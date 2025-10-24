@@ -68,3 +68,24 @@ func (s *SessionController) RevokeAll(c *gin.Context) {
 
 	respondWithServiceResponse(c, resp)
 }
+
+func (s *SessionController) ListByUserID(c *gin.Context) {
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
+	if !ok {
+		return
+	}
+
+	targetUserID := c.Param("id")
+	if targetUserID == "" {
+		utils.Fail(c, "User ID is required", http.StatusBadRequest, "missing user ID")
+		return
+	}
+
+	resp, err := s.userService.ListSessionsByUserID(c.Request.Context(), targetUserID, userID, email, sessionID)
+	if err != nil {
+		utils.Fail(c, "Unable to fetch sessions", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(c, resp)
+}

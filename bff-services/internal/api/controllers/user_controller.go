@@ -332,3 +332,95 @@ func (u *UserController) UpdateUserRole(ctx *gin.Context) {
 
 	respondWithServiceResponse(ctx, userResp)
 }
+
+func (u *UserController) LockAccount(ctx *gin.Context) {
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(ctx)
+	if !ok {
+		return
+	}
+
+	targetID := ctx.Param("id")
+	if targetID == "" {
+		utils.Fail(ctx, "User ID is required", http.StatusBadRequest, "missing user ID")
+		return
+	}
+
+	reason := ctx.Query("reason")
+
+	resp, err := u.userService.LockAccountWithContext(ctx.Request.Context(), userID, email, sessionID, targetID, reason)
+	if err != nil {
+		utils.Fail(ctx, "Failed to lock account", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(ctx, resp)
+}
+
+func (u *UserController) UnlockAccount(ctx *gin.Context) {
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(ctx)
+	if !ok {
+		return
+	}
+
+	targetID := ctx.Param("id")
+	if targetID == "" {
+		utils.Fail(ctx, "User ID is required", http.StatusBadRequest, "missing user ID")
+		return
+	}
+
+	reason := ctx.Query("reason")
+
+	resp, err := u.userService.UnlockAccountWithContext(ctx.Request.Context(), userID, email, sessionID, targetID, reason)
+	if err != nil {
+		utils.Fail(ctx, "Failed to unlock account", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(ctx, resp)
+}
+
+func (u *UserController) SoftDeleteAccount(ctx *gin.Context) {
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(ctx)
+	if !ok {
+		return
+	}
+
+	targetID := ctx.Param("id")
+	if targetID == "" {
+		utils.Fail(ctx, "User ID is required", http.StatusBadRequest, "missing user ID")
+		return
+	}
+
+	reason := ctx.Query("reason")
+
+	resp, err := u.userService.SoftDeleteAccountWithContext(ctx.Request.Context(), userID, email, sessionID, targetID, reason)
+	if err != nil {
+		utils.Fail(ctx, "Failed to delete account", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(ctx, resp)
+}
+
+func (u *UserController) RestoreAccount(ctx *gin.Context) {
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(ctx)
+	if !ok {
+		return
+	}
+
+	targetID := ctx.Param("id")
+	if targetID == "" {
+		utils.Fail(ctx, "User ID is required", http.StatusBadRequest, "missing user ID")
+		return
+	}
+
+	reason := ctx.Query("reason")
+
+	resp, err := u.userService.RestoreAccountWithContext(ctx.Request.Context(), userID, email, sessionID, targetID, reason)
+	if err != nil {
+		utils.Fail(ctx, "Failed to restore account", http.StatusBadGateway, err.Error())
+		return
+	}
+
+	respondWithServiceResponse(ctx, resp)
+}

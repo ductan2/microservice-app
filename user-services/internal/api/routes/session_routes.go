@@ -15,5 +15,6 @@ func RegisterSessionRoutes(router *gin.RouterGroup, controller *controllers.Sess
 		sessions.GET("", controller.GetActiveSessions)             // GET /sessions
 		sessions.DELETE("/:id", controller.RevokeSession)          // DELETE /sessions/:id
 		sessions.POST("/revoke-all", controller.RevokeAllSessions) // POST /sessions/revoke-all
+		sessions.POST("/user/:id", controller.ListSessionsByUserID) // POST /sessions/user/:id
 	}
 }

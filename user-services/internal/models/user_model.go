@@ -34,6 +34,13 @@ const (
 	RoleSuperAdmin = "super-admin"
 )
 
+const (
+	StatusActive   = "active"
+	StatusLocked   = "locked"
+	StatusDisabled = "disabled"
+	StatusDeleted  = "deleted"
+)
+
 // UserProfile stores non-auth PII
 type UserProfile struct {
 	UserID      uuid.UUID `gorm:"type:uuid;primaryKey" json:"user_id"`

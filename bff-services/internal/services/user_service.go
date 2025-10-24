@@ -30,12 +30,17 @@ type UserService interface {
 	GetSessions(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
 	DeleteSession(ctx context.Context, userID, email, sessionID, deleteSessionID string) (*types.HTTPResponse, error)
 	RevokeAllSessions(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
+	ListSessionsByUserID(ctx context.Context, targetUserID, userID, email, sessionID string) (*types.HTTPResponse, error)
 	GetUsers(ctx context.Context, page, pageSize, status, search, userID, email, sessionID string) (*types.HTTPResponse, error)
 	GetUserById(ctx context.Context, userID, email, sessionID, UserFindID string) (*types.HTTPResponse, error)
 	// New methods for internal communication with user context
 	GetProfileWithContext(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
 	UpdateProfileWithContext(ctx context.Context, userID, email, sessionID string, payload dto.UpdateProfileRequest) (*types.HTTPResponse, error)
 	UpdateUserRoleWithContext(ctx context.Context, userID, email, sessionID string, targetID string, payload dto.UpdateUserRoleRequest) (*types.HTTPResponse, error)
+	LockAccountWithContext(ctx context.Context, userID, email, sessionID, targetID, reason string) (*types.HTTPResponse, error)
+	UnlockAccountWithContext(ctx context.Context, userID, email, sessionID, targetID, reason string) (*types.HTTPResponse, error)
+	SoftDeleteAccountWithContext(ctx context.Context, userID, email, sessionID, targetID, reason string) (*types.HTTPResponse, error)
+	RestoreAccountWithContext(ctx context.Context, userID, email, sessionID, targetID, reason string) (*types.HTTPResponse, error)
 }
 
 type UserServiceClient struct {
@@ -124,6 +129,10 @@ func (c *UserServiceClient) DeleteSession(ctx context.Context, userID, email, se
 
 func (c *UserServiceClient) RevokeAllSessions(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPost, "/api/v1/sessions/revoke-all", nil, internalAuthHeaders(userID, email, sessionID))
+}
+
+func (c *UserServiceClient) ListSessionsByUserID(ctx context.Context, targetUserID, userID, email, sessionID string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/sessions/user/"+targetUserID, nil, internalAuthHeaders(userID, email, sessionID))
 }
 
 func (c *UserServiceClient) GetUsers(ctx context.Context, page, pageSize, status, search, userID, email, sessionID string) (*types.HTTPResponse, error) {
@@ -219,4 +228,38 @@ func (c *UserServiceClient) UpdateProfileWithContext(ctx context.Context, userID
 
 func (c *UserServiceClient) UpdateUserRoleWithContext(ctx context.Context, userID, email, sessionID string, targetID string, payload dto.UpdateUserRoleRequest) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodPut, fmt.Sprintf("/api/v1/users/%s/role", targetID), payload, internalAuthHeaders(userID, email, sessionID))
+}
+
+func (c *UserServiceClient) LockAccountWithContext(ctx context.Context, userID, email, sessionID, targetID, reason string) (*types.HTTPResponse, error) {
+	path := appendReason(fmt.Sprintf("/api/v1/users/%s/lock", targetID), reason)
+	return c.doRequest(ctx, http.MethodPost, path, nil, internalAuthHeaders(userID, email, sessionID))
+}
+
+func (c *UserServiceClient) UnlockAccountWithContext(ctx context.Context, userID, email, sessionID, targetID, reason string) (*types.HTTPResponse, error) {
+	path := appendReason(fmt.Sprintf("/api/v1/users/%s/unlock", targetID), reason)
+	return c.doRequest(ctx, http.MethodPost, path, nil, internalAuthHeaders(userID, email, sessionID))
+}
+
+func (c *UserServiceClient) SoftDeleteAccountWithContext(ctx context.Context, userID, email, sessionID, targetID, reason string) (*types.HTTPResponse, error) {
+	path := appendReason(fmt.Sprintf("/api/v1/users/%s/delete", targetID), reason)
+	return c.doRequest(ctx, http.MethodDelete, path, nil, internalAuthHeaders(userID, email, sessionID))
+}
+
+func (c *UserServiceClient) RestoreAccountWithContext(ctx context.Context, userID, email, sessionID, targetID, reason string) (*types.HTTPResponse, error) {
+	path := appendReason(fmt.Sprintf("/api/v1/users/%s/restore", targetID), reason)
+	return c.doRequest(ctx, http.MethodPost, path, nil, internalAuthHeaders(userID, email, sessionID))
+}
+
+func appendReason(path, reason string) string {
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		return path
+	}
+
+	sep := "?"
+	if strings.Contains(path, "?") {
+		sep = "&"
+	}
+
+	return path + sep + "reason=" + url.QueryEscape(reason)
 }

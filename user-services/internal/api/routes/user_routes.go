@@ -12,26 +12,30 @@ func RegisterUserRoutes(router *gin.RouterGroup, controller *controllers.UserCon
 	users := router.Group("/users")
 	{
 		// Authentication routes (public)
-		users.POST("/register", controller.RegisterUser)       // POST /users/register
-		users.POST("/login", controller.LoginUser)             // POST /users/login
-		users.POST("/logout", controller.LogoutUser)           // POST /users/logout
-		users.GET("/verify-email", controller.VerifyUserEmail) // GET /users/verify-email
+		users.POST("/register", controller.RegisterUser)
+		users.POST("/login", controller.LoginUser)
+		users.POST("/logout", controller.LogoutUser)
+		users.GET("/verify-email", controller.VerifyUserEmail)
 
 		// Profile routes (authenticated)
 		profile := users.Group("/profile")
 		// Use InternalAuthRequired for internal communication from BFF
 		profile.Use(middleware.InternalAuthRequired())
 		{
-			profile.GET("", controller.GetUserProfile)    // GET /users/profile
-			profile.PUT("", controller.UpdateUserProfile) // PUT /users/profile
+			profile.GET("", controller.GetUserProfile)
+			profile.PUT("", controller.UpdateUserProfile)
 		}
 
 		// User management routes (authenticated)
 		users.Use(middleware.InternalAuthRequired())
 		{
-			users.GET("", controller.ListAllUsers)            // GET /users (list all users)
-			users.GET("/:id", controller.GetUserByID)         // GET /users/:id (get specific user)
-			users.PUT("/:id/role", controller.UpdateUserRole) // PUT /users/:id/role (update role)
+			users.GET("", controller.ListAllUsers)
+			users.GET("/:id", controller.GetUserByID)
+			users.PUT("/:id/role", controller.UpdateUserRole)
+			users.POST("/:id/lock", controller.LockAccount)
+			users.POST("/:id/unlock", controller.UnlockAccount)
+			users.DELETE("/:id/delete", controller.SoftDeleteAccount)
+			users.POST("/:id/restore", controller.RestoreAccount)
 		}
 	}
 }
