@@ -10,7 +10,7 @@ import (
 
 	"user-services/internal/api/dto"
 	"user-services/internal/api/services"
-	"user-services/internal/types"
+	"user-services/internal/utils"
 )
 
 // ActivitySessionController handles activity session HTTP requests
@@ -42,59 +42,34 @@ func (c *ActivitySessionController) StartSession(ctx *gin.Context) {
 	// Get userID from context (set by InternalAuthRequired middleware)
 	userID, exists := ctx.Get("userID")
 	if !exists {
-		ctx.JSON(http.StatusUnauthorized, types.HTTPResponse{
-			Success: false,
-			Message: "Unauthorized: User ID not found in context",
-			Error:   "unauthorized",
-		})
+		utils.Fail(ctx, "Unauthorized: User ID not found in context", http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	userIDUUID := userID.(uuid.UUID)
+	userIDUUID, ok := userID.(uuid.UUID)
+	if !ok {
+		utils.Fail(ctx, "Unauthorized: Invalid user ID type in context", http.StatusUnauthorized, "invalid user ID type")
+		return
+	}
 
 	var req dto.StartSessionRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, types.HTTPResponse{
-			Success: false,
-			Message: "Invalid request body",
-			Error:   err.Error(),
-		})
+		utils.Fail(ctx, "Invalid request body", http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err := req.Validate(); err != nil {
-		ctx.JSON(http.StatusBadRequest, types.HTTPResponse{
-			Success: false,
-			Message: "Validation failed",
-			Error:   err.Error(),
-		})
+		utils.Fail(ctx, "Validation failed", http.StatusBadRequest, err.Error())
 		return
 	}
 
-	session, err := c.service.StartActivitySession(ctx, &req, userIDUUID)
+	session, err := c.service.StartActivitySession(ctx, &req, userIDUUID, ctx)
 	if err != nil {
-		if _, ok := err.(*services.ValidationError); ok {
-			ctx.JSON(http.StatusBadRequest, types.HTTPResponse{
-				Success: false,
-				Message: "Validation failed",
-				Error:   err.Error(),
-			})
-			return
-		}
-
-		ctx.JSON(http.StatusInternalServerError, types.HTTPResponse{
-			Success: false,
-			Message: "Failed to start session",
-			Error:   err.Error(),
-		})
+		utils.Fail(ctx, "Failed to start session", http.StatusBadRequest, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, types.HTTPResponse{
-		Success: true,
-		Message: "Session started successfully",
-		Data:    session,
-	})
+	utils.Success(ctx, session)
 }
 
 // EndSession ends a user activity session
@@ -114,76 +89,34 @@ func (c *ActivitySessionController) EndSession(ctx *gin.Context) {
 	// Get userID from context (set by InternalAuthRequired middleware)
 	userID, exists := ctx.Get("userID")
 	if !exists {
-		ctx.JSON(http.StatusUnauthorized, types.HTTPResponse{
-			Success: false,
-			Message: "Unauthorized: User ID not found in context",
-			Error:   "unauthorized",
-		})
+		utils.Fail(ctx, "Unauthorized: User ID not found in context", http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	userIDUUID := userID.(uuid.UUID)
+	userIDUUID, ok := userID.(uuid.UUID)
+	if !ok {
+		utils.Fail(ctx, "Unauthorized: Invalid user ID type in context", http.StatusUnauthorized, "invalid user ID type")
+		return
+	}
 
 	var req dto.EndSessionRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, types.HTTPResponse{
-			Success: false,
-			Message: "Invalid request body",
-			Error:   err.Error(),
-		})
+		utils.Fail(ctx, "Invalid request body", http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err := req.Validate(); err != nil {
-		ctx.JSON(http.StatusBadRequest, types.HTTPResponse{
-			Success: false,
-			Message: "Validation failed",
-			Error:   err.Error(),
-		})
+		utils.Fail(ctx, "Validation failed", http.StatusBadRequest, err.Error())
 		return
 	}
 
 	session, err := c.service.EndActivitySession(ctx, &req, userIDUUID)
 	if err != nil {
-		if sessionErr, ok := err.(*services.SessionError); ok {
-			switch sessionErr.Code {
-			case "SESSION_NOT_FOUND":
-				ctx.JSON(http.StatusNotFound, types.HTTPResponse{
-					Success: false,
-					Message: "Active session not found",
-					Error:   sessionErr.Error(),
-				})
-				return
-			case "UNAUTHORIZED":
-				ctx.JSON(http.StatusUnauthorized, types.HTTPResponse{
-					Success: false,
-					Message: "Unauthorized to access this session",
-					Error:   sessionErr.Error(),
-				})
-				return
-			default:
-				ctx.JSON(http.StatusInternalServerError, types.HTTPResponse{
-					Success: false,
-					Message: "Failed to end session",
-					Error:   sessionErr.Error(),
-				})
-				return
-			}
-		}
-
-		ctx.JSON(http.StatusInternalServerError, types.HTTPResponse{
-			Success: false,
-			Message: "Failed to end session",
-			Error:   err.Error(),
-		})
+		utils.Fail(ctx, "Failed to end session", http.StatusBadRequest, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, types.HTTPResponse{
-		Success: true,
-		Message: "Session ended successfully",
-		Data:    session,
-	})
+	utils.Success(ctx, session)
 }
 
 // GetSessions retrieves user's activity sessions
@@ -205,15 +138,15 @@ func (c *ActivitySessionController) GetSessions(ctx *gin.Context) {
 	// Get userID from context
 	userID, exists := ctx.Get("userID")
 	if !exists {
-		ctx.JSON(http.StatusUnauthorized, types.HTTPResponse{
-			Success: false,
-			Message: "Unauthorized: User ID not found in context",
-			Error:   "unauthorized",
-		})
+		utils.Fail(ctx, "Unauthorized: User ID not found in context", http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	userIDUUID := userID.(uuid.UUID)
+	userIDUUID, ok := userID.(uuid.UUID)
+	if !ok {
+		utils.Fail(ctx, "Unauthorized: Invalid user ID type in context", http.StatusUnauthorized, "invalid user ID type")
+		return
+	}
 
 	// Parse query parameters
 	pageStr := ctx.DefaultQuery("page", "1")
@@ -245,28 +178,22 @@ func (c *ActivitySessionController) GetSessions(ctx *gin.Context) {
 
 	sessions, total, err := c.service.GetActivitySessions(ctx, userIDUUID, page, limit, startDate, endDate)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, types.HTTPResponse{
-			Success: false,
-			Message: "Failed to get sessions",
-			Error:   err.Error(),
-		})
+		utils.Fail(ctx, "Failed to get sessions", http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// Create pagination metadata
-	metadata := map[string]interface{}{
-		"page":       page,
-		"limit":      limit,
-		"total":      total,
-		"totalPages": (total + int64(limit) - 1) / int64(limit),
+	responseData := map[string]any{
+		"sessions": sessions,
+		"metadata": map[string]any{
+			"page":       page,
+			"limit":      limit,
+			"total":      total,
+			"totalPages": (total + int64(limit) - 1) / int64(limit),
+		},
 	}
 
-	ctx.JSON(http.StatusOK, types.HTTPResponse{
-		Success:  true,
-		Message:  "Sessions retrieved successfully",
-		Data:     sessions,
-		Metadata: metadata,
-	})
+	utils.Success(ctx, responseData)
 }
 
 // GetSessionStats retrieves session statistics for a user
@@ -283,31 +210,23 @@ func (c *ActivitySessionController) GetSessionStats(ctx *gin.Context) {
 	// Get userID from context
 	userID, exists := ctx.Get("userID")
 	if !exists {
-		ctx.JSON(http.StatusUnauthorized, types.HTTPResponse{
-			Success: false,
-			Message: "Unauthorized: User ID not found in context",
-			Error:   "unauthorized",
-		})
+		utils.Fail(ctx, "Unauthorized: User ID not found in context", http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	userIDUUID := userID.(uuid.UUID)
+	userIDUUID, ok := userID.(uuid.UUID)
+	if !ok {
+		utils.Fail(ctx, "Unauthorized: Invalid user ID type in context", http.StatusUnauthorized, "invalid user ID type")
+		return
+	}
 
 	stats, err := c.service.GetSessionStats(ctx, userIDUUID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, types.HTTPResponse{
-			Success: false,
-			Message: "Failed to get session statistics",
-			Error:   err.Error(),
-		})
+		utils.Fail(ctx, "Failed to get session statistics", http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, types.HTTPResponse{
-		Success: true,
-		Message: "Session statistics retrieved successfully",
-		Data:    stats,
-	})
+	utils.Success(ctx, stats)
 }
 
 // UpdateSession updates session information for an active session
@@ -327,73 +246,41 @@ func (c *ActivitySessionController) UpdateSession(ctx *gin.Context) {
 	// Get userID from context
 	userID, exists := ctx.Get("userID")
 	if !exists {
-		ctx.JSON(http.StatusUnauthorized, types.HTTPResponse{
-			Success: false,
-			Message: "Unauthorized: User ID not found in context",
-			Error:   "unauthorized",
-		})
+		utils.Fail(ctx, "Unauthorized: User ID not found in context", http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	userIDUUID := userID.(uuid.UUID)
+	userIDUUID, ok := userID.(uuid.UUID)
+	if !ok {
+		utils.Fail(ctx, "Unauthorized: Invalid user ID type in context", http.StatusUnauthorized, "invalid user ID type")
+		return
+	}
 
 	var req dto.UpdateSessionRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, types.HTTPResponse{
-			Success: false,
-			Message: "Invalid request body",
-			Error:   err.Error(),
-		})
+		utils.Fail(ctx, "Invalid request body", http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err := req.Validate(); err != nil {
-		ctx.JSON(http.StatusBadRequest, types.HTTPResponse{
-			Success: false,
-			Message: "Validation failed",
-			Error:   err.Error(),
-		})
+		utils.Fail(ctx, "Validation failed", http.StatusBadRequest, err.Error())
 		return
 	}
 
-	err := c.service.UpdateActiveSession(ctx, req.SessionID, req.UserAgent, req.IPAddr, userIDUUID)
+	err := c.service.UpdateActiveSession(ctx, req.SessionID, req.UserAgent, req.IPAddr, userIDUUID, ctx)
 	if err != nil {
-		if sessionErr, ok := err.(*services.SessionError); ok {
-			switch sessionErr.Code {
-			case "SESSION_NOT_FOUND":
-				ctx.JSON(http.StatusNotFound, types.HTTPResponse{
-					Success: false,
-					Message: "Active session not found",
-					Error:   sessionErr.Error(),
-				})
-				return
-			case "UNAUTHORIZED":
-				ctx.JSON(http.StatusUnauthorized, types.HTTPResponse{
-					Success: false,
-					Message: "Unauthorized to access this session",
-					Error:   sessionErr.Error(),
-				})
-				return
-			default:
-				ctx.JSON(http.StatusInternalServerError, types.HTTPResponse{
-					Success: false,
-					Message: "Failed to update session",
-					Error:   sessionErr.Error(),
-				})
-				return
-			}
+		if err.Error() == "active session not found" {
+			utils.Fail(ctx, "Active session not found", http.StatusNotFound, err.Error())
+			return
+		}
+		if err.Error() == "unauthorized to access this session" {
+			utils.Fail(ctx, "Unauthorized to access this session", http.StatusUnauthorized, err.Error())
+			return
 		}
 
-		ctx.JSON(http.StatusInternalServerError, types.HTTPResponse{
-			Success: false,
-			Message: "Failed to update session",
-			Error:   err.Error(),
-		})
+		utils.Fail(ctx, "Failed to update session", http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, types.HTTPResponse{
-		Success: true,
-		Message: "Session updated successfully",
-	})
+	utils.Success(ctx, map[string]string{"message": "Session updated successfully"})
 }

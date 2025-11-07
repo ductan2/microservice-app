@@ -19,6 +19,7 @@ func initControllers(deps Deps) *controllers.Controllers {
 	// Initialize user controller (requires both UserService and LessonService)
 	if deps.UserService != nil && deps.LessonService != nil {
 		ctrl.User = controllers.NewUserController(deps.UserService, deps.LessonService)
+		ctrl.Dashboard = controllers.NewDashboardController(deps.UserService, deps.LessonService)
 	}
 
 	// Initialize other service controllers

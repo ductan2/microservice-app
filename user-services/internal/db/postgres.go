@@ -67,6 +67,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.MFAMethod{},
 		&models.LoginAttempt{},
 		&models.PasswordReset{},
+		&models.UserActivitySession{},
 		&models.AuditLog{},
 		&models.Outbox{},
 	); err != nil {

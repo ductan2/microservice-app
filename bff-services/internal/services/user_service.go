@@ -198,15 +198,15 @@ func (c *UserServiceClient) RestoreAccountWithContext(ctx context.Context, userI
 
 // Activity session methods
 func (c *UserServiceClient) StartActivitySession(ctx context.Context, payload dto.StartSessionRequest, userID, email, sessionID string) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/sessions/start", payload, internalAuthHeaders(userID, email, sessionID))
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/activity-sessions/start", payload, internalAuthHeaders(userID, email, sessionID))
 }
 
 func (c *UserServiceClient) EndActivitySession(ctx context.Context, payload dto.EndSessionRequest, userID, email, sessionID string) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/sessions/end", payload, internalAuthHeaders(userID, email, sessionID))
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/activity-sessions/end", payload, internalAuthHeaders(userID, email, sessionID))
 }
 
 func (c *UserServiceClient) GetActivitySessions(ctx context.Context, userID, email, sessionID string, page, limit int, startDate, endDate *time.Time) (*types.HTTPResponse, error) {
-	path := "/api/v1/sessions"
+	path := "/api/v1/activity-sessions"
 	query := url.Values{}
 	query.Add("page", fmt.Sprintf("%d", page))
 	query.Add("limit", fmt.Sprintf("%d", limit))
@@ -221,11 +221,11 @@ func (c *UserServiceClient) GetActivitySessions(ctx context.Context, userID, ema
 }
 
 func (c *UserServiceClient) GetSessionStats(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodGet, "/api/v1/sessions/stats", nil, internalAuthHeaders(userID, email, sessionID))
+	return c.doRequest(ctx, http.MethodGet, "/api/v1/activity-sessions/stats", nil, internalAuthHeaders(userID, email, sessionID))
 }
 
 func (c *UserServiceClient) UpdateActivitySession(ctx context.Context, payload dto.UpdateSessionRequest, userID, email, sessionID string) (*types.HTTPResponse, error) {
-	return c.doRequest(ctx, http.MethodPost, "/api/v1/sessions/update", payload, internalAuthHeaders(userID, email, sessionID))
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/activity-sessions/update", payload, internalAuthHeaders(userID, email, sessionID))
 }
 
 func appendReason(path, reason string) string {

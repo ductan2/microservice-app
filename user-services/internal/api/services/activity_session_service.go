@@ -5,20 +5,22 @@ import (
 	"errors"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"user-services/internal/api/repositories"
 	"user-services/internal/api/dto"
+	"user-services/internal/api/repositories"
+	"user-services/internal/models"
 )
 
 // ActivitySessionService handles user activity session business logic
 type ActivitySessionService interface {
-	StartActivitySession(ctx context.Context, req *dto.StartSessionRequest, userID uuid.UUID) (*dto.ActivitySessionResponse, error)
+	StartActivitySession(ctx context.Context, req *dto.StartSessionRequest, userID uuid.UUID, ginCtx *gin.Context) (*dto.ActivitySessionResponse, error)
 	EndActivitySession(ctx context.Context, req *dto.EndSessionRequest, userID uuid.UUID) (*dto.ActivitySessionResponse, error)
 	GetActivitySessions(ctx context.Context, userID uuid.UUID, page int, limit int, startDate *time.Time, endDate *time.Time) ([]dto.ActivitySessionResponse, int64, error)
 	GetSessionStats(ctx context.Context, userID uuid.UUID) (*dto.SessionStatsResponse, error)
-	UpdateActiveSession(ctx context.Context, sessionID uuid.UUID, userAgent *string, ipAddr *string, userID uuid.UUID) error
+	UpdateActiveSession(ctx context.Context, sessionID uuid.UUID, userAgent *string, ipAddr *string, userID uuid.UUID, ginCtx *gin.Context) error
 }
 
 // activitySessionService implements ActivitySessionService
@@ -35,8 +37,30 @@ func NewActivitySessionService(repo repositories.ActivitySessionRepository, db *
 	}
 }
 
+// getClientIP extracts the real client IP address from the request
+func getClientIP(ginCtx *gin.Context) string {
+	// Check X-Forwarded-For header first (for reverse proxies)
+	if xff := ginCtx.GetHeader("X-Forwarded-For"); xff != "" {
+		// X-Forwarded-For can contain multiple IPs, take the first one
+		for i, char := range xff {
+			if char == ',' {
+				return xff[:i]
+			}
+		}
+		return xff
+	}
+
+	// Check X-Real-IP header
+	if xri := ginCtx.GetHeader("X-Real-IP"); xri != "" {
+		return xri
+	}
+
+	// Fall back to RemoteAddr
+	return ginCtx.ClientIP()
+}
+
 // StartActivitySession creates a new activity session
-func (s *activitySessionService) StartActivitySession(ctx context.Context, req *StartSessionRequest, userID uuid.UUID) (*UserActivitySessionResponse, error) {
+func (s *activitySessionService) StartActivitySession(ctx context.Context, req *dto.StartSessionRequest, userID uuid.UUID, ginCtx *gin.Context) (*dto.ActivitySessionResponse, error) {
 	// Check if session already exists
 	existing, err := s.repo.GetBySessionID(ctx, req.SessionID)
 	if err != nil {
@@ -44,17 +68,20 @@ func (s *activitySessionService) StartActivitySession(ctx context.Context, req *
 	}
 
 	if existing != nil {
-		// Session already exists, return existing session
 		return mapToActivitySessionResponse(existing), nil
 	}
 
-	// Validate that the session exists in the system
-	// This is a simple validation - in production you might want to check against the sessions table
 	if req.SessionID == uuid.Nil {
-		return nil, &ValidationError{
-			Field:   "session_id",
-			Message: "invalid session_id",
-		}
+		return nil, errors.New("invalid session_id")
+	}
+
+	// Get IP address from backend request
+	clientIP := getClientIP(ginCtx)
+
+	// Get user agent from request header, fallback to request body if provided
+	userAgent := ginCtx.GetHeader("User-Agent")
+	if req.UserAgent != nil && *req.UserAgent != "" {
+		userAgent = *req.UserAgent
 	}
 
 	// Create new activity session
@@ -62,8 +89,8 @@ func (s *activitySessionService) StartActivitySession(ctx context.Context, req *
 		UserID:    userID,
 		SessionID: req.SessionID,
 		StartedAt: time.Now().UTC(),
-		IPAddr:    dereferenceString(req.IPAddr),
-		UserAgent: dereferenceString(req.UserAgent),
+		IPAddr:    clientIP,
+		UserAgent: userAgent,
 	}
 
 	err = s.repo.Create(ctx, session)
@@ -75,26 +102,16 @@ func (s *activitySessionService) StartActivitySession(ctx context.Context, req *
 }
 
 // EndActivitySession ends an active session and calculates duration
-func (s *activitySessionService) EndActivitySession(ctx context.Context, req *EndSessionRequest, userID uuid.UUID) (*UserActivitySessionResponse, error) {
+func (s *activitySessionService) EndActivitySession(ctx context.Context, req *dto.EndSessionRequest, userID uuid.UUID) (*dto.ActivitySessionResponse, error) {
 	// Get the active session
 	session, err := s.repo.GetActiveSession(ctx, req.SessionID)
 	if err != nil {
 		return nil, err
 	}
 
-	if session == nil {
-		return nil, &SessionError{
-			Code:    "SESSION_NOT_FOUND",
-			Message: "Active session not found",
-		}
-	}
-
 	// Verify ownership
 	if session.UserID != userID {
-		return nil, &SessionError{
-			Code:    "UNAUTHORIZED",
-			Message: "Unauthorized to access this session",
-		}
+		return nil, errors.New("unauthorized to access this session")
 	}
 
 	// Calculate end time
@@ -122,7 +139,7 @@ func (s *activitySessionService) EndActivitySession(ctx context.Context, req *En
 }
 
 // GetActivitySessions retrieves user's activity sessions with pagination
-func (s *activitySessionService) GetActivitySessions(ctx context.Context, userID uuid.UUID, page int, limit int, startDate *time.Time, endDate *time.Time) ([]UserActivitySessionResponse, int64, error) {
+func (s *activitySessionService) GetActivitySessions(ctx context.Context, userID uuid.UUID, page int, limit int, startDate *time.Time, endDate *time.Time) ([]dto.ActivitySessionResponse, int64, error) {
 	offset := (page - 1) * limit
 
 	sessions, total, err := s.repo.GetByUserID(ctx, userID, limit, offset)
@@ -139,7 +156,7 @@ func (s *activitySessionService) GetActivitySessions(ctx context.Context, userID
 }
 
 // GetSessionStats retrieves aggregated session statistics for a user
-func (s *activitySessionService) GetSessionStats(ctx context.Context, userID uuid.UUID) (*SessionStatsResponse, error) {
+func (s *activitySessionService) GetSessionStats(ctx context.Context, userID uuid.UUID) (*dto.SessionStatsResponse, error) {
 	stats, err := s.repo.GetSessionStats(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -155,7 +172,7 @@ func (s *activitySessionService) GetSessionStats(ctx context.Context, userID uui
 }
 
 // UpdateActiveSession updates user agent and IP address for an active session
-func (s *activitySessionService) UpdateActiveSession(ctx context.Context, sessionID uuid.UUID, userAgent *string, ipAddr *string, userID uuid.UUID) error {
+func (s *activitySessionService) UpdateActiveSession(ctx context.Context, sessionID uuid.UUID, userAgent *string, ipAddr *string, userID uuid.UUID, ginCtx *gin.Context) error {
 	// Check if active session exists and belongs to user
 	session, err := s.repo.GetActiveSession(ctx, sessionID)
 	if err != nil {
@@ -163,20 +180,32 @@ func (s *activitySessionService) UpdateActiveSession(ctx context.Context, sessio
 	}
 
 	if session == nil {
-		return &SessionError{
-			Code:    "SESSION_NOT_FOUND",
-			Message: "Active session not found",
-		}
+		return errors.New("active session not found")
 	}
 
 	if session.UserID != userID {
-		return &SessionError{
-			Code:    "UNAUTHORIZED",
-			Message: "Unauthorized to access this session",
-		}
+		return errors.New("unauthorized to access this session")
 	}
 
-	return s.repo.UpdateSessionInfo(ctx, sessionID, userAgent, ipAddr)
+	// Get IP address from backend if not provided
+	var finalIPAddr *string
+	if ipAddr != nil && *ipAddr != "" {
+		finalIPAddr = ipAddr
+	} else {
+		clientIP := getClientIP(ginCtx)
+		finalIPAddr = &clientIP
+	}
+
+	// Get user agent from request header if not provided
+	var finalUserAgent *string
+	if userAgent != nil && *userAgent != "" {
+		finalUserAgent = userAgent
+	} else {
+		headerUA := ginCtx.GetHeader("User-Agent")
+		finalUserAgent = &headerUA
+	}
+
+	return s.repo.UpdateSessionInfo(ctx, sessionID, finalUserAgent, finalIPAddr)
 }
 
 // Helper functions
@@ -195,37 +224,9 @@ func mapToActivitySessionResponse(session *models.UserActivitySession) *dto.Acti
 		StartedAt:  session.StartedAt,
 		EndedAt:    endTime,
 		DurationMs: session.DurationMs,
-		IPAddr:     dereferenceString(session.IPAddr),
-		UserAgent:  dereferenceString(session.UserAgent),
+		IPAddr:     &session.IPAddr,
+		UserAgent:  &session.UserAgent,
 		CreatedAt:  session.CreatedAt,
 		UpdatedAt:  session.UpdatedAt,
 	}
-}
-
-// dereferenceString returns a string pointer if the string is not empty, otherwise nil
-func dereferenceString(s *string) *string {
-	if s != nil && *s != "" {
-		return s
-	}
-	return nil
-}
-
-// ValidationError represents a validation error
-type ValidationError struct {
-	Field   string
-	Message string
-}
-
-func (e *ValidationError) Error() string {
-	return e.Field + ": " + e.Message
-}
-
-// SessionError represents a session-related error
-type SessionError struct {
-	Code    string
-	Message string
-}
-
-func (e *SessionError) Error() string {
-	return e.Message
 }

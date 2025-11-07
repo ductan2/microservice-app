@@ -4,23 +4,23 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"user-services/internal/api/controllers"
-	"user-services/internal/middleware"
+	"user-services/internal/api/middleware"
+	"user-services/internal/cache"
 )
 
 // SetupActivitySessionRoutes sets up activity session routes
-func SetupActivitySessionRoutes(router *gin.Engine, activitySessionController *controllers.ActivitySessionController) {
-	// Create activity session routes group
-	activitySessionGroup := router.Group("/api/v1/sessions")
+func RegisterActivitySessionRoutes(router *gin.RouterGroup, activitySessionController *controllers.ActivitySessionController, sessionCache *cache.SessionCache) {
+	if activitySessionController == nil || sessionCache == nil {
+		return
+	}
 
-	// Apply InternalAuthRequired middleware to all session routes
+	activitySessionGroup := router.Group("/activity-sessions")
 	activitySessionGroup.Use(middleware.InternalAuthRequired())
-
-	// Session start and end endpoints
-	activitySessionGroup.POST("/start", activitySessionController.StartSession)
-	activitySessionGroup.POST("/end", activitySessionController.EndSession)
-
-	// Session management endpoints
-	activitySessionGroup.GET("", activitySessionController.GetSessions)
-	activitySessionGroup.GET("/stats", activitySessionController.GetSessionStats)
-	activitySessionGroup.POST("/update", activitySessionController.UpdateSession)
+	{
+		activitySessionGroup.POST("/start", activitySessionController.StartSession)
+		activitySessionGroup.POST("/end", activitySessionController.EndSession)
+		activitySessionGroup.GET("", activitySessionController.GetSessions)
+		activitySessionGroup.GET("/stats", activitySessionController.GetSessionStats)
+		activitySessionGroup.POST("/update", activitySessionController.UpdateSession)
+	}
 }

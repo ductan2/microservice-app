@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -23,6 +24,7 @@ func AuthRequired(sessionCache *cache.SessionCache) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
+			fmt.Println("missing authorization header")
 			utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "missing authorization header")
 			c.Abort()
 			return

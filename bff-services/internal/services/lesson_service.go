@@ -23,6 +23,7 @@ type LessonService interface {
 	CheckMyStreak(ctx context.Context, userID, email, sessionID string, payload *dto.StreakCheckRequest) (*types.HTTPResponse, error)
 	GetMyStreakStatus(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
 	GetStreakLeaderboard(ctx context.Context, userID, email, sessionID string, limit int) (*types.HTTPResponse, error)
+	GetUserLessonStats(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
 	GetDailyActivityToday(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
 	GetDailyActivityByDate(ctx context.Context, userID, email, sessionID, activityDate string) (*types.HTTPResponse, error)
 	GetDailyActivityRange(ctx context.Context, userID, email, sessionID, dateFrom, dateTo string) (*types.HTTPResponse, error)
@@ -108,6 +109,10 @@ func (c *LessonServiceClient) GetStreakLeaderboard(ctx context.Context, userID, 
 		path += fmt.Sprintf("?limit=%d", limit)
 	}
 	return c.doRequest(ctx, http.MethodGet, path, nil, internalAuthHeaders(userID, email, sessionID))
+}
+
+func (c *LessonServiceClient) GetUserLessonStats(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodGet, "/api/v1/api/user-lessons/stats", nil, internalAuthHeaders(userID, email, sessionID))
 }
 
 func (c *LessonServiceClient) GetDailyActivityToday(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {

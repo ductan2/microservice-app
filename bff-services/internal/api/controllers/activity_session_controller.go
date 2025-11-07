@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"bff-services/internal/api/dto"
+	middleware "bff-services/internal/middlewares"
 	"bff-services/internal/services"
 	"bff-services/internal/utils"
 )
@@ -40,12 +41,8 @@ func NewActivitySessionController(userService services.UserService) *ActivitySes
 // @Router /session/start [post]
 func (c *ActivitySessionController) StartSession(ctx *gin.Context) {
 	// Get user context from AuthRequired middleware
-	userID, exists := ctx.Get("userID")
-	email, _ := ctx.Get("email")
-	sessionID, _ := ctx.Get("sessionID")
-
-	if !exists {
-		utils.Fail(ctx, "Unauthorized: User context not found", http.StatusUnauthorized, "unauthorized")
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(ctx)
+	if !ok {
 		return
 	}
 
@@ -63,9 +60,9 @@ func (c *ActivitySessionController) StartSession(ctx *gin.Context) {
 	response, err := c.userService.StartActivitySession(
 		ctx,
 		req,
-		userID.(string),
-		email.(string),
-		sessionID.(string),
+		userID,
+		email,
+		sessionID,
 	)
 	if err != nil {
 		utils.Fail(ctx, "Failed to start session", http.StatusInternalServerError, err.Error())
@@ -91,12 +88,8 @@ func (c *ActivitySessionController) StartSession(ctx *gin.Context) {
 // @Router /session/end [post]
 func (c *ActivitySessionController) EndSession(ctx *gin.Context) {
 	// Get user context from AuthRequired middleware
-	userID, exists := ctx.Get("userID")
-	email, _ := ctx.Get("email")
-	sessionID, _ := ctx.Get("sessionID")
-
-	if !exists {
-		utils.Fail(ctx, "Unauthorized: User context not found", http.StatusUnauthorized, "unauthorized")
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(ctx)
+	if !ok {
 		return
 	}
 
@@ -114,9 +107,9 @@ func (c *ActivitySessionController) EndSession(ctx *gin.Context) {
 	response, err := c.userService.EndActivitySession(
 		ctx,
 		req,
-		userID.(string),
-		email.(string),
-		sessionID.(string),
+		userID,
+		email,
+		sessionID,
 	)
 	if err != nil {
 		utils.Fail(ctx, "Failed to end session", http.StatusInternalServerError, err.Error())
@@ -144,12 +137,8 @@ func (c *ActivitySessionController) EndSession(ctx *gin.Context) {
 // @Router /sessions [get]
 func (c *ActivitySessionController) GetSessions(ctx *gin.Context) {
 	// Get user context from AuthRequired middleware
-	userID, exists := ctx.Get("userID")
-	email, _ := ctx.Get("email")
-	sessionID, _ := ctx.Get("sessionID")
-
-	if !exists {
-		utils.Fail(ctx, "Unauthorized: User context not found", http.StatusUnauthorized, "unauthorized")
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(ctx)
+	if !ok {
 		return
 	}
 
@@ -183,9 +172,9 @@ func (c *ActivitySessionController) GetSessions(ctx *gin.Context) {
 
 	response, err := c.userService.GetActivitySessions(
 		ctx,
-		userID.(string),
-		email.(string),
-		sessionID.(string),
+		userID,
+		email,
+		sessionID,
 		page,
 		limit,
 		startDate,
@@ -212,20 +201,16 @@ func (c *ActivitySessionController) GetSessions(ctx *gin.Context) {
 // @Router /sessions/stats [get]
 func (c *ActivitySessionController) GetSessionStats(ctx *gin.Context) {
 	// Get user context from AuthRequired middleware
-	userID, exists := ctx.Get("userID")
-	email, _ := ctx.Get("email")
-	sessionID, _ := ctx.Get("sessionID")
-
-	if !exists {
-		utils.Fail(ctx, "Unauthorized: User context not found", http.StatusUnauthorized, "unauthorized")
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(ctx)
+	if !ok {
 		return
 	}
 
 	response, err := c.userService.GetSessionStats(
 		ctx,
-		userID.(string),
-		email.(string),
-		sessionID.(string),
+		userID,
+		email,
+		sessionID,
 	)
 	if err != nil {
 		utils.Fail(ctx, "Failed to get session statistics", http.StatusInternalServerError, err.Error())
@@ -251,12 +236,8 @@ func (c *ActivitySessionController) GetSessionStats(ctx *gin.Context) {
 // @Router /sessions/update [post]
 func (c *ActivitySessionController) UpdateSession(ctx *gin.Context) {
 	// Get user context from AuthRequired middleware
-	userID, exists := ctx.Get("userID")
-	email, _ := ctx.Get("email")
-	sessionID, _ := ctx.Get("sessionID")
-
-	if !exists {
-		utils.Fail(ctx, "Unauthorized: User context not found", http.StatusUnauthorized, "unauthorized")
+	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(ctx)
+	if !ok {
 		return
 	}
 
@@ -274,9 +255,9 @@ func (c *ActivitySessionController) UpdateSession(ctx *gin.Context) {
 	response, err := c.userService.UpdateActivitySession(
 		ctx,
 		req,
-		userID.(string),
-		email.(string),
-		sessionID.(string),
+		userID,
+		email,
+		sessionID,
 	)
 	if err != nil {
 		utils.Fail(ctx, "Failed to update session", http.StatusInternalServerError, err.Error())

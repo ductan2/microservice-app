@@ -36,7 +36,7 @@ func NewRouter(deps Deps) *gin.Engine {
 	mfaRepo := repositories.NewMFARepository(deps.DB)
 	loginAttemptRepo := repositories.NewLoginAttemptRepository(deps.DB)
 	passwordResetRepo := repositories.NewPasswordResetRepository(deps.DB)
-
+	activitySessionRepo := repositories.NewActivitySessionRepository(deps.DB)
 	// Initialize Redis session cache
 	sessionCache := cache.NewSessionCache(deps.RedisClient)
 
@@ -48,18 +48,20 @@ func NewRouter(deps Deps) *gin.Engine {
 	mfaService := services.NewMFAService(mfaRepo, userRepo)
 	sessionService := services.NewSessionService(sessionRepo, sessionCache)
 	userService := services.NewUserService(userRepo)
+	activitySessionService := services.NewActivitySessionService(activitySessionRepo, deps.DB)
 	// Initialize controllers
 	userCtrl := controllers.NewUserController(authService, profileService, currentUserService, userService, sessionService)
 	passwordCtrl := controllers.NewPasswordController(passwordService)
 	mfaCtrl := controllers.NewMFAController(mfaService)
 	sessionCtrl := controllers.NewSessionController(sessionService)
-
+	activitySessionCtrl := controllers.NewActivitySessionController(activitySessionService)
 	api := r.Group("/api/v1")
 	{
 		routers.RegisterUserRoutes(api, userCtrl)
 		routers.RegisterPasswordRoutes(api, passwordCtrl, sessionCache)
 		routers.RegisterMFARoutes(api, mfaCtrl, sessionCache)
 		routers.RegisterSessionRoutes(api, sessionCtrl, sessionCache)
+		routers.RegisterActivitySessionRoutes(api, activitySessionCtrl, sessionCache)
 	}
 
 	return r

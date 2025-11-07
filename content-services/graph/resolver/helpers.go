@@ -32,14 +32,6 @@ func derefString(s *string) string {
 	return *s
 }
 
-// derefInt safely dereferences an *int, returns 0 if nil
-func derefInt(i *int) int {
-	if i == nil {
-		return 0
-	}
-	return *i
-}
-
 // toIntPtr converts an int to *int, returns nil if zero
 func toIntPtr(i int) *int {
 	if i == 0 {

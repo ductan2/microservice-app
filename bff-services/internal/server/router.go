@@ -50,8 +50,6 @@ func setupAPIRoutes(r *gin.Engine, controllers *controllers.Controllers, session
 		c.JSON(200, gin.H{"message": "inside group works"})
 	})
 
-	// Health check
-
 	// Setup routes from separate files
 	routes.SetupAuthRoutes(api, controllers, sessionCache)
 	routes.SetupPasswordRoutes(api, controllers)
@@ -63,4 +61,5 @@ func setupAPIRoutes(r *gin.Engine, controllers *controllers.Controllers, session
 	routes.SetupUserRoutes(api, controllers, sessionCache)
 	routes.SetupNotificationRoutes(api, controllers)
 	routes.SetupActivitySessionRoutes(api, controllers, sessionCache)
+	routes.SetupDashboardRoutes(api, controllers, sessionCache)
 }
