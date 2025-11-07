@@ -15,9 +15,14 @@ from app.schemas.daily_activity_schema import (
 )
 from app.services.daily_activity_service import DailyActivityService
 from app.middlewares.auth_middleware import get_current_user_id
+from app.routers.base import ApiResponseRoute
 
 
-router = APIRouter(prefix="/progress/daily-activity", tags=["Daily Activity"])
+router = APIRouter(
+    prefix="/progress/daily-activity",
+    tags=["Daily Activity"],
+    route_class=ApiResponseRoute,
+)
 
 
 def get_daily_activity_service(db: Session = Depends(get_db)) -> DailyActivityService:

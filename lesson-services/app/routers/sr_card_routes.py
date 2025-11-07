@@ -8,8 +8,13 @@ from app.database.connection import get_db
 from app.schemas.spaced_repetition_schema import SRCardCreate, SRCardResponse, SRCardStatsResponse
 from app.services.sr_card_service import SRCardService
 from app.middlewares.auth_middleware import get_current_user_id
+from app.routers.base import ApiResponseRoute
 
-router = APIRouter(prefix="/api/spaced-repetition/cards", tags=["Spaced Repetition Cards"])
+router = APIRouter(
+    prefix="/api/spaced-repetition/cards",
+    tags=["Spaced Repetition Cards"],
+    route_class=ApiResponseRoute,
+)
 
 
 def get_sr_card_service(db: Session = Depends(get_db)) -> SRCardService:

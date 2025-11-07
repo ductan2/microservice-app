@@ -3,32 +3,39 @@ package services
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
 	"bff-services/internal/api/dto"
 	"bff-services/internal/types"
+	"github.com/redis/go-redis/v9"
 )
 
 // ContentService defines the contract for interacting with the content service GraphQL API.
 type ContentService interface {
 	ExecuteGraphQL(ctx context.Context, token string, payload dto.GraphQLRequest) (*types.HTTPResponse, error)
-	GetTopicsLevelsTags(ctx context.Context, token string) (*types.HTTPResponse, error)
-	GetLessons(ctx context.Context, token string, params dto.LessonQueryParams) (*types.HTTPResponse, error)
-	CreateLesson(ctx context.Context, token string, payload dto.CreateLessonRequest) (*types.HTTPResponse, error)
-	GetFlashcardSets(ctx context.Context, token string, params dto.FlashcardQueryParams) (*types.HTTPResponse, error)
-	GetQuizzes(ctx context.Context, token string, params dto.QuizQueryParams) (*types.HTTPResponse, error)
 }
 
 // ContentServiceClient implements ContentService against a remote HTTP GraphQL endpoint.
 type ContentServiceClient struct {
-	baseURL    string
-	httpClient *http.Client
+	baseURL     string
+	httpClient  *http.Client
+	redisClient *redis.Client
+}
+
+// Whitelist of cacheable GraphQL operations with their TTL
+var gqlCacheOps = map[string]time.Duration{
+	"GetTopics": 5 * time.Minute,
+	"GetLevels": 5 * time.Minute,
+	"GetTags":   5 * time.Minute,
 }
 
 type graphQLRequest struct {
@@ -44,96 +51,19 @@ func NewContentServiceClient(baseURL string, httpClient *http.Client) *ContentSe
 		httpClient = &http.Client{Timeout: 10 * time.Second}
 	}
 	return &ContentServiceClient{
-		baseURL:    trimmed,
-		httpClient: httpClient,
+		baseURL:     trimmed,
+		httpClient:  httpClient,
+		redisClient: nil,
 	}
 }
 
-const (
-	topicsLevelsTagsQuery = `query {
-  topics {
-    id
-    slug
-    name
-    createdAt
-  }
-  levels {
-    id
-    code
-    name
-  }
-  tags {
-    id
-    slug
-    name
-  }
-}`
-
-	lessonsQuery = `query ($filter: LessonFilterInput, $page: Int, $pageSize: Int) {
-  lessons(filter: $filter, page: $page, pageSize: $pageSize) {
-    items {
-      id
-      code
-      title
-      description
-      topic {
-        id
-        name
-      }
-      level {
-        id
-        name
-      }
-      isPublished
-      createdAt
-      sections {
-        id
-        type
-        body
-      }
-    }
-    totalCount
-  }
-}`
-
-	createLessonMutation = `mutation ($input: CreateLessonInput!) {
-  createLesson(input: $input) {
-    id
-    title
-    code
-  }
-}`
-
-	flashcardSetsQuery = `query ($topicId: ID, $levelId: ID, $page: Int, $pageSize: Int) {
-  flashcardSets(topicId: $topicId, levelId: $levelId, page: $page, pageSize: $pageSize) {
-    items {
-      id
-      title
-      description
-      cards {
-        id
-        frontText
-        backText
-        hints
-      }
-    }
-    totalCount
-  }
-}`
-
-	quizzesQuery = `query ($lessonId: ID!, $page: Int, $pageSize: Int) {
-  quizzes(lessonId: $lessonId, page: $page, pageSize: $pageSize) {
-    items {
-      id
-      title
-    }
-  }
-}`
-)
+// SetRedisClient sets the Redis client for caching
+func (c *ContentServiceClient) SetRedisClient(redisClient *redis.Client) {
+	c.redisClient = redisClient
+}
 
 // ExecuteGraphQL forwards raw GraphQL operations to the content service.
 func (c *ContentServiceClient) ExecuteGraphQL(ctx context.Context, token string, payload dto.GraphQLRequest) (*types.HTTPResponse, error) {
-	log.Println("query", payload.Query)
 	query := strings.TrimSpace(payload.Query)
 	if query == "" {
 		return nil, fmt.Errorf("graphql query is required")
@@ -147,103 +77,22 @@ func (c *ContentServiceClient) ExecuteGraphQL(ctx context.Context, token string,
 		request.OperationName = op
 	}
 
-	return c.sendGraphQLRequest(ctx, request, token)
-}
-
-// GetTopicsLevelsTags fetches topics, levels, and tags metadata.
-func (c *ContentServiceClient) GetTopicsLevelsTags(ctx context.Context, token string) (*types.HTTPResponse, error) {
-	return c.doGraphQLRequest(ctx, topicsLevelsTagsQuery, nil, token)
-}
-
-// GetLessons fetches paginated lessons using optional filters.
-func (c *ContentServiceClient) GetLessons(ctx context.Context, token string, params dto.LessonQueryParams) (*types.HTTPResponse, error) {
-	variables := make(map[string]interface{})
-	filter := make(map[string]interface{})
-
-	if params.TopicID != "" {
-		filter["topicId"] = params.TopicID
-	}
-	if params.LevelID != "" {
-		filter["levelId"] = params.LevelID
-	}
-	if params.IsPublished != nil {
-		filter["isPublished"] = *params.IsPublished
-	}
-	if len(filter) > 0 {
-		variables["filter"] = filter
-	}
-	if params.Page > 0 {
-		variables["page"] = params.Page
-	}
-	if params.PageSize > 0 {
-		variables["pageSize"] = params.PageSize
+	// Check cache if Redis is configured and operation is whitelisted
+	if c.redisClient != nil {
+		opName := extractOperationName(query)
+		if _, isCacheable := gqlCacheOps[opName]; isCacheable {
+			cacheKey := generateCacheKey(opName, request.Variables)
+			if cached, err := c.redisClient.Get(ctx, cacheKey).Result(); err == nil {
+				log.Printf("Cache hit for operation: %s", opName)
+				return &types.HTTPResponse{
+					StatusCode: http.StatusOK,
+					Body:       []byte(cached),
+					Headers:    make(http.Header),
+				}, nil
+			}
+		}
 	}
 
-	return c.doGraphQLRequest(ctx, lessonsQuery, variables, token)
-}
-
-// CreateLesson creates a new lesson.
-func (c *ContentServiceClient) CreateLesson(ctx context.Context, token string, payload dto.CreateLessonRequest) (*types.HTTPResponse, error) {
-	input := map[string]interface{}{
-		"title":       payload.Title,
-		"description": payload.Description,
-		"topicId":     payload.TopicID,
-		"levelId":     payload.LevelID,
-	}
-	if payload.CreatedBy != "" {
-		input["createdBy"] = payload.CreatedBy
-	}
-
-	variables := map[string]interface{}{
-		"input": input,
-	}
-
-	return c.doGraphQLRequest(ctx, createLessonMutation, variables, token)
-}
-
-// GetFlashcardSets fetches flashcard sets with optional filters.
-func (c *ContentServiceClient) GetFlashcardSets(ctx context.Context, token string, params dto.FlashcardQueryParams) (*types.HTTPResponse, error) {
-	variables := make(map[string]interface{})
-	if params.TopicID != "" {
-		variables["topicId"] = params.TopicID
-	}
-	if params.LevelID != "" {
-		variables["levelId"] = params.LevelID
-	}
-	if params.Page > 0 {
-		variables["page"] = params.Page
-	}
-	if params.PageSize > 0 {
-		variables["pageSize"] = params.PageSize
-	}
-
-	return c.doGraphQLRequest(ctx, flashcardSetsQuery, variables, token)
-}
-
-// GetQuizzes fetches quizzes for a lesson.
-func (c *ContentServiceClient) GetQuizzes(ctx context.Context, token string, params dto.QuizQueryParams) (*types.HTTPResponse, error) {
-	if params.LessonID == "" {
-		return nil, fmt.Errorf("lessonId is required")
-	}
-
-	variables := map[string]interface{}{
-		"lessonId": params.LessonID,
-	}
-	if params.Page > 0 {
-		variables["page"] = params.Page
-	}
-	if params.PageSize > 0 {
-		variables["pageSize"] = params.PageSize
-	}
-
-	return c.doGraphQLRequest(ctx, quizzesQuery, variables, token)
-}
-
-func (c *ContentServiceClient) doGraphQLRequest(ctx context.Context, query string, variables map[string]interface{}, token string) (*types.HTTPResponse, error) {
-	request := graphQLRequest{Query: query}
-	if len(variables) > 0 {
-		request.Variables = variables
-	}
 	return c.sendGraphQLRequest(ctx, request, token)
 }
 
@@ -279,9 +128,45 @@ func (c *ContentServiceClient) sendGraphQLRequest(ctx context.Context, payload g
 		return nil, fmt.Errorf("read graphql response: %w", err)
 	}
 
-	return &types.HTTPResponse{
+	httpResp := &types.HTTPResponse{
 		StatusCode: resp.StatusCode,
 		Body:       respBody,
 		Headers:    resp.Header.Clone(),
-	}, nil
+	}
+
+	// Cache successful responses for whitelisted operations
+	if resp.StatusCode == http.StatusOK && c.redisClient != nil {
+		opName := extractOperationName(payload.Query)
+		if ttl, isCacheable := gqlCacheOps[opName]; isCacheable {
+			cacheKey := generateCacheKey(opName, payload.Variables)
+			// Cache asynchronously to avoid blocking response
+			go func() {
+				c.redisClient.Set(context.Background(), cacheKey, string(respBody), ttl)
+				log.Printf("Cached response for operation: %s with TTL: %v", opName, ttl)
+			}()
+		}
+	}
+
+	return httpResp, nil
+}
+
+// extractOperationName extracts the operation name from a GraphQL query string
+func extractOperationName(query string) string {
+	re := regexp.MustCompile(`(?i)query\s+([A-Za-z0-9_]+)`)
+	m := re.FindStringSubmatch(query)
+	if len(m) == 2 {
+		return m[1]
+	}
+	return ""
+}
+
+// generateCacheKey creates a consistent cache key from operation name and variables
+func generateCacheKey(opName string, variables map[string]interface{}) string {
+	key := opName
+	if len(variables) > 0 {
+		varsJSON, _ := json.Marshal(variables)
+		hash := md5.Sum(varsJSON)
+		key = fmt.Sprintf("%s:%s", opName, hex.EncodeToString(hash[:]))
+	}
+	return fmt.Sprintf("gql:%s", key)
 }

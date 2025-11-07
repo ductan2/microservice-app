@@ -1,15 +1,22 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
-from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.routers.base import ApiResponseRoute
 
 # Import dependencies
 # from app.database.connection import get_db
 # from app.services.outbox_service import OutboxService
 # from app.schemas.outbox_schema import OutboxResponse
 
-router = APIRouter(prefix="/api/outbox", tags=["Outbox Pattern"])
+router = APIRouter(
+    prefix="/api/outbox",
+    tags=["Outbox Pattern"],
+    route_class=ApiResponseRoute,
+)
 
 # GET /api/outbox/pending
 # Logic: Get unpublished outbox messages (internal/admin)
@@ -59,4 +66,3 @@ router = APIRouter(prefix="/api/outbox", tags=["Outbox Pattern"])
 # - Count failed publishes (old unpublished)
 # - Average publish time
 # - Return statistics object
-

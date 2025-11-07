@@ -13,9 +13,14 @@ from app.schemas.quiz_schema import (
 )
 from app.services.quiz_attempt_service import QuizAttemptService
 from app.middlewares.auth_middleware import get_current_user_id
+from app.routers.base import ApiResponseRoute
 
 
-router = APIRouter(prefix="/quiz-attempts", tags=["Quiz Attempts"])
+router = APIRouter(
+    prefix="/quiz-attempts",
+    tags=["Quiz Attempts"],
+    route_class=ApiResponseRoute,
+)
 
 
 def get_quiz_attempt_service(db: Session = Depends(get_db)) -> QuizAttemptService:
@@ -104,4 +109,3 @@ def delete_quiz_attempt(
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz attempt not found")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-

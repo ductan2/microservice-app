@@ -12,9 +12,14 @@ from app.schemas.quiz_schema import (
     QuizAnswerUpdate,
 )
 from app.services.quiz_answer_service import QuizAnswerService
+from app.routers.base import ApiResponseRoute
 
 
-router = APIRouter(prefix="/api/quiz-answers", tags=["Quiz Answers"])
+router = APIRouter(
+    prefix="/api/quiz-answers",
+    tags=["Quiz Answers"],
+    route_class=ApiResponseRoute,
+)
 
 
 def get_quiz_answer_service(db: Session = Depends(get_db)) -> QuizAnswerService:
@@ -89,4 +94,3 @@ def get_answer_summary(
     service: QuizAnswerService = Depends(get_quiz_answer_service),
 ) -> QuizAnswerSummary:
     return service.get_answer_summary(attempt_id)
-

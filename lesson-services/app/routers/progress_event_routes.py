@@ -12,9 +12,14 @@ from app.schemas.progress_event_schema import (
 )
 from app.services.progress_event_service import ProgressEventService
 from app.middlewares.auth_middleware import get_current_user_id
+from app.routers.base import ApiResponseRoute
 
 
-router = APIRouter(prefix="/api/progress-events", tags=["Progress Events"])
+router = APIRouter(
+    prefix="/api/progress-events",
+    tags=["Progress Events"],
+    route_class=ApiResponseRoute,
+)
 
 
 def get_progress_event_service(db: Session = Depends(get_db)) -> ProgressEventService:
@@ -115,4 +120,3 @@ def get_event_type_stats(
         )
 
     return service.get_event_type_stats(date_from=date_from, date_to=date_to)
-

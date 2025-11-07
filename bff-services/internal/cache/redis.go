@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/redis/go-redis/v9"
 	"bff-services/internal/config"
+	"github.com/redis/go-redis/v9"
 )
 
 // NewRedisClient creates a redis client and PINGs it.

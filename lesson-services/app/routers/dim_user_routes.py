@@ -12,8 +12,13 @@ from app.schemas.dim_user_schema import (
 )
 from app.services.dim_user_service import DimUserService
 from app.middlewares.auth_middleware import get_current_user_id
+from app.routers.base import ApiResponseRoute
 
-router = APIRouter(prefix="/api/users", tags=["User Preferences"])
+router = APIRouter(
+    prefix="/api/users",
+    tags=["User Preferences"],
+    route_class=ApiResponseRoute,
+)
 
 
 def get_dim_user_service(db: Session = Depends(get_db)) -> DimUserService:

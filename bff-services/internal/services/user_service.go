@@ -1,11 +1,8 @@
 package services
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -41,6 +38,12 @@ type UserService interface {
 	UnlockAccountWithContext(ctx context.Context, userID, email, sessionID, targetID, reason string) (*types.HTTPResponse, error)
 	SoftDeleteAccountWithContext(ctx context.Context, userID, email, sessionID, targetID, reason string) (*types.HTTPResponse, error)
 	RestoreAccountWithContext(ctx context.Context, userID, email, sessionID, targetID, reason string) (*types.HTTPResponse, error)
+	// Activity session methods
+	StartActivitySession(ctx context.Context, payload dto.StartSessionRequest, userID, email, sessionID string) (*types.HTTPResponse, error)
+	EndActivitySession(ctx context.Context, payload dto.EndSessionRequest, userID, email, sessionID string) (*types.HTTPResponse, error)
+	GetActivitySessions(ctx context.Context, userID, email, sessionID string, page, limit int, startDate, endDate *time.Time) (*types.HTTPResponse, error)
+	GetSessionStats(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error)
+	UpdateActivitySession(ctx context.Context, payload dto.UpdateSessionRequest, userID, email, sessionID string) (*types.HTTPResponse, error)
 }
 
 type UserServiceClient struct {
@@ -161,63 +164,6 @@ func (c *UserServiceClient) GetUserById(ctx context.Context, userID, email, sess
 	return c.doRequest(ctx, http.MethodGet, path, nil, internalAuthHeaders(userID, email, sessionID))
 }
 
-func (c *UserServiceClient) doRequest(ctx context.Context, method, path string, payload interface{}, headers http.Header) (*types.HTTPResponse, error) {
-	if c.baseURL == "" {
-		return nil, fmt.Errorf("user service base URL is not configured")
-	}
-
-	endpoint := c.baseURL + path
-
-	var bodyReader io.Reader
-	if payload != nil {
-		body, err := json.Marshal(payload)
-		if err != nil {
-			return nil, fmt.Errorf("marshal payload: %w", err)
-		}
-		bodyReader = bytes.NewReader(body)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, method, endpoint, bodyReader)
-	if err != nil {
-		return nil, fmt.Errorf("create request: %w", err)
-	}
-	if payload != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
-
-	for key, values := range headers {
-		for _, value := range values {
-			req.Header.Add(key, value)
-		}
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("perform request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
-	}
-
-	return &types.HTTPResponse{
-		StatusCode: resp.StatusCode,
-		Body:       respBody,
-		Headers:    resp.Header.Clone(),
-	}, nil
-}
-
-// internalAuthHeaders creates headers for internal microservice communication
-func internalAuthHeaders(userID, email, sessionID string) http.Header {
-	header := http.Header{}
-	header.Set("X-User-ID", userID)
-	header.Set("X-User-Email", email)
-	header.Set("X-Session-ID", sessionID)
-	return header
-}
-
 func (c *UserServiceClient) GetProfileWithContext(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
 	return c.doRequest(ctx, http.MethodGet, "/api/v1/users/profile", nil, internalAuthHeaders(userID, email, sessionID))
 }
@@ -250,6 +196,38 @@ func (c *UserServiceClient) RestoreAccountWithContext(ctx context.Context, userI
 	return c.doRequest(ctx, http.MethodPost, path, nil, internalAuthHeaders(userID, email, sessionID))
 }
 
+// Activity session methods
+func (c *UserServiceClient) StartActivitySession(ctx context.Context, payload dto.StartSessionRequest, userID, email, sessionID string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/sessions/start", payload, internalAuthHeaders(userID, email, sessionID))
+}
+
+func (c *UserServiceClient) EndActivitySession(ctx context.Context, payload dto.EndSessionRequest, userID, email, sessionID string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/sessions/end", payload, internalAuthHeaders(userID, email, sessionID))
+}
+
+func (c *UserServiceClient) GetActivitySessions(ctx context.Context, userID, email, sessionID string, page, limit int, startDate, endDate *time.Time) (*types.HTTPResponse, error) {
+	path := "/api/v1/sessions"
+	query := url.Values{}
+	query.Add("page", fmt.Sprintf("%d", page))
+	query.Add("limit", fmt.Sprintf("%d", limit))
+	if startDate != nil {
+		query.Add("start_date", startDate.Format(time.RFC3339))
+	}
+	if endDate != nil {
+		query.Add("end_date", endDate.Format(time.RFC3339))
+	}
+	path += "?" + query.Encode()
+	return c.doRequest(ctx, http.MethodGet, path, nil, internalAuthHeaders(userID, email, sessionID))
+}
+
+func (c *UserServiceClient) GetSessionStats(ctx context.Context, userID, email, sessionID string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodGet, "/api/v1/sessions/stats", nil, internalAuthHeaders(userID, email, sessionID))
+}
+
+func (c *UserServiceClient) UpdateActivitySession(ctx context.Context, payload dto.UpdateSessionRequest, userID, email, sessionID string) (*types.HTTPResponse, error) {
+	return c.doRequest(ctx, http.MethodPost, "/api/v1/sessions/update", payload, internalAuthHeaders(userID, email, sessionID))
+}
+
 func appendReason(path, reason string) string {
 	reason = strings.TrimSpace(reason)
 	if reason == "" {
@@ -262,4 +240,8 @@ func appendReason(path, reason string) string {
 	}
 
 	return path + sep + "reason=" + url.QueryEscape(reason)
+}
+
+func (c *UserServiceClient) doRequest(ctx context.Context, method, path string, payload interface{}, headers http.Header) (*types.HTTPResponse, error) {
+	return doRequest(ctx, c.baseURL, method, path, c.httpClient, payload, headers)
 }

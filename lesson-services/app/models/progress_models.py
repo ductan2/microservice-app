@@ -31,6 +31,39 @@ class UserLesson(Base):
         CheckConstraint("status IN ('in_progress','completed','abandoned')", name='status_check'),
     )
 
+class CourseEnrollment(Base):
+    __tablename__ = "course_enrollments"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), nullable=False)
+    course_id = Column(UUID(as_uuid=True), nullable=False)
+    status = Column(Text, nullable=False, default="enrolled")  # enrolled, in_progress, completed, cancelled
+    progress_percent = Column(Integer, nullable=False, default=0)
+    enrolled_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    started_at = Column(DateTime(timezone=True))
+    completed_at = Column(DateTime(timezone=True))
+    last_accessed_at = Column(DateTime(timezone=True))
+
+    __table_args__ = (
+        CheckConstraint("status IN ('enrolled','in_progress','completed','cancelled')", name="course_status_check"),
+    )
+
+
+class CourseLesson(Base):
+    __tablename__ = "course_lessons"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    course_id = Column(UUID(as_uuid=True), nullable=False)
+    lesson_id = Column(UUID(as_uuid=True), nullable=False)
+    ord = Column(Integer, nullable=False)
+    is_required = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    __table_args__ = (
+        CheckConstraint("ord >= 0", name="lesson_order_nonnegative"),
+    )
+
+
 class QuizAttempt(Base):
     __tablename__ = "quiz_attempts"
     

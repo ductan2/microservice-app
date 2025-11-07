@@ -1,5 +1,7 @@
 import os
 from typing import Optional
+
+from fastapi import status
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
@@ -47,3 +49,22 @@ class Settings(BaseSettings):
         extra = "ignore"  # Ignore extra environment variables
 
 settings = Settings()
+
+# Default success payload when an endpoint returns no explicit data
+DEFAULT_SUCCESS_DATA: dict[str, object] = {}
+
+# Human friendly error messages mapped by HTTP status codes
+ERROR_MESSAGES = {
+    status.HTTP_400_BAD_REQUEST: "Invalid request.",
+    status.HTTP_401_UNAUTHORIZED: "Unauthorized request.",
+    status.HTTP_403_FORBIDDEN: "Access forbidden.",
+    status.HTTP_404_NOT_FOUND: "Resource not found.",
+    status.HTTP_409_CONFLICT: "Request could not be completed due to a conflict.",
+    status.HTTP_422_UNPROCESSABLE_ENTITY: "Invalid request payload.",
+    status.HTTP_500_INTERNAL_SERVER_ERROR: "Something went wrong. Please try again later.",
+}
+
+
+def get_error_message(status_code: int) -> str:
+    """Return the configured message for the provided status code."""
+    return ERROR_MESSAGES.get(status_code, ERROR_MESSAGES[status.HTTP_500_INTERNAL_SERVER_ERROR])

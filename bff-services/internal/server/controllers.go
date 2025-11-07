@@ -13,6 +13,7 @@ func initControllers(deps Deps) *controllers.Controllers {
 		ctrl.Password = controllers.NewPasswordController(deps.UserService)
 		ctrl.MFA = controllers.NewMFAController(deps.UserService)
 		ctrl.Session = controllers.NewSessionController(deps.UserService)
+		ctrl.ActivitySession = controllers.NewActivitySessionController(deps.UserService)
 	}
 
 	// Initialize user controller (requires both UserService and LessonService)

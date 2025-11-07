@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
 from typing import List, Optional
 from uuid import UUID
+
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
 from app.schemas.user_streak_schema import (
@@ -14,9 +15,14 @@ from app.schemas.user_streak_schema import (
 )
 from app.services.user_streak_service import UserStreakService
 from app.middlewares.auth_middleware import get_current_user_id
+from app.routers.base import ApiResponseRoute
 
 
-router = APIRouter(prefix="/progress/streaks", tags=["User Streaks"])
+router = APIRouter(
+    prefix="/progress/streaks",
+    tags=["User Streaks"],
+    route_class=ApiResponseRoute,
+)
 
 
 def get_user_streak_service(db: Session = Depends(get_db)) -> UserStreakService:

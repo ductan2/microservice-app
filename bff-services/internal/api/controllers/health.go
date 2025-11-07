@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"net/http"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 // Health returns a simple health check response.

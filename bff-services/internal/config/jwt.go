@@ -7,8 +7,8 @@ import (
 
 // JWTConfig contains signing secret and token lifetime.
 type JWTConfig struct {
-	Secret     string
-	ExpiresIn  time.Duration
+	Secret    string
+	ExpiresIn time.Duration
 }
 
 func GetJWTConfig() JWTConfig {

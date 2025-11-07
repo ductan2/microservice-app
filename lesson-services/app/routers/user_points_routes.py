@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
 from app.schemas.user_points_schema import (
@@ -14,9 +15,14 @@ from app.schemas.user_points_schema import (
 )
 from app.services.user_points_service import UserPointsService
 from app.middlewares.auth_middleware import get_current_user_id
+from app.routers.base import ApiResponseRoute
 
 
-router = APIRouter(prefix="/progress/points", tags=["User Points"])
+router = APIRouter(
+    prefix="/progress/points",
+    tags=["User Points"],
+    route_class=ApiResponseRoute,
+)
 
 
 def get_user_points_service(db: Session = Depends(get_db)) -> UserPointsService:

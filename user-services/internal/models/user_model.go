@@ -116,6 +116,20 @@ type AuditLog struct {
 	CreatedAt time.Time      `gorm:"default:now();not null;index:audit_logs_user_time_idx" json:"created_at"`
 }
 
+// UserActivitySession tracks user activity time spent in the app
+type UserActivitySession struct {
+	ID         uuid.UUID    `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	UserID     uuid.UUID    `gorm:"type:uuid;not null;index:activity_sessions_user_idx;constraint:OnDelete:CASCADE" json:"user_id"`
+	SessionID  uuid.UUID    `gorm:"type:uuid;not null;index:activity_sessions_session_idx" json:"session_id"`
+	StartedAt  time.Time    `gorm:"not null" json:"started_at"`
+	EndedAt    sql.NullTime `gorm:"type:timestamptz" json:"ended_at,omitempty"`
+	DurationMs int64        `gorm:"default:0" json:"duration_ms"`
+	IPAddr     string       `gorm:"type:inet" json:"ip_addr,omitempty"`
+	UserAgent  string       `gorm:"type:text" json:"user_agent,omitempty"`
+	CreatedAt  time.Time    `gorm:"default:now();not null" json:"created_at"`
+	UpdatedAt  time.Time    `gorm:"default:now();not null" json:"updated_at"`
+}
+
 // Outbox for cross-service events (transactional outbox pattern)
 type Outbox struct {
 	ID          int64        `gorm:"primaryKey;autoIncrement" json:"id"`

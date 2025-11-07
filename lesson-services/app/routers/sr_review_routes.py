@@ -14,8 +14,13 @@ from app.schemas.spaced_repetition_schema import (
 )
 from app.services.sr_review_service import SRReviewService
 from app.middlewares.auth_middleware import get_current_user_id
+from app.routers.base import ApiResponseRoute
 
-router = APIRouter(prefix="/api/spaced-repetition/reviews", tags=["Spaced Repetition Reviews"])
+router = APIRouter(
+    prefix="/api/spaced-repetition/reviews",
+    tags=["Spaced Repetition Reviews"],
+    route_class=ApiResponseRoute,
+)
 
 
 def get_sr_review_service(db: Session = Depends(get_db)) -> SRReviewService:

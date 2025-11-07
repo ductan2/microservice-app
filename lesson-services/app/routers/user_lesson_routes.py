@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from sqlalchemy.orm import Session
 from typing import List, Optional
 from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
 from app.schemas.user_lesson_schema import (
@@ -16,9 +17,14 @@ from app.schemas.user_lesson_schema import (
 )
 from app.services.user_lesson_service import UserLessonService
 from app.middlewares.auth_middleware import get_current_user_id
+from app.routers.base import ApiResponseRoute
 
 
-router = APIRouter(prefix="/api/user-lessons", tags=["User Lesson Progress"])
+router = APIRouter(
+    prefix="/api/user-lessons",
+    tags=["User Lesson Progress"],
+    route_class=ApiResponseRoute,
+)
 
 
 def get_user_lesson_service(db: Session = Depends(get_db)) -> UserLessonService:

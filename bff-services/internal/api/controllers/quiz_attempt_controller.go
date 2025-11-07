@@ -174,7 +174,7 @@ func (q *QuizAttemptController) GetQuizAttemptsByUserID(c *gin.Context) {
 	if !ok {
 		return
 	}
-	
+
 	targetUserID := c.Param("user_id")
 	if targetUserID == "" {
 		utils.Fail(c, "User ID is required", http.StatusBadRequest, "missing user_id path parameter")
@@ -233,4 +233,3 @@ func (q *QuizAttemptController) DeleteQuizAttempt(c *gin.Context) {
 
 	respondWithServiceResponse(c, resp)
 }
-

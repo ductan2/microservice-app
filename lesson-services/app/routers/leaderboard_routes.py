@@ -12,9 +12,14 @@ from app.schemas.leaderboard_schema import (
 )
 from app.services.leaderboard_service import LeaderboardService
 from app.middlewares.auth_middleware import get_current_user_id
+from app.routers.base import ApiResponseRoute
 
 
-router = APIRouter(prefix="/api/leaderboards", tags=["Leaderboards"])
+router = APIRouter(
+    prefix="/api/leaderboards",
+    tags=["Leaderboards"],
+    route_class=ApiResponseRoute,
+)
 
 
 def get_leaderboard_service(db: Session = Depends(get_db)) -> LeaderboardService:

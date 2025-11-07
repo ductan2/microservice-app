@@ -62,4 +62,5 @@ func setupAPIRoutes(r *gin.Engine, controllers *controllers.Controllers, session
 	routes.SetupQuizAttemptRoutes(api, controllers, sessionCache)
 	routes.SetupUserRoutes(api, controllers, sessionCache)
 	routes.SetupNotificationRoutes(api, controllers)
+	routes.SetupActivitySessionRoutes(api, controllers, sessionCache)
 }

@@ -45,6 +45,7 @@ func main() {
 
 	userService := services.NewUserServiceClient(config.GetUserServiceURL(), nil)
 	contentService := services.NewContentServiceClient(config.GetContentServiceURL(), nil)
+	contentService.SetRedisClient(redisClient)
 	lessonService := services.NewLessonServiceClient(config.GetLessonServiceURL(), nil)
 	quizAttemptService := services.NewQuizAttemptServiceClient(config.GetLessonServiceURL(), nil)
 	notificationService := services.NewNotificationServiceClient(config.GetNotificationServiceURL(), nil)
