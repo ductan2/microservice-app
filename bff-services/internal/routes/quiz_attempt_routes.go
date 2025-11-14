@@ -8,12 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// SetupQuizAttemptRoutes configures quiz attempt related endpoints.
+// SetupQuizAttemptRoutes configures quiz attempt related routes
 func SetupQuizAttemptRoutes(api *gin.RouterGroup, controllers *controllers.Controllers, sessionCache *cache.SessionCache) {
-	if controllers.QuizAttempt == nil || sessionCache == nil {
+	if controllers == nil || controllers.QuizAttempt == nil || sessionCache == nil {
 		return
 	}
 
+	// Protected quiz attempt routes
 	attempts := api.Group("/quiz-attempts")
 	attempts.Use(middleware.AuthRequired(sessionCache))
 	{

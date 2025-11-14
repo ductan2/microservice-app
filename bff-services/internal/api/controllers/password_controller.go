@@ -11,10 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// PasswordController handles password reset and change operations.
 type PasswordController struct {
 	userService services.UserService
 }
 
+// NewPasswordController constructs a new PasswordController.
 func NewPasswordController(userService services.UserService) *PasswordController {
 	return &PasswordController{userService: userService}
 }

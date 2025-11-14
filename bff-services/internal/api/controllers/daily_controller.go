@@ -11,10 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// DailyController handles daily activity tracking operations.
 type DailyController struct {
 	dailyService services.DailyService
 }
 
+// NewDailyController constructs a new DailyController.
 func NewDailyController(dailyService services.DailyService) *DailyController {
 	return &DailyController{dailyService: dailyService}
 }

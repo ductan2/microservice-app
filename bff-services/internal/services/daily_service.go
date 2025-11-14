@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
+	"time"
 
 	"bff-services/internal/api/dto"
 	"bff-services/internal/types"
@@ -29,8 +31,12 @@ type DailyServiceClient struct {
 
 // NewDailyServiceClient constructs a new DailyServiceClient.
 func NewDailyServiceClient(baseURL string, httpClient *http.Client) *DailyServiceClient {
+	trimmed := strings.TrimRight(baseURL, "/")
+	if httpClient == nil {
+		httpClient = &http.Client{Timeout: 10 * time.Second}
+	}
 	return &DailyServiceClient{
-		baseURL:    baseURL,
+		baseURL:    trimmed,
 		httpClient: httpClient,
 	}
 }

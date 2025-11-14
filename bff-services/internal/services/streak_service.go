@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"bff-services/internal/api/dto"
 	"bff-services/internal/types"
@@ -27,8 +29,12 @@ type StreakServiceClient struct {
 
 // NewStreakServiceClient constructs a new StreakServiceClient.
 func NewStreakServiceClient(baseURL string, httpClient *http.Client) *StreakServiceClient {
+	trimmed := strings.TrimRight(baseURL, "/")
+	if httpClient == nil {
+		httpClient = &http.Client{Timeout: 10 * time.Second}
+	}
 	return &StreakServiceClient{
-		baseURL:    baseURL,
+		baseURL:    trimmed,
 		httpClient: httpClient,
 	}
 }

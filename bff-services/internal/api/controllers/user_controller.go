@@ -14,11 +14,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// UserController handles user authentication, profile, and management operations.
 type UserController struct {
 	userService   services.UserService
 	lessonService services.LessonService
 }
 
+// NewUserController constructs a new UserController.
 func NewUserController(userService services.UserService, lessonService services.LessonService) *UserController {
 	return &UserController{
 		userService:   userService,
@@ -26,7 +28,6 @@ func NewUserController(userService services.UserService, lessonService services.
 	}
 }
 
-// Authentication methods
 func (u *UserController) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

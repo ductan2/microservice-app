@@ -1,12 +1,14 @@
 package middleware
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
 
 	"bff-services/internal/cache"
+	"bff-services/internal/services"
 	"bff-services/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +19,14 @@ const (
 	contextUserIDKey    = "userID"
 	contextUserEmailKey = "userEmail"
 	contextSessionIDKey = "sessionID"
+	contextUserRoleKey  = "userRole"
+)
+
+const (
+	RoleStudent    = "student"
+	RoleTeacher    = "teacher"
+	RoleAdmin      = "admin"
+	RoleSuperAdmin = "super-admin"
 )
 
 // AuthRequired ensures requests include a valid Bearer access token and validates session in Redis.
@@ -122,4 +132,54 @@ func GetUserContextFromMiddleware(c *gin.Context) (userID, email, sessionID stri
 	}
 
 	return userIDUUID.String(), emailStr, sessionIDUUID.String(), true
+}
+
+// AdminRequired checks if the authenticated user has admin or super-admin role.
+// This middleware must be used after AuthRequired middleware.
+func AdminRequired(userService services.UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, email, sessionID, ok := GetUserContextFromMiddleware(c)
+		if !ok {
+			return
+		}
+
+		// Get user information from user-service to check role
+		userResp, err := userService.GetUserById(c.Request.Context(), userID, email, sessionID, userID)
+		if err != nil {
+			utils.Fail(c, "Failed to verify user role", http.StatusInternalServerError, err.Error())
+			c.Abort()
+			return
+		}
+
+		if userResp.StatusCode != http.StatusOK {
+			utils.Fail(c, "Failed to verify user role", userResp.StatusCode, "unable to fetch user data")
+			c.Abort()
+			return
+		}
+
+		// Parse user data to get role
+		var userData struct {
+			Data struct {
+				Role string `json:"role"`
+			} `json:"data"`
+		}
+
+		if err := json.Unmarshal(userResp.Body, &userData); err != nil {
+			utils.Fail(c, "Failed to parse user data", http.StatusInternalServerError, err.Error())
+			c.Abort()
+			return
+		}
+
+		// Check if user is admin or super-admin
+		if userData.Data.Role != RoleAdmin && userData.Data.Role != RoleSuperAdmin {
+			utils.Fail(c, "Forbidden", http.StatusForbidden, "admin or super-admin role required")
+			c.Abort()
+			return
+		}
+
+		// Store role in context for later use if needed
+		c.Set(contextUserRoleKey, userData.Data.Role)
+
+		c.Next()
+	}
 }

@@ -11,10 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// MFAController handles multi-factor authentication operations.
 type MFAController struct {
 	userService services.UserService
 }
 
+// NewMFAController constructs a new MFAController.
 func NewMFAController(userService services.UserService) *MFAController {
 	return &MFAController{userService: userService}
 }

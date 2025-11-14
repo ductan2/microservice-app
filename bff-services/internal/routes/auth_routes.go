@@ -10,10 +10,7 @@ import (
 
 // SetupAuthRoutes configures authentication-related routes
 func SetupAuthRoutes(api *gin.RouterGroup, controllers *controllers.Controllers, sessionCache *cache.SessionCache) {
-	if controllers == nil {
-		return
-	}
-	if controllers.User == nil {
+	if controllers == nil || controllers.User == nil || sessionCache == nil {
 		return
 	}
 
@@ -24,12 +21,10 @@ func SetupAuthRoutes(api *gin.RouterGroup, controllers *controllers.Controllers,
 	api.GET("/users/verify-email", controllers.User.VerifyEmail)
 
 	// Protected profile routes
-	if sessionCache != nil {
-		profile := api.Group("/users/profile")
-		profile.Use(middleware.AuthRequired(sessionCache))
-		{
-			profile.GET("", controllers.User.GetProfile)
-			profile.PUT("", controllers.User.UpdateProfile)
-		}
+	profile := api.Group("/users/profile")
+	profile.Use(middleware.AuthRequired(sessionCache))
+	{
+		profile.GET("", controllers.User.GetProfile)
+		profile.PUT("", controllers.User.UpdateProfile)
 	}
 }

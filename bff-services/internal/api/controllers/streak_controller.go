@@ -13,10 +13,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// StreakController handles user streak operations.
 type StreakController struct {
 	streakService services.StreakService
 }
 
+// NewStreakController constructs a new StreakController.
 func NewStreakController(streakService services.StreakService) *StreakController {
 	return &StreakController{streakService: streakService}
 }

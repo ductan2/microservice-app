@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// QuizAttemptController exposes handlers for quiz attempt operations.
+// QuizAttemptController handles quiz attempt operations.
 type QuizAttemptController struct {
 	quizAttemptService services.QuizAttemptService
 }
@@ -24,7 +24,6 @@ func NewQuizAttemptController(quizAttemptService services.QuizAttemptService) *Q
 	}
 }
 
-// StartQuizAttempt handles POST /api/v1/quiz-attempts/start.
 func (q *QuizAttemptController) StartQuizAttempt(c *gin.Context) {
 	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
@@ -46,7 +45,6 @@ func (q *QuizAttemptController) StartQuizAttempt(c *gin.Context) {
 	respondWithServiceResponse(c, resp)
 }
 
-// GetQuizAttempt handles GET /api/v1/quiz-attempts/:attempt_id.
 func (q *QuizAttemptController) GetQuizAttempt(c *gin.Context) {
 	attemptID := c.Param("attempt_id")
 	if attemptID == "" {
@@ -68,7 +66,6 @@ func (q *QuizAttemptController) GetQuizAttempt(c *gin.Context) {
 	respondWithServiceResponse(c, resp)
 }
 
-// SubmitQuizAttempt handles POST /api/v1/quiz-attempts/:attempt_id/submit.
 func (q *QuizAttemptController) SubmitQuizAttempt(c *gin.Context) {
 	attemptID := c.Param("attempt_id")
 	if attemptID == "" {
@@ -96,7 +93,6 @@ func (q *QuizAttemptController) SubmitQuizAttempt(c *gin.Context) {
 	respondWithServiceResponse(c, resp)
 }
 
-// GetUserQuizAttempts handles GET /api/v1/quiz-attempts/user/me/quiz/:quiz_id.
 func (q *QuizAttemptController) GetUserQuizAttempts(c *gin.Context) {
 	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
@@ -118,7 +114,6 @@ func (q *QuizAttemptController) GetUserQuizAttempts(c *gin.Context) {
 	respondWithServiceResponse(c, resp)
 }
 
-// GetUserQuizHistory handles GET /api/v1/quiz-attempts/user/me/history.
 func (q *QuizAttemptController) GetUserQuizHistory(c *gin.Context) {
 	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
@@ -168,7 +163,6 @@ func (q *QuizAttemptController) GetUserQuizHistory(c *gin.Context) {
 	respondWithServiceResponse(c, resp)
 }
 
-// GetQuizAttemptsByUserID handles GET /api/v1/quiz-attempts/user/:user_id.
 func (q *QuizAttemptController) GetQuizAttemptsByUserID(c *gin.Context) {
 	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
@@ -190,7 +184,6 @@ func (q *QuizAttemptController) GetQuizAttemptsByUserID(c *gin.Context) {
 	respondWithServiceResponse(c, resp)
 }
 
-// GetLessonQuizAttempts handles GET /api/v1/quiz-attempts/lesson/:lesson_id/user/me.
 func (q *QuizAttemptController) GetLessonQuizAttempts(c *gin.Context) {
 	userID, email, sessionID, ok := middleware.GetUserContextFromMiddleware(c)
 	if !ok {
@@ -212,7 +205,6 @@ func (q *QuizAttemptController) GetLessonQuizAttempts(c *gin.Context) {
 	respondWithServiceResponse(c, resp)
 }
 
-// DeleteQuizAttempt handles DELETE /api/v1/quiz-attempts/:attempt_id.
 func (q *QuizAttemptController) DeleteQuizAttempt(c *gin.Context) {
 	attemptID := c.Param("attempt_id")
 	if attemptID == "" {

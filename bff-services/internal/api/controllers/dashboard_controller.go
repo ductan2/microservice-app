@@ -18,11 +18,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// DashboardController aggregates data from multiple services for dashboard views.
 type DashboardController struct {
 	userService   services.UserService
 	lessonService services.LessonService
 }
 
+// NewDashboardController constructs a new DashboardController.
 func NewDashboardController(userService services.UserService, lessonService services.LessonService) *DashboardController {
 	return &DashboardController{
 		userService:   userService,

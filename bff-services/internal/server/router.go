@@ -31,7 +31,7 @@ func NewRouter(deps Deps) *gin.Engine {
 	ctrl := initControllers(deps)
 
 	// Setup API routes
-	setupAPIRoutes(r, ctrl, deps.SessionCache)
+	setupAPIRoutes(r, ctrl, deps)
 
 	// Test route
 	r.POST("/test-login", func(c *gin.Context) {
@@ -42,7 +42,7 @@ func NewRouter(deps Deps) *gin.Engine {
 }
 
 // setupAPIRoutes configures all API routes using the separated route files
-func setupAPIRoutes(r *gin.Engine, controllers *controllers.Controllers, sessionCache *cache.SessionCache) {
+func setupAPIRoutes(r *gin.Engine, controllers *controllers.Controllers, deps Deps) {
 	api := r.Group("/api/v1")
 
 	// Test route inside group
@@ -51,15 +51,15 @@ func setupAPIRoutes(r *gin.Engine, controllers *controllers.Controllers, session
 	})
 
 	// Setup routes from separate files
-	routes.SetupAuthRoutes(api, controllers, sessionCache)
-	routes.SetupPasswordRoutes(api, controllers)
-	routes.SetupMFARoutes(api, controllers)
-	routes.SetupSessionRoutes(api, controllers)
-	routes.SetupContentRoutes(api, controllers)
-	routes.SetupLessonRoutes(api, controllers, sessionCache)
-	routes.SetupQuizAttemptRoutes(api, controllers, sessionCache)
-	routes.SetupUserRoutes(api, controllers, sessionCache)
-	routes.SetupNotificationRoutes(api, controllers)
-	routes.SetupActivitySessionRoutes(api, controllers, sessionCache)
-	routes.SetupDashboardRoutes(api, controllers, sessionCache)
+	routes.SetupAuthRoutes(api, controllers, deps.SessionCache)
+	routes.SetupPasswordRoutes(api, controllers, deps.SessionCache)
+	routes.SetupMFARoutes(api, controllers, deps.SessionCache)
+	routes.SetupSessionRoutes(api, controllers, deps.SessionCache)
+	routes.SetupContentRoutes(api, controllers, deps.SessionCache)
+	routes.SetupLessonRoutes(api, controllers, deps.SessionCache)
+	routes.SetupQuizAttemptRoutes(api, controllers, deps.SessionCache)
+	routes.SetupUserRoutes(api, controllers, deps.SessionCache, deps.UserService)
+	routes.SetupNotificationRoutes(api, controllers, deps.SessionCache)
+	routes.SetupActivitySessionRoutes(api, controllers, deps.SessionCache)
+	routes.SetupDashboardRoutes(api, controllers, deps.SessionCache)
 }

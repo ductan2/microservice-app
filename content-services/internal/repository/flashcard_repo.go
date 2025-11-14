@@ -12,12 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var (
-	// ErrFlashcardSetNotFound indicates a flashcard set lookup failed.
-	ErrFlashcardSetNotFound = errors.New("flashcard set not found")
-	// ErrFlashcardNotFound indicates a flashcard lookup failed.
-	ErrFlashcardNotFound = errors.New("flashcard not found")
-)
 
 type FlashcardSetRepository interface {
 	Create(ctx context.Context, set *models.FlashcardSet) error

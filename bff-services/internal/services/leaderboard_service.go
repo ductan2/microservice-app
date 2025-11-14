@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
+	"time"
 
 	"bff-services/internal/types"
 )
@@ -28,8 +30,12 @@ type LeaderboardServiceClient struct {
 
 // NewLeaderboardServiceClient constructs a new LeaderboardServiceClient.
 func NewLeaderboardServiceClient(baseURL string, httpClient *http.Client) *LeaderboardServiceClient {
+	trimmed := strings.TrimRight(baseURL, "/")
+	if httpClient == nil {
+		httpClient = &http.Client{Timeout: 10 * time.Second}
+	}
 	return &LeaderboardServiceClient{
-		baseURL:    baseURL,
+		baseURL:    trimmed,
 		httpClient: httpClient,
 	}
 }

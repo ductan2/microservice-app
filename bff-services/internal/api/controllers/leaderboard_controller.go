@@ -11,10 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// LeaderboardController handles leaderboard operations.
 type LeaderboardController struct {
 	leaderboardService services.LeaderboardService
 }
 
+// NewLeaderboardController constructs a new LeaderboardController.
 func NewLeaderboardController(leaderboardService services.LeaderboardService) *LeaderboardController {
 	return &LeaderboardController{leaderboardService: leaderboardService}
 }

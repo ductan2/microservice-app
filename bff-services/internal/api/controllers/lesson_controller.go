@@ -17,15 +17,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// LessonController handles lesson, activity, streak, and leaderboard operations.
 type LessonController struct {
 	lessonService      services.LessonService
 	streakCacheService *cache.StreakCacheService
 }
 
+// NewLessonController constructs a new LessonController.
 func NewLessonController(lessonService services.LessonService) *LessonController {
 	return &LessonController{lessonService: lessonService}
 }
 
+// NewLessonControllerWithCache constructs a new LessonController with caching support.
 func NewLessonControllerWithCache(lessonService services.LessonService, streakCacheService *cache.StreakCacheService) *LessonController {
 	return &LessonController{
 		lessonService:      lessonService,

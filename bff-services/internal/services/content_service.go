@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,6 +24,14 @@ import (
 // ContentService defines the contract for interacting with the content service GraphQL API.
 type ContentService interface {
 	ExecuteGraphQL(ctx context.Context, token string, payload dto.GraphQLRequest) (*types.HTTPResponse, error)
+	UploadMediaBatch(ctx context.Context, token string, opts MediaBatchUploadOptions) (*types.HTTPResponse, error)
+}
+
+type MediaBatchUploadOptions struct {
+	Files      []*multipart.FileHeader
+	Kind       string
+	UploadedBy string
+	FolderID   string
 }
 
 // ContentServiceClient implements ContentService against a remote HTTP GraphQL endpoint.
@@ -43,6 +53,24 @@ type graphQLRequest struct {
 	Variables     map[string]interface{} `json:"variables,omitempty"`
 	OperationName string                 `json:"operationName,omitempty"`
 }
+
+const uploadMediaBatchMutation = `mutation UploadImages($inputs: [UploadMediaInput!]!) {
+  uploadMediaBatch(inputs: $inputs) {
+    id
+    storageKey
+    kind
+    mimeType
+    folderId
+    originalName
+    thumbnailURL
+    bytes
+    durationMs
+    sha256
+    createdAt
+    uploadedBy
+    downloadURL
+  }
+}`
 
 // NewContentServiceClient constructs a new ContentServiceClient.
 func NewContentServiceClient(baseURL string, httpClient *http.Client) *ContentServiceClient {
@@ -148,6 +176,148 @@ func (c *ContentServiceClient) sendGraphQLRequest(ctx context.Context, payload g
 	}
 
 	return httpResp, nil
+}
+
+// UploadMediaBatch streams multipart uploads to the content service GraphQL endpoint.
+func (c *ContentServiceClient) UploadMediaBatch(ctx context.Context, token string, opts MediaBatchUploadOptions) (*types.HTTPResponse, error) {
+	if len(opts.Files) == 0 {
+		return nil, fmt.Errorf("no files provided for upload")
+	}
+	if c.baseURL == "" {
+		return nil, fmt.Errorf("content service base URL is not configured")
+	}
+
+	kind := strings.ToUpper(strings.TrimSpace(opts.Kind))
+	if kind == "" {
+		kind = "IMAGE"
+	}
+	uploadedBy := strings.TrimSpace(opts.UploadedBy)
+	folderID := strings.TrimSpace(opts.FolderID)
+
+	inputs := make([]map[string]interface{}, 0, len(opts.Files))
+	fileMap := make(map[string][]string, len(opts.Files))
+	for idx, fh := range opts.Files {
+		if fh == nil {
+			return nil, fmt.Errorf("file at index %d is nil", idx)
+		}
+		mimeType := fh.Header.Get("Content-Type")
+		if mimeType == "" {
+			mimeType = "application/octet-stream"
+		}
+		input := map[string]interface{}{
+			"file":     nil,
+			"kind":     kind,
+			"mimeType": mimeType,
+			"filename": fh.Filename,
+		}
+		if uploadedBy != "" {
+			input["uploadedBy"] = uploadedBy
+		}
+		if folderID != "" {
+			input["folderId"] = folderID
+		}
+		inputs = append(inputs, input)
+		fileMap[strconv.Itoa(idx)] = []string{fmt.Sprintf("variables.inputs.%d.file", idx)}
+	}
+
+	operations := map[string]interface{}{
+		"query": uploadMediaBatchMutation,
+		"variables": map[string]interface{}{
+			"inputs": inputs,
+		},
+	}
+
+	opsBytes, err := json.Marshal(operations)
+	if err != nil {
+		return nil, fmt.Errorf("marshal operations: %w", err)
+	}
+	mapBytes, err := json.Marshal(fileMap)
+	if err != nil {
+		return nil, fmt.Errorf("marshal upload map: %w", err)
+	}
+
+	pr, pw := io.Pipe()
+	writer := multipart.NewWriter(pw)
+	contentType := writer.FormDataContentType()
+
+	go func() {
+		err := writeUploadMultipartPayload(writer, opsBytes, mapBytes, opts.Files)
+		_ = writer.Close()
+		if err != nil {
+			_ = pw.CloseWithError(err)
+			return
+		}
+		_ = pw.Close()
+	}()
+
+	endpoint := c.baseURL + "/graphql"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, pr)
+	if err != nil {
+		_ = pw.CloseWithError(err)
+		return nil, fmt.Errorf("create upload request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", contentType)
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("perform upload request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read upload response: %w", err)
+	}
+
+	return &types.HTTPResponse{
+		StatusCode: resp.StatusCode,
+		Body:       respBody,
+		Headers:    resp.Header.Clone(),
+	}, nil
+}
+
+func writeUploadMultipartPayload(writer *multipart.Writer, operations, fileMap []byte, files []*multipart.FileHeader) error {
+	opsPart, err := writer.CreateFormField("operations")
+	if err != nil {
+		return err
+	}
+	if _, err := opsPart.Write(operations); err != nil {
+		return err
+	}
+
+	mapPart, err := writer.CreateFormField("map")
+	if err != nil {
+		return err
+	}
+	if _, err := mapPart.Write(fileMap); err != nil {
+		return err
+	}
+
+	for idx, fh := range files {
+		if fh == nil {
+			return fmt.Errorf("file at index %d is nil", idx)
+		}
+		file, err := fh.Open()
+		if err != nil {
+			return fmt.Errorf("open file %s: %w", fh.Filename, err)
+		}
+		part, err := writer.CreateFormFile(strconv.Itoa(idx), fh.Filename)
+		if err != nil {
+			file.Close()
+			return err
+		}
+		if _, err := io.Copy(part, file); err != nil {
+			file.Close()
+			return err
+		}
+		file.Close()
+	}
+
+	return nil
 }
 
 // extractOperationName extracts the operation name from a GraphQL query string

@@ -2,17 +2,29 @@ package routes
 
 import (
 	"bff-services/internal/api/controllers"
+	"bff-services/internal/cache"
+	middleware "bff-services/internal/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
 
 // SetupPasswordRoutes configures password management routes
-func SetupPasswordRoutes(api *gin.RouterGroup, controllers *controllers.Controllers) {
-	if controllers.Password == nil {
+func SetupPasswordRoutes(api *gin.RouterGroup, controllers *controllers.Controllers, sessionCache *cache.SessionCache) {
+	if controllers == nil || controllers.Password == nil || sessionCache == nil {
 		return
 	}
 
-	api.POST("/password/reset/request", controllers.Password.RequestReset)
-	api.POST("/password/reset/confirm", controllers.Password.ConfirmReset)
-	api.POST("/password/change", controllers.Password.ChangePassword)
+	password := api.Group("/password")
+	{
+		// Public password reset routes
+		password.POST("/reset/request", controllers.Password.RequestReset)
+		password.POST("/reset/confirm", controllers.Password.ConfirmReset)
+	}
+
+	// Protected password change routes
+	protectedPassword := password.Group("")
+	protectedPassword.Use(middleware.AuthRequired(sessionCache))
+	{
+		protectedPassword.POST("/change", controllers.Password.ChangePassword)
+	}
 }

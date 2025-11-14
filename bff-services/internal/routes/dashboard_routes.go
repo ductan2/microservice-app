@@ -8,11 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// SetupDashboardRoutes configures dashboard-related routes
 func SetupDashboardRoutes(api *gin.RouterGroup, controllers *controllers.Controllers, sessionCache *cache.SessionCache) {
-	if controllers.Dashboard == nil || sessionCache == nil {
+	if controllers == nil || controllers.Dashboard == nil || sessionCache == nil {
 		return
 	}
 
+	// Protected dashboard routes
 	dashboard := api.Group("/dashboard")
 	dashboard.Use(middleware.AuthRequired(sessionCache))
 	{

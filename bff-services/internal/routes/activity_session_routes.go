@@ -10,10 +10,7 @@ import (
 
 // SetupActivitySessionRoutes configures activity session management routes
 func SetupActivitySessionRoutes(api *gin.RouterGroup, controllers *controllers.Controllers, sessionCache *cache.SessionCache) {
-	if controllers.ActivitySession == nil || sessionCache == nil {
-		return
-	}
-	if sessionCache == nil {
+	if controllers == nil || controllers.ActivitySession == nil || sessionCache == nil {
 		return
 	}
 

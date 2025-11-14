@@ -61,6 +61,7 @@ type Mutation {
   deleteFolder(id: ID!): Boolean!
 
   uploadMedia(input: UploadMediaInput!): MediaAsset!
+  uploadMediaBatch(inputs: [UploadMediaInput!]!): [MediaAsset!]!
   deleteMedia(id: ID!): Boolean!
 
   createLesson(input: CreateLessonInput!): Lesson!
@@ -779,5 +780,4 @@ input FolderOrderInput {
   field: FolderOrderField! = NAME
   direction: OrderDirection! = ASC
 }
-
 

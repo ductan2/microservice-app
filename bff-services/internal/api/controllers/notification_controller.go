@@ -11,15 +11,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// NotificationController handles notification and template operations.
 type NotificationController struct {
 	notificationService services.NotificationService
 }
 
+// NewNotificationController constructs a new NotificationController.
 func NewNotificationController(notificationService services.NotificationService) *NotificationController {
 	return &NotificationController{notificationService: notificationService}
 }
 
-// Template management endpoints
 func (n *NotificationController) CreateTemplate(c *gin.Context) {
 	var req dto.CreateNotificationTemplateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

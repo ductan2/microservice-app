@@ -10,10 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// SessionController handles user session management operations.
 type SessionController struct {
 	userService services.UserService
 }
 
+// NewSessionController constructs a new SessionController.
 func NewSessionController(userService services.UserService) *SessionController {
 	return &SessionController{userService: userService}
 }
