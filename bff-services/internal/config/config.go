@@ -53,6 +53,13 @@ func GetNotificationServiceURL() string {
 	return "http://localhost:8003"
 }
 
+func GetOrderServiceURL() string {
+	if v := os.Getenv("ORDER_SERVICE_URL"); v != "" {
+		return v
+	}
+	return "http://localhost:8006"
+}
+
 // GetCORSOrigins returns allowed CORS origins from env CORS_URLS (comma-separated)
 // Falls back to single env CORS_URL, then default http://localhost:3000.
 func GetCORSOrigins() []string {

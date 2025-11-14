@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Expose port
-EXPOSE 8004
+EXPOSE 8006
 
 # Run with auto reload using Air
 CMD ["air", "-c", ".air.toml"]

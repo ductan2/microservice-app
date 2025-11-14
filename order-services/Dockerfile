@@ -30,10 +30,10 @@ COPY --from=builder /out/order-services /app/order-services
 RUN chmod +x /app/order-services
 
 # Service listens on PORT (default via .env/ENV). Expose common default.
-EXPOSE 8004
+EXPOSE 8006
 
 # Optional: allow overriding PORT at runtime
-ENV PORT=8004
+ENV PORT=8006
 
 # Run
 CMD ["/bin/sh", "-c", "exec /app/order-services"]

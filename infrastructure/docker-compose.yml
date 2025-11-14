@@ -297,6 +297,49 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  order-services:
+    build:
+      context: ../order-services
+      dockerfile: Dockerfile
+    container_name: order-services
+    restart: always
+    networks:
+      - frontend
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.order.rule=PathPrefix(`/api/order`)"
+      - "traefik.http.services.order.loadbalancer.server.port=8006"
+    ports:
+      - "${ORDER_SERVICES_PORT:-8006}:8006"
+    environment:
+      - PORT=8006
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER:-user}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - DB_NAME=${POSTGRES_DB:-english_app}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-user}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-sk_test_...}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-whsec_...}
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      user-services:
+        condition: service_started
+
   bff-services:
     build:
       context: ../bff-services
@@ -320,6 +363,7 @@ services:
       - LESSON_SERVICE_URL=http://lesson-services:8005
       - NOTIFICATION_SERVICE_URL=http://notification-services:8003
       - CONTENT_SERVICE_URL=http://content-services:8004
+      - ORDER_SERVICE_URL=http://order-services:8006
       - CORS_URL=http://localhost:3001
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -337,6 +381,8 @@ services:
       content-services:
         condition: service_started
       notification-services:
+        condition: service_started
+      order-services:
         condition: service_started
 
   traefik:

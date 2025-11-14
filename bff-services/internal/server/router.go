@@ -15,6 +15,9 @@ type Deps struct {
 	LessonService       services.LessonService
 	QuizAttemptService  services.QuizAttemptService
 	NotificationService services.NotificationService
+	OrderService        services.OrderService
+	PaymentService      services.PaymentService
+	CouponService       services.CouponService
 	SessionCache        *cache.SessionCache
 }
 
@@ -62,4 +65,7 @@ func setupAPIRoutes(r *gin.Engine, controllers *controllers.Controllers, deps De
 	routes.SetupNotificationRoutes(api, controllers, deps.SessionCache)
 	routes.SetupActivitySessionRoutes(api, controllers, deps.SessionCache)
 	routes.SetupDashboardRoutes(api, controllers, deps.SessionCache)
+	routes.SetupOrderRoutes(api, controllers, deps.SessionCache)
+	routes.SetupPaymentRoutes(api, controllers, deps.SessionCache)
+	routes.SetupCouponRoutes(api, controllers, deps.SessionCache)
 }

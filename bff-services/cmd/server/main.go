@@ -49,6 +49,9 @@ func main() {
 	lessonService := services.NewLessonServiceClient(config.GetLessonServiceURL(), nil)
 	quizAttemptService := services.NewQuizAttemptServiceClient(config.GetLessonServiceURL(), nil)
 	notificationService := services.NewNotificationServiceClient(config.GetNotificationServiceURL(), nil)
+	orderService := services.NewOrderServiceClient(config.GetOrderServiceURL(), nil)
+	paymentService := services.NewPaymentServiceClient(config.GetOrderServiceURL(), nil)
+	couponService := services.NewCouponServiceClient(config.GetOrderServiceURL(), nil)
 
 	addr := ":" + port
 	r := server.NewRouter(server.Deps{
@@ -57,6 +60,9 @@ func main() {
 		LessonService:       lessonService,
 		QuizAttemptService:  quizAttemptService,
 		NotificationService: notificationService,
+		OrderService:        orderService,
+		PaymentService:      paymentService,
+		CouponService:       couponService,
 		SessionCache:        sessionCache,
 	})
 

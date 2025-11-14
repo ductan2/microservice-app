@@ -10,8 +10,8 @@ import (
 // User represents the canonical identity
 type User struct {
 	ID                      uuid.UUID    `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	Email                   string       `gorm:"type:citext;uniqueIndex;not null" json:"email"`
-	EmailNormalized         string       `gorm:"type:citext;index:users_email_norm_idx" json:"-"`
+	Email                   string       `gorm:"type:text;uniqueIndex;not null" json:"email"`
+	EmailNormalized         string       `gorm:"type:text;index:users_email_norm_idx" json:"-"`
 	PasswordHash            string       `gorm:"type:text;not null" json:"-"`
 	EmailVerified           bool         `gorm:"default:false;not null" json:"email_verified"`
 	EmailVerificationToken  string       `gorm:"type:text" json:"-"`
@@ -89,7 +89,7 @@ type MFAMethod struct {
 type LoginAttempt struct {
 	ID        int64      `gorm:"primaryKey;autoIncrement" json:"id"`
 	UserID    *uuid.UUID `gorm:"type:uuid;index:login_attempts_user_time_idx" json:"user_id,omitempty"`
-	Email     string     `gorm:"type:citext" json:"email,omitempty"`
+	Email     string     `gorm:"type:text" json:"email,omitempty"`
 	IPAddr    string     `gorm:"type:inet" json:"ip_addr,omitempty"`
 	Success   bool       `gorm:"not null" json:"success"`
 	Reason    string     `gorm:"type:text" json:"reason,omitempty"`

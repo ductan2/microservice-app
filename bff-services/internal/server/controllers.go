@@ -39,5 +39,17 @@ func initControllers(deps Deps) *controllers.Controllers {
 		ctrl.QuizAttempt = controllers.NewQuizAttemptController(deps.QuizAttemptService)
 	}
 
+	if deps.OrderService != nil {
+		ctrl.Order = controllers.NewOrderController(deps.OrderService)
+	}
+
+	if deps.PaymentService != nil {
+		ctrl.Payment = controllers.NewPaymentController(deps.PaymentService)
+	}
+
+	if deps.CouponService != nil {
+		ctrl.Coupon = controllers.NewCouponController(deps.CouponService)
+	}
+
 	return ctrl
 }

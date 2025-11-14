@@ -68,3 +68,12 @@ func internalAuthHeaders(userID, email, sessionID string) http.Header {
 	header.Set("X-Session-ID", sessionID)
 	return header
 }
+
+// bearerAuthHeader builds the Authorization header for downstream services expecting JWT tokens.
+func bearerAuthHeader(token string) http.Header {
+	header := http.Header{}
+	if token != "" {
+		header.Set("Authorization", "Bearer "+token)
+	}
+	return header
+}

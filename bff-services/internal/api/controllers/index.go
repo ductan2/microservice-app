@@ -12,4 +12,7 @@ type Controllers struct {
 	QuizAttempt     *QuizAttemptController
 	ActivitySession *ActivitySessionController
 	Dashboard       *DashboardController
+	Order           *OrderController
+	Payment         *PaymentController
+	Coupon          *CouponController
 }
