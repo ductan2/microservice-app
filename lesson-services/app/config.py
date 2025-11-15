@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     # PostgreSQL settings
     postgres_user: str = "user"
     postgres_password: str = "password"
-    postgres_db: str = "english_app"
+    postgres_db: str = "lms_lesson_service"
     postgres_port: int = 5432
     postgres_host: str = "localhost"
     postgres_exporter_port: int = 9187
@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     environment: str = "development"
+    run_migrations_on_startup: bool = True
     
     @property
     def database_url(self) -> str:

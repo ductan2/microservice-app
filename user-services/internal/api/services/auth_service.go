@@ -4,13 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
 	"user-services/internal/api/repositories"
 	"user-services/internal/cache"
 	"user-services/internal/config"
+	"user-services/internal/errors"
 	"user-services/internal/models"
 	"user-services/internal/utils"
 
@@ -79,7 +79,7 @@ func (s *AuthService) Register(ctx context.Context, email, password, name string
 		return AuthResult{}, err
 	}
 	if exists {
-		return AuthResult{}, utils.ErrEmailExists
+		return AuthResult{}, errors.ErrEmailExists
 	}
 
 	// 3. Hash password with bcrypt
@@ -134,10 +134,11 @@ func (s *AuthService) Register(ctx context.Context, email, password, name string
 	// Hash the token for storage
 	tokenHash := utils.HashToken(verificationToken)
 
-	// Save verification token to user
+	// Save verification token to user with configurable expiry
+	cfg := config.GetConfig()
 	user.EmailVerificationToken = tokenHash
 	user.EmailVerificationExpiry = sql.NullTime{
-		Time:  time.Now().Add(24 * time.Hour), // Expires in 24 hours
+		Time:  time.Now().Add(cfg.Email.VerificationExpiry),
 		Valid: true,
 	}
 	if err := s.UserRepo.UpdateUser(ctx, &user); err != nil {
@@ -145,8 +146,8 @@ func (s *AuthService) Register(ctx context.Context, email, password, name string
 	}
 
 	// 8. Build verification link
-	frontendURL := utils.GetEnv("FRONTEND_URL", "http://localhost:3001")
-	verificationLink := fmt.Sprintf("%s/verify-email?token=%s", frontendURL, verificationToken)
+	cfg = config.GetConfig()
+	verificationLink := fmt.Sprintf("%s/verify-email?token=%s", cfg.Email.FrontendURL, verificationToken)
 
 	// 9. Create outbox event for email verification
 	payloadData := map[string]any{
@@ -184,47 +185,137 @@ func (s *AuthService) Register(ctx context.Context, email, password, name string
 
 // Login authenticates a user and returns auth result
 func (s *AuthService) Login(ctx context.Context, email, password, mfaCode, userAgent, ipAddr string) (AuthResult, error) {
-	// 1) Find user by email
+	// Step 1: Authenticate user credentials
+	user, err := s.authenticateUser(ctx, email, password, ipAddr)
+	if err != nil {
+		return AuthResult{}, err
+	}
+
+	// Step 2: Verify MFA if required
+	if err := s.verifyMFA(ctx, user, mfaCode, email, ipAddr); err != nil {
+		return AuthResult{}, err
+	}
+
+	// Step 3: Create session and tokens
+	authResult, err := s.createSessionAndTokens(ctx, user, userAgent, ipAddr)
+	if err != nil {
+		_ = s.logLoginAttempt(ctx, &user.ID, email, ipAddr, false, "session_creation_failed")
+		return AuthResult{}, err
+	}
+
+	// Step 4: Log successful login
+	_ = s.logLoginAttempt(ctx, &user.ID, email, ipAddr, true, "success")
+	_ = s.UserRepo.UpdateLastLogin(ctx, user.ID, time.Now(), ipAddr)
+
+	return authResult, nil
+}
+
+// authenticateUser validates user credentials
+func (s *AuthService) authenticateUser(ctx context.Context, email, password, ipAddr string) (*models.User, error) {
 	user, err := s.UserRepo.GetUserByEmail(ctx, email)
 	if err != nil {
-		// Log failed attempt (no user id)
 		_ = s.logLoginAttempt(ctx, nil, email, ipAddr, false, "invalid_credentials")
-		return AuthResult{}, utils.ErrInvalidCredentials
-	}
-	if !user.EmailVerified {
-		return AuthResult{}, utils.ErrEmailNotVerified
+		return nil, errors.ErrInvalidCredentials
 	}
 
-	// 2) Verify password
+	if !user.EmailVerified {
+		return nil, errors.ErrEmailNotVerified
+	}
+
+	// Check account status
+	switch user.Status {
+	case "locked":
+		return nil, errors.ErrAccountLocked
+	case "disabled":
+		return nil, errors.ErrAccountDisabled
+	case "deleted":
+		return nil, errors.ErrUserNotFound
+	}
+
 	if err := utils.CheckPassword(user.PasswordHash, password); err != nil {
 		_ = s.logLoginAttempt(ctx, &user.ID, email, ipAddr, false, "invalid_credentials")
-		return AuthResult{}, utils.ErrInvalidCredentials
+		return nil, errors.ErrInvalidCredentials
 	}
 
-	// 3) If MFA enabled, verify code
-	// For now, check if TOTP exists; if exists require mfaCode and verify
-	if totp, err := s.MFARepo.GetTOTPByUserID(ctx, user.ID); err == nil && totp != nil {
-		if mfaCode == "" || !utils.VerifyTOTP(totp.Secret, mfaCode, time.Now()) {
-			_ = s.logLoginAttempt(ctx, &user.ID, email, ipAddr, false, "mfa_required_or_invalid")
-			return AuthResult{}, utils.ErrInvalidMFACode
-		}
-		_ = s.MFARepo.UpdateLastUsed(ctx, totp.ID)
+	return &user, nil
+}
+
+// verifyMFA checks MFA if required for the user
+func (s *AuthService) verifyMFA(ctx context.Context, user *models.User, mfaCode, email, ipAddr string) error {
+	totp, err := s.MFARepo.GetTOTPByUserID(ctx, user.ID)
+	if err != nil || totp == nil {
+		// No MFA setup, skip verification
+		return nil
 	}
 
-	// 4) Create session
+	if mfaCode == "" {
+		_ = s.logLoginAttempt(ctx, &user.ID, email, ipAddr, false, "mfa_required")
+		return errors.NewAuthenticationError("MFA code required").WithCode("MFA_REQUIRED")
+	}
+
+	if !utils.VerifyTOTP(totp.Secret, mfaCode, time.Now()) {
+		_ = s.logLoginAttempt(ctx, &user.ID, email, ipAddr, false, "mfa_invalid")
+		return errors.ErrInvalidMFACode
+	}
+
+	// Update last used timestamp
+	_ = s.MFARepo.UpdateLastUsed(ctx, totp.ID)
+	return nil
+}
+
+// createSessionAndTokens creates a session and generates JWT tokens
+func (s *AuthService) createSessionAndTokens(ctx context.Context, user *models.User, userAgent, ipAddr string) (AuthResult, error) {
+	cfg := config.GetConfig()
+
+	// Create session in database
+	sanitizedIP := utils.SanitizeIPAddress(ipAddr)
+	var ipAddrPtr *string
+	if sanitizedIP != "" {
+		ipAddrPtr = &sanitizedIP
+	}
+
 	session := &models.Session{
 		UserID:    user.ID,
 		UserAgent: userAgent,
-		IPAddr:    utils.SanitizeIPAddress(ipAddr),
+		IPAddr:    ipAddrPtr,
 		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // default 30d session expiry
+		ExpiresAt: time.Now().Add(cfg.Session.Expiry),
 	}
+
 	if err := s.SessionRepo.Create(ctx, session); err != nil {
 		return AuthResult{}, err
 	}
 
-	// 4.1) Store session in Redis with TTL matching JWT expiration
-	jwtConfig := config.GetJWTConfig()
+	// Store session in Redis
+	if err := s.storeSessionInCache(ctx, session, user, userAgent, ipAddr); err != nil {
+		// Log error but don't fail login
+		fmt.Printf("Warning: failed to store session in Redis: %v\n", err)
+	}
+
+	// Generate JWT token
+	accessToken, err := utils.GenerateJWT(user.ID, user.Email, session.ID)
+	if err != nil {
+		return AuthResult{}, err
+	}
+
+	// Generate refresh token
+	refreshToken, err := s.createRefreshToken(ctx, session.ID)
+	if err != nil {
+		return AuthResult{}, err
+	}
+
+	return AuthResult{
+		User:         *user,
+		Token:        accessToken,
+		RefreshToken: refreshToken,
+		ExpiresAt:    time.Now().Add(cfg.JWT.ExpiresIn),
+	}, nil
+}
+
+// storeSessionInCache stores session data in Redis cache
+func (s *AuthService) storeSessionInCache(ctx context.Context, session *models.Session, user *models.User, userAgent, ipAddr string) error {
+	cfg := config.GetConfig()
+
 	sessionData := cache.SessionData{
 		UserID:    user.ID,
 		Email:     user.Email,
@@ -232,65 +323,54 @@ func (s *AuthService) Login(ctx context.Context, email, password, mfaCode, userA
 		IPAddr:    utils.SanitizeIPAddress(ipAddr),
 		CreatedAt: session.CreatedAt,
 	}
-	if err := s.SessionCache.StoreSession(ctx, session.ID, sessionData, jwtConfig.ExpiresIn); err != nil {
-		// Log error but don't fail login - session still exists in DB
-		// In production, you might want to use a proper logger
-		fmt.Printf("Warning: failed to store session in Redis: %v\n", err)
-	}
 
-	// 5) Issue tokens: access JWT and refresh token
-	accessToken, err := utils.GenerateJWT(user.ID, user.Email, session.ID)
-	if err != nil {
-		return AuthResult{}, err
-	}
+	return s.SessionCache.StoreSession(ctx, session.ID, sessionData, cfg.JWT.ExpiresIn)
+}
 
-	// Create random refresh token and store hashed
+// createRefreshToken creates and stores a refresh token
+func (s *AuthService) createRefreshToken(ctx context.Context, sessionID uuid.UUID) (string, error) {
+	cfg := config.GetConfig()
+
 	rawRefresh := uuid.NewString()
 	refreshHash, err := utils.HashPassword(rawRefresh)
 	if err != nil {
-		return AuthResult{}, err
+		return "", err
 	}
+
 	refresh := &models.RefreshToken{
-		SessionID: session.ID,
+		SessionID: sessionID,
 		TokenHash: refreshHash,
 		IssuedAt:  time.Now(),
-		ExpiresAt: time.Now().Add(60 * 24 * time.Hour), // 60d refresh
+		ExpiresAt: time.Now().Add(cfg.JWT.RefreshExpiresIn),
 	}
+
 	if err := s.RefreshTokenRepo.Create(ctx, refresh); err != nil {
-		return AuthResult{}, err
+		return "", err
 	}
 
-	// 6) Audit + outbox could be added here if needed
-
-	// 7) Log success attempt
-	_ = s.logLoginAttempt(ctx, &user.ID, email, ipAddr, true, "success")
-
-	// 7.1) Update user's last login timestamp and IP
-	_ = s.UserRepo.UpdateLastLogin(ctx, user.ID, time.Now(), ipAddr)
-
-	// Build response
-	return AuthResult{
-		User:         user,
-		Token:        accessToken,
-		RefreshToken: rawRefresh,
-		ExpiresAt:    time.Now().Add(config.GetJWTConfig().ExpiresIn),
-	}, nil
+	return rawRefresh, nil
 }
 
 // VerifyEmail verifies user's email with the provided token
 func (s *AuthService) VerifyEmail(ctx context.Context, token string) error {
+	if token == "" {
+		return errors.NewValidationError("Verification token is required").WithCode("TOKEN_REQUIRED")
+	}
+
 	// 1. Hash the token
 	tokenHash := utils.HashToken(token)
 
 	// 2. Find user with this token
 	user, err := s.UserRepo.GetByVerificationToken(ctx, tokenHash)
 	if err != nil {
-		return errors.New("invalid or expired verification token")
+		return errors.InvalidVerificationToken
 	}
 
 	// 3. Check if token is expired
 	if user.EmailVerificationExpiry.Valid && user.EmailVerificationExpiry.Time.Before(time.Now()) {
-		return errors.New("verification token has expired")
+		return errors.InvalidVerificationToken.WithDetails(map[string]interface{}{
+			"reason": "expired",
+		})
 	}
 
 	// 4. Check if already verified
@@ -304,21 +384,33 @@ func (s *AuthService) VerifyEmail(ctx context.Context, token string) error {
 	user.EmailVerificationExpiry = sql.NullTime{Valid: false}
 
 	if err := s.UserRepo.UpdateUser(ctx, user); err != nil {
-		return err
+		return errors.NewInternalError("Failed to update user verification status").WithCause(err)
 	}
 
 	// 6. Log audit event
+	s.logAuditEvent(ctx, &user.ID, "email.verified", map[string]any{
+		"email": user.Email,
+	})
+
+	// 7. Send welcome email after verification
+	s.sendWelcomeEmail(ctx, user)
+
+	return nil
+}
+
+// logAuditEvent is a helper to log audit events
+func (s *AuthService) logAuditEvent(ctx context.Context, userID *uuid.UUID, action string, metadata map[string]any) {
 	auditLog := &models.AuditLog{
-		UserID: &user.ID,
-		Action: "email.verified",
-		Metadata: map[string]any{
-			"email": user.Email,
-		},
+		UserID:    userID,
+		Action:    action,
+		Metadata:  metadata,
 		CreatedAt: time.Now(),
 	}
 	_ = s.AuditLogRepo.Create(ctx, auditLog)
+}
 
-	// 7. Send welcome email after verification
+// sendWelcomeEmail creates an outbox event for welcome email
+func (s *AuthService) sendWelcomeEmail(ctx context.Context, user *models.User) {
 	payloadData := map[string]any{
 		"user_id": user.ID,
 		"email":   user.Email,
@@ -333,16 +425,18 @@ func (s *AuthService) VerifyEmail(ctx context.Context, token string) error {
 		CreatedAt:   time.Now(),
 	}
 	_ = s.OutboxRepo.Create(ctx, outboxEvent)
-
-	return nil
 }
 
 // logLoginAttempt helper
 func (s *AuthService) logLoginAttempt(ctx context.Context, userID *uuid.UUID, email, ip string, success bool, reason string) error {
+	var ipAddr *string
+	if ip != "" {
+		ipAddr = &ip
+	}
 	attempt := &models.LoginAttempt{
 		UserID:  userID,
 		Email:   email,
-		IPAddr:  ip,
+		IPAddr:  ipAddr,
 		Success: success,
 		Reason:  reason,
 	}

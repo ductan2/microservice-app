@@ -1,22 +1,32 @@
 package config
 
 import (
-	"os"
-
-	"github.com/joho/godotenv"
+	"sync"
 )
 
-func init() {
-	// Load .env if present; non-fatal if missing (e.g., in production/containers)
-	if err := godotenv.Load(); err != nil {
-		// It's okay if .env is not present; PORT can still be provided by the environment
-	}
+var (
+	instance *Config
+	once     sync.Once
+)
+
+// GetConfig returns the singleton configuration instance
+func GetConfig() *Config {
+	once.Do(func() {
+		cfg, err := Load()
+		if err != nil {
+			panic("Failed to load configuration: " + err.Error())
+		}
+
+		if err := cfg.Validate(); err != nil {
+			panic("Configuration validation failed: " + err.Error())
+		}
+
+		instance = cfg
+	})
+	return instance
 }
 
-// GetPort returns the port from the PORT env var. Falls back to 8001 if unset.
+// GetPort returns the server port from configuration
 func GetPort() string {
-	if p := os.Getenv("PORT"); p != "" {
-		return p
-	}
-	return "8001"
+	return GetConfig().Server.Port
 }

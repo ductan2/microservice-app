@@ -2,10 +2,48 @@ package models
 
 import (
 	"database/sql"
+	"database/sql/driver"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+// JSONBMap is a custom type for handling JSONB columns in PostgreSQL
+type JSONBMap map[string]any
+
+// Value implements the driver.Valuer interface for JSONBMap
+func (j JSONBMap) Value() (driver.Value, error) {
+	if j == nil {
+		return []byte("{}"), nil
+	}
+	return json.Marshal(j)
+}
+
+// Scan implements the sql.Scanner interface for JSONBMap
+func (j *JSONBMap) Scan(value interface{}) error {
+	if value == nil {
+		*j = make(JSONBMap)
+		return nil
+	}
+
+	var bytes []byte
+	switch v := value.(type) {
+	case []byte:
+		bytes = v
+	case string:
+		bytes = []byte(v)
+	default:
+		return nil
+	}
+
+	if len(bytes) == 0 {
+		*j = make(JSONBMap)
+		return nil
+	}
+
+	return json.Unmarshal(bytes, j)
+}
 
 // User represents the canonical identity
 type User struct {
@@ -56,7 +94,7 @@ type Session struct {
 	ID        uuid.UUID    `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
 	UserID    uuid.UUID    `gorm:"type:uuid;not null;index:sessions_user_expires_idx;constraint:OnDelete:CASCADE" json:"user_id"`
 	UserAgent string       `gorm:"type:text" json:"user_agent,omitempty"`
-	IPAddr    string       `gorm:"type:inet" json:"ip_addr,omitempty"`
+	IPAddr    *string      `gorm:"type:inet" json:"ip_addr,omitempty"`
 	CreatedAt time.Time    `json:"created_at"`
 	ExpiresAt time.Time    `gorm:"not null;index:sessions_user_expires_idx" json:"expires_at"`
 	RevokedAt sql.NullTime `json:"revoked_at,omitempty"`
@@ -90,7 +128,7 @@ type LoginAttempt struct {
 	ID        int64      `gorm:"primaryKey;autoIncrement" json:"id"`
 	UserID    *uuid.UUID `gorm:"type:uuid;index:login_attempts_user_time_idx" json:"user_id,omitempty"`
 	Email     string     `gorm:"type:text" json:"email,omitempty"`
-	IPAddr    string     `gorm:"type:inet" json:"ip_addr,omitempty"`
+	IPAddr    *string    `gorm:"type:inet" json:"ip_addr,omitempty"`
 	Success   bool       `gorm:"not null" json:"success"`
 	Reason    string     `gorm:"type:text" json:"reason,omitempty"`
 	CreatedAt time.Time  `gorm:"default:now();not null;index:login_attempts_user_time_idx" json:"created_at"`
@@ -107,13 +145,13 @@ type PasswordReset struct {
 
 // AuditLog append-only audit trail
 type AuditLog struct {
-	ID        int64          `gorm:"primaryKey;autoIncrement" json:"id"`
-	UserID    *uuid.UUID     `gorm:"type:uuid;index:audit_logs_user_time_idx" json:"user_id,omitempty"`
-	ActorID   *uuid.UUID     `gorm:"type:uuid" json:"actor_id,omitempty"`
-	Action    string         `gorm:"type:text;not null" json:"action"`
-	IPAddr    string         `gorm:"type:inet" json:"ip_addr,omitempty"`
-	Metadata  map[string]any `gorm:"type:jsonb;default:'{}';not null" json:"metadata"`
-	CreatedAt time.Time      `gorm:"default:now();not null;index:audit_logs_user_time_idx" json:"created_at"`
+	ID        int64      `gorm:"primaryKey;autoIncrement" json:"id"`
+	UserID    *uuid.UUID `gorm:"type:uuid;index:audit_logs_user_time_idx" json:"user_id,omitempty"`
+	ActorID   *uuid.UUID `gorm:"type:uuid" json:"actor_id,omitempty"`
+	Action    string     `gorm:"type:text;not null" json:"action"`
+	IPAddr    *string    `gorm:"type:inet" json:"ip_addr,omitempty"`
+	Metadata  JSONBMap   `gorm:"type:jsonb;default:'{}';not null" json:"metadata"`
+	CreatedAt time.Time  `gorm:"default:now();not null;index:audit_logs_user_time_idx" json:"created_at"`
 }
 
 // UserActivitySession tracks user activity time spent in the app
@@ -124,7 +162,7 @@ type UserActivitySession struct {
 	StartedAt  time.Time    `gorm:"not null" json:"started_at"`
 	EndedAt    sql.NullTime `gorm:"type:timestamptz" json:"ended_at,omitempty"`
 	DurationMs int64        `gorm:"default:0" json:"duration_ms"`
-	IPAddr     string       `gorm:"type:inet" json:"ip_addr,omitempty"`
+	IPAddr     *string      `gorm:"type:inet" json:"ip_addr,omitempty"`
 	UserAgent  string       `gorm:"type:text" json:"user_agent,omitempty"`
 	CreatedAt  time.Time    `gorm:"default:now();not null" json:"created_at"`
 	UpdatedAt  time.Time    `gorm:"default:now();not null" json:"updated_at"`
@@ -139,4 +177,8 @@ type Outbox struct {
 	Payload     []byte       `gorm:"type:jsonb"`
 	CreatedAt   time.Time    `gorm:"default:now();not null" json:"created_at"`
 	PublishedAt sql.NullTime `gorm:"index:outbox_unpublished_idx,where:published_at IS NULL" json:"published_at,omitempty"`
+}
+
+func (Outbox) TableName() string {
+	return "outbox"
 }

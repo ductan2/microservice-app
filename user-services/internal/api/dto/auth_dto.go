@@ -72,7 +72,7 @@ type VerifyEmailRequest struct {
 type SessionResponse struct {
 	ID        uuid.UUID `json:"id"`
 	UserAgent string    `json:"user_agent,omitempty"`
-	IPAddr    string    `json:"ip_addr,omitempty"`
+	IPAddr    *string   `json:"ip_addr,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	ExpiresAt time.Time `json:"expires_at"`
 	IsCurrent bool      `json:"is_current"`

@@ -42,10 +42,15 @@ func NewSessionService(sessionRepo repositories.SessionRepository, sessionCache 
 
 func (s *sessionService) CreateSession(ctx context.Context, userID uuid.UUID, userAgent, ipAddr string) (*dto.SessionResponse, error) {
 	now := time.Now()
+	sanitizedIP := utils.SanitizeIPAddress(ipAddr)
+	var ipAddrPtr *string
+	if sanitizedIP != "" {
+		ipAddrPtr = &sanitizedIP
+	}
 	session := &models.Session{
 		UserID:    userID,
 		UserAgent: userAgent,
-		IPAddr:    utils.SanitizeIPAddress(ipAddr),
+		IPAddr:    ipAddrPtr,
 		CreatedAt: now,
 		ExpiresAt: now.Add(defaultSessionExpiry),
 	}

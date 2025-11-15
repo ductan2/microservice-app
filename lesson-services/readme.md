@@ -85,6 +85,8 @@ cp .env.example .env
 
 3. Run database migrations:
 ```bash
+make migrate
+# or directly
 alembic upgrade head
 ```
 
@@ -123,6 +125,9 @@ alembic upgrade head
 # Rollback migration
 alembic downgrade -1
 ```
+
+- FastAPI runs `alembic upgrade head` automatically on startup (disable via `RUN_MIGRATIONS_ON_STARTUP=false`).
+- `make migrate`, `make migrate-status`, and `make migrate-create MSG="..."` wrap the helper script in `migrate.sh`.
 
 ## Testing
 

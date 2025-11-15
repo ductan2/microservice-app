@@ -221,7 +221,7 @@ export function buildEmailVerificationTemplate(params: EmailVerificationParams) 
             <p>Thank you for signing up for ${appName}!</p>
             <p>To complete your registration and start learning English, please verify your email address by clicking the button below:</p>
             <p style="text-align: center; color: #ffffff;">
-              <a href="${verificationLink}" class="button">Verify Email Address</a>
+              <a href="${verificationLink}" class="button" style="color: #ffffff;">Verify Email Address</a>
             </p>
             <p><strong>This link will expire in 24 hours.</strong></p>
             <p>If you didn't create an account with ${appName}, you can safely ignore this email.</p>

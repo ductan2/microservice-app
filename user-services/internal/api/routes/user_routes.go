@@ -3,17 +3,27 @@ package routes
 import (
 	"user-services/internal/api/controllers"
 	"user-services/internal/api/middleware"
+	"user-services/internal/config"
 
 	"github.com/gin-gonic/gin"
 )
 
 // RegisterUserRoutes registers all user-related routes (auth, profile, user management)
-func RegisterUserRoutes(router *gin.RouterGroup, controller *controllers.UserController) {
+func RegisterUserRoutes(router *gin.RouterGroup, controller *controllers.UserController, rateLimiter middleware.RateLimiter, cfg *config.Config) {
 	users := router.Group("/users")
 	{
-		// Authentication routes (public)
-		users.POST("/register", controller.RegisterUser)
-		users.POST("/login", controller.LoginUser)
+		// Authentication routes (public) with rate limiting
+		authConfig := middleware.RateLimitConfig{
+			Requests: cfg.RateLimit.AuthRequestsPerMinute,
+			Window:   cfg.RateLimit.AuthWindow,
+		}
+
+		users.POST("/register",
+			middleware.AuthRateLimitMiddleware(rateLimiter, authConfig),
+			controller.RegisterUser)
+		users.POST("/login",
+			middleware.AuthRateLimitMiddleware(rateLimiter, authConfig),
+			controller.LoginUser)
 		users.POST("/logout", controller.LogoutUser)
 		users.GET("/verify-email", controller.VerifyUserEmail)
 

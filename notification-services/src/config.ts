@@ -30,7 +30,7 @@ const EnvSchema = z.object({
   // PostgreSQL
   POSTGRES_USER: z.string().default('user'),
   POSTGRES_PASSWORD: z.string().default('password'),
-  POSTGRES_DB: z.string().default('userdb'),
+  POSTGRES_DB_USER_SERVICES: z.string().default('lms_user_services'),
   POSTGRES_HOST: z.string().default('localhost'),
   POSTGRES_PORT: z.coerce.number().int().positive().default(5432),
   POSTGRES_SSLMODE: z.string().default('disable'),

@@ -1,59 +1,53 @@
 package utils
 
 import (
-	"errors"
 	"net"
 	"regexp"
 	"strings"
 	"unicode"
-)
 
-// Custom errors
-var (
-	ErrEmailExists      = errors.New("email already exists")
-	ErrInvalidEmail     = errors.New("invalid email format")
-	ErrWeakPassword     = errors.New("password does not meet strength requirements")
-	ErrEmailRequired    = errors.New("email is required")
-	ErrPasswordRequired = errors.New("password is required")
+	"user-services/internal/config"
+	customerrors "user-services/internal/errors"
 )
 
 // ValidateEmail validates email format
 func ValidateEmail(email string) error {
 	if email == "" {
-		return ErrEmailRequired
+		return customerrors.NewValidationError("Email is required").WithCode("EMAIL_REQUIRED")
 	}
 
 	email = strings.TrimSpace(email)
 	if email == "" {
-		return ErrEmailRequired
+		return customerrors.NewValidationError("Email is required").WithCode("EMAIL_REQUIRED")
 	}
 
 	// Basic email regex validation
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 	if !emailRegex.MatchString(email) {
-		return ErrInvalidEmail
+		return customerrors.ErrInvalidEmail
 	}
 
 	return nil
 }
 
-// ValidatePassword validates password strength
+// ValidatePassword validates password strength based on security configuration
 func ValidatePassword(password string) error {
+	cfg := config.GetConfig()
+
 	if password == "" {
-		return ErrPasswordRequired
+		return customerrors.NewValidationError("Password is required").WithCode("PASSWORD_REQUIRED")
 	}
 
-	if len(password) < 8 {
-		return ErrWeakPassword
+	if len(password) < cfg.Security.PasswordMinLength {
+		return customerrors.ErrWeakPassword.WithDetails(map[string]interface{}{
+			"min_length": cfg.Security.PasswordMinLength,
+		})
 	}
 
-	// Check for at least one uppercase letter
+	// Check for character requirements based on configuration
 	hasUpper := false
-	// Check for at least one lowercase letter
 	hasLower := false
-	// Check for at least one digit
 	hasDigit := false
-	// Check for at least one special character
 	hasSpecial := false
 
 	for _, char := range password {
@@ -69,23 +63,34 @@ func ValidatePassword(password string) error {
 		}
 	}
 
-	// Require at least 3 of the 4 criteria
-	criteria := 0
-	if hasUpper {
-		criteria++
+	// Validate requirements based on configuration
+	missingRequirements := make([]string, 0)
+
+	if cfg.Security.PasswordRequireUpper && !hasUpper {
+		missingRequirements = append(missingRequirements, "uppercase letter")
 	}
-	if hasLower {
-		criteria++
+	if cfg.Security.PasswordRequireLower && !hasLower {
+		missingRequirements = append(missingRequirements, "lowercase letter")
 	}
-	if hasDigit {
-		criteria++
+	if cfg.Security.PasswordRequireDigit && !hasDigit {
+		missingRequirements = append(missingRequirements, "digit")
 	}
-	if hasSpecial {
-		criteria++
+	if cfg.Security.PasswordRequireSpecial && !hasSpecial {
+		missingRequirements = append(missingRequirements, "special character")
 	}
 
-	if criteria < 3 {
-		return ErrWeakPassword
+	// If any requirements are not met, return validation error
+	if len(missingRequirements) > 0 {
+		return customerrors.ErrWeakPassword.WithDetails(map[string]interface{}{
+			"missing_requirements": missingRequirements,
+			"requirements": map[string]interface{}{
+				"uppercase":   cfg.Security.PasswordRequireUpper,
+				"lowercase":   cfg.Security.PasswordRequireLower,
+				"digit":       cfg.Security.PasswordRequireDigit,
+				"special":     cfg.Security.PasswordRequireSpecial,
+				"min_length":  cfg.Security.PasswordMinLength,
+			},
+		})
 	}
 
 	return nil
@@ -103,7 +108,7 @@ func ValidateIPAddress(ip string) error {
 	}
 
 	if net.ParseIP(ip) == nil {
-		return errors.New("invalid IP address format")
+		return customerrors.NewValidationError("invalid IP address format")
 	}
 
 	return nil

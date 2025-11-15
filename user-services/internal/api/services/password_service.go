@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 	"user-services/internal/api/repositories"
+	"user-services/internal/config"
 	"user-services/internal/models"
 	"user-services/internal/utils"
 
@@ -91,8 +92,8 @@ func (s *passwordService) InitiatePasswordReset(ctx context.Context, email strin
 	}
 
 	// 7. Build reset link
-	frontendURL := utils.GetEnv("FRONTEND_URL", "http://localhost:3000")
-	resetLink := fmt.Sprintf("%s/reset-password?token=%s", frontendURL, token)
+	cfg := config.GetConfig()
+	resetLink := fmt.Sprintf("%s/reset-password?token=%s", cfg.Email.FrontendURL, token)
 
 	// 8. Create outbox event for password reset email
 	payloadData := map[string]any{

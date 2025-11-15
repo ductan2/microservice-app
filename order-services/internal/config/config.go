@@ -76,7 +76,7 @@ func loadConfig() *Config {
 		DBPort:     getEnv("DB_PORT", "5432"),
 		DBUser:     getEnv("DB_USER", "user"),
 		DBPassword: getEnv("DB_PASSWORD", "password"),
-		DBName:     getEnv("DB_NAME", "english_app"),
+		DBName:     getEnv("DB_NAME", "lms_order_serivecs"),
 
 		// Redis
 		RedisHost:     getEnv("REDIS_HOST", "localhost"),

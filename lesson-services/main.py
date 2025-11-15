@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.middlewares.auth_middleware import InternalAuthRequired
+from app.database.migrations import run_database_migrations
+from app.config import settings
 from app.routers import (
     daily_activity_routes,
     health_routes,
@@ -33,6 +35,12 @@ app.add_middleware(
 
 # Add authentication middleware (except for health check)
 app.add_middleware(InternalAuthRequired)
+
+
+@app.on_event("startup")
+async def apply_database_migrations() -> None:
+    if settings.run_migrations_on_startup:
+        run_database_migrations()
 
 app.include_router(health_routes.router, prefix="/api/v1", tags=["health"])
 app.include_router(daily_activity_routes.router, prefix="/api/v1", tags=["daily-activity"])

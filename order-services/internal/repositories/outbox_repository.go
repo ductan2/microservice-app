@@ -46,7 +46,7 @@ func NewOutboxRepository(db *sql.DB) OutboxRepository {
 // Create creates a new outbox event
 func (r *outboxRepository) Create(ctx context.Context, event *models.Outbox) error {
 	query := `
-		INSERT INTO outboxes (aggregate_id, topic, type, payload, created_at)
+		INSERT INTO outbox (aggregate_id, topic, type, payload, created_at)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id`
 
@@ -65,7 +65,7 @@ func (r *outboxRepository) Create(ctx context.Context, event *models.Outbox) err
 func (r *outboxRepository) GetUnpublishedEvents(ctx context.Context, limit int) ([]models.Outbox, error) {
 	query := `
 		SELECT id, aggregate_id, topic, type, payload, created_at, published_at
-		FROM outboxes
+		FROM outbox
 		WHERE published_at IS NULL
 		ORDER BY created_at ASC
 		LIMIT $1`
@@ -106,14 +106,14 @@ func (r *outboxRepository) GetUnpublishedEvents(ctx context.Context, limit int) 
 
 // MarkAsPublished marks an event as published
 func (r *outboxRepository) MarkAsPublished(ctx context.Context, eventID int64) error {
-	query := `UPDATE outboxes SET published_at = $1 WHERE id = $2`
+	query := `UPDATE outbox SET published_at = $1 WHERE id = $2`
 	_, err := r.db.ExecContext(ctx, query, time.Now(), eventID)
 	return err
 }
 
 // CountUnpublishedEvents counts unpublished events
 func (r *outboxRepository) CountUnpublishedEvents(ctx context.Context) (int64, error) {
-	query := `SELECT COUNT(*) FROM outboxes WHERE published_at IS NULL`
+	query := `SELECT COUNT(*) FROM outbox WHERE published_at IS NULL`
 	var count int64
 	err := r.db.QueryRowContext(ctx, query).Scan(&count)
 	return count, err
@@ -121,7 +121,7 @@ func (r *outboxRepository) CountUnpublishedEvents(ctx context.Context) (int64, e
 
 // CountTotalEvents counts all events
 func (r *outboxRepository) CountTotalEvents(ctx context.Context) (int64, error) {
-	query := `SELECT COUNT(*) FROM outboxes`
+	query := `SELECT COUNT(*) FROM outbox`
 	var count int64
 	err := r.db.QueryRowContext(ctx, query).Scan(&count)
 	return count, err
@@ -129,7 +129,7 @@ func (r *outboxRepository) CountTotalEvents(ctx context.Context) (int64, error) 
 
 // DeleteOldPublishedEvents deletes published events older than the specified time
 func (r *outboxRepository) DeleteOldPublishedEvents(ctx context.Context, olderThan time.Time) error {
-	query := `DELETE FROM outboxes WHERE published_at IS NOT NULL AND published_at < $1`
+	query := `DELETE FROM outbox WHERE published_at IS NOT NULL AND published_at < $1`
 	_, err := r.db.ExecContext(ctx, query, olderThan)
 	return err
 }
@@ -138,7 +138,7 @@ func (r *outboxRepository) DeleteOldPublishedEvents(ctx context.Context, olderTh
 func (r *outboxRepository) GetEventsByAggregateID(ctx context.Context, aggregateID uuid.UUID) ([]models.Outbox, error) {
 	query := `
 		SELECT id, aggregate_id, topic, type, payload, created_at, published_at
-		FROM outboxes
+		FROM outbox
 		WHERE aggregate_id = $1
 		ORDER BY created_at ASC`
 

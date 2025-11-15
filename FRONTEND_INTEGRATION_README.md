@@ -444,6 +444,299 @@ Content-Type: application/json
 }
 ```
 
+### 💳 Commerce APIs (Orders, Coupons & Payments via BFF)
+
+**Base URL:** `http://localhost/api/bff`
+
+All commerce endpoints sit behind the BFF and forward the authenticated request to `order-service`. Always include `Authorization: Bearer <access_token>` and expect responses inside the standard wrapper:
+
+```json
+{
+  "success": true,
+  "data": { ... },
+  "timestamp": "2024-02-06T12:00:00Z",
+  "meta": { ... }
+}
+```
+
+#### Checkout Flow Overview
+
+1. **(Optional) Validate coupon** – `POST /coupons/validate` with the cart total to preview discounts.
+2. **Create order** – `POST /orders` storing the snapshot of courses and customer info. The response returns the `order.id` and `payment_intent_id` placeholder.
+3. **Create Stripe PaymentIntent** – `POST /orders/{orderId}/pay` to receive the `client_secret` needed for Stripe.js.
+4. **Confirm payment** – Use Stripe.js or call `POST /payments/{pi_id}/confirm` with the selected payment method.
+5. **Sync UI** – Poll `GET /orders/{id}` or `GET /orders/{id}/payment` until status is `paid` to grant course access.
+
+#### Orders
+
+| Action | Method & Path | Notes |
+|--------|---------------|-------|
+|Create order|`POST /orders`|Requires at least one course item; amounts are stored in cents.|
+|List orders|`GET /orders?status=pending_payment&limit=20`|Supports `limit`, `offset`, `page`, `status`, `sort_by`, `sort_order`.|
+|Get order|`GET /orders/{orderId}`|Returns full order, order items, coupon redemptions, and attached payments.|
+|Cancel order|`POST /orders/{orderId}/cancel`|Allowed while status is `created` or `pending_payment` with a short reason string.|
+
+**Create Order Request**
+
+```http
+POST /api/bff/orders
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "course_id": "7ce7b327-d179-4b11-9c0d-22b5265f2fd9",
+      "quantity": 1,
+      "price_snapshot": 19900
+    }
+  ],
+  "coupon_code": "SPRING25",
+  "customer_email": "learner@example.com",
+  "customer_name": "Jane Learner",
+  "metadata": { "utm": "spring_launch" }
+}
+```
+
+**Create Order Response (201)**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "46dc0e9c-7f35-44e0-b72f-2381cda84c3f",
+    "status": "created",
+    "total_amount": 14900,
+    "discount_amount": 5000,
+    "currency": "usd",
+    "payment_intent_id": null,
+    "order_items": [
+      {
+        "course_id": "7ce7b327-d179-4b11-9c0d-22b5265f2fd9",
+        "price_snapshot": 19900,
+        "quantity": 1
+      }
+    ],
+    "coupon_redemptions": [
+      {
+        "coupon": { "code": "SPRING25", "type": "percentage", "percent_off": 25 },
+        "discount_amount": 5000
+      }
+    ]
+  },
+  "timestamp": "2024-02-06T12:00:00Z"
+}
+```
+
+**Cancel Order Request**
+
+```http
+POST /api/bff/orders/{orderId}/cancel
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "reason": "Learner switched to annual plan"
+}
+```
+
+Order statuses you can surface in the UI: `created`, `pending_payment`, `paid`, `failed`, `cancelled`, `refunded`.
+
+#### Coupons
+
+| Action | Method & Path | Notes |
+|--------|---------------|-------|
+|List coupons|`GET /coupons?limit=10`|Returns coupons the current user can see; includes per-user usage info.|
+|Get coupon|`GET /coupons/{couponId}`|Optional `?user_id=` allows admins to inspect usage.|
+|Validate coupon|`POST /coupons/validate`|Supply user ID (BFF adds it), order amount in cents, and optional course IDs.|
+|Usage history|`GET /coupons/usage`|Returns how many redemptions the user has performed so far.|
+
+**Validate Coupon Request**
+
+```http
+POST /api/bff/coupons/validate
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "code": "SPRING25",
+  "order_amount": 19900,
+  "course_ids": ["7ce7b327-d179-4b11-9c0d-22b5265f2fd9"]
+}
+```
+
+**Validate Coupon Response**
+
+```json
+{
+  "success": true,
+  "data": {
+    "valid": true,
+    "coupon": {
+      "id": "94f738fb-3a4b-4c2c-9c71-3c54debba51d",
+      "code": "SPRING25",
+      "type": "percentage",
+      "percent_off": 25,
+      "first_time_only": false,
+      "expires_at": "2024-03-31T23:59:59Z",
+      "user_redemption_count": 0,
+      "can_redeem": true
+    },
+    "discount_amount": 5000,
+    "final_amount": 14900,
+    "message": "Coupon is valid"
+  }
+}
+```
+
+Handle invalid cases by checking `data.valid === false`; the response still carries a friendly `message` so you can show “Coupon expired” inline.
+
+#### Payments
+
+| Action | Method & Path | Notes |
+|--------|---------------|-------|
+|Get publishable key|`GET /stripe/config`|Public endpoint for Stripe.js initialization.|
+|Create PaymentIntent|`POST /orders/{orderId}/pay`|Returns `client_secret`, `payment_intent_id`, amount & currency.|
+|Confirm Payment|`POST /payments/{payment_intent_id}/confirm`|Only needed when you gather payment method IDs server-side.|
+|Get payment for order|`GET /orders/{orderId}/payment`|Returns persisted payment record for receipts.|
+|List payment methods|`GET /payment-methods`|Stubbed today – returns empty list until wallet support lands.|
+|Payment history|`GET /payments?status=paid`|Paginated list to power billing history views.|
+
+**Get Stripe Config**
+
+```http
+GET /api/bff/stripe/config
+
+Response → {
+  "success": true,
+  "data": {
+    "publishable_key": "pk_test_123",
+    "currency": "usd",
+    "payment_method_types": ["card"]
+  }
+}
+```
+
+**Create PaymentIntent Request**
+
+```http
+POST /api/bff/orders/{orderId}/pay
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "payment_method": null,
+  "confirm": false
+}
+```
+
+**Create PaymentIntent Response**
+
+```json
+{
+  "success": true,
+  "data": {
+    "payment_intent_id": "pi_3Prv9ZIIRcHi",
+    "client_secret": "pi_3Prv9ZIIRcHi_secret_xxx",
+    "status": "requires_payment_method",
+    "amount": 14900,
+    "currency": "usd"
+  }
+}
+```
+
+Feed the `client_secret` into Stripe.js:
+
+```typescript
+const stripe = await loadStripe(publishableKey);
+const result = await stripe.confirmCardPayment(clientSecret, {
+  payment_method: {
+    card: cardElement,
+    billing_details: { email: user.email, name: user.name }
+  }
+});
+```
+
+If you collect payment method IDs separately (saved cards), confirm through the API:
+
+```http
+POST /api/bff/payments/{paymentIntentId}/confirm
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "payment_method_id": "pm_1N0sJ7IIRcHi"
+}
+```
+
+Expect `status` to be `succeeded`, `requires_action`, or `requires_payment_method`. When `next_action` is present, surface Stripe’s modal instructions.
+
+**Get Payment by Order**
+
+```http
+GET /api/bff/orders/{orderId}/payment
+Authorization: Bearer <token>
+```
+
+Sample response body:
+
+```json
+{
+  "success": true,
+  "data": {
+    "stripe_payment_intent_id": "pi_3Prv9ZIIRcHi",
+    "status": "succeeded",
+    "amount": 14900,
+    "currency": "usd",
+    "payment_method_type": "card",
+    "stripe_receipt_url": "https://pay.stripe.com/receipts/..."
+  }
+}
+```
+
+Use that payload to render receipts and payment history.
+
+#### Putting It Together (React Example)
+
+```typescript
+const checkout = async (cart: CartItem[], couponCode?: string) => {
+  // 1) Create the order
+  const orderResp = await api.post('/api/bff/orders', {
+    items: cart.map(item => ({
+      course_id: item.courseId,
+      quantity: item.quantity,
+      price_snapshot: item.priceCents
+    })),
+    coupon_code: couponCode,
+    customer_email: profile.email
+  });
+
+  const order = orderResp.data.data;
+
+  // 2) Create PaymentIntent
+  const payResp = await api.post(`/api/bff/orders/${order.id}/pay`, {});
+  const { client_secret } = payResp.data.data;
+
+  // 3) Confirm via Stripe.js
+  const result = await stripe.confirmCardPayment(client_secret, {
+    payment_method: {
+      card: cardElement,
+      billing_details: { email: profile.email, name: profile.name }
+    }
+  });
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  // 4) Refresh order to display success state
+  const finalOrder = await api.get(`/api/bff/orders/${order.id}`);
+  return finalOrder.data.data;
+};
+```
+
+Surface the order status plus any `failure_reason` text if the payment fails so learners know what to retry.
+
 ## 🔧 Frontend Integration Examples
 
 ### JavaScript/TypeScript Integration

@@ -1,31 +1,221 @@
-# user-services
+# User Services
 
-User service for authentication, sessions, profiles, password reset, and MFA. Go + Gin. Default port 8001.
+A comprehensive user management service providing authentication, sessions, profiles, password reset, and MFA functionality. Built with Go, Gin framework, and follows microservice best practices.
 
-- Base API URL: /api/v1
-- Health URL: /health
+**🚀 Features:**
+- JWT-based authentication with refresh tokens
+- Session management with Redis caching
+- Multi-factor authentication (TOTP)
+- Password reset flow
+- Comprehensive audit logging
+- Rate limiting and security hardening
+- Configurable through environment variables
+- Structured logging with correlation IDs
+- Database migrations
+- Outbox pattern for reliable event publishing
 
-## Run
+**📋 Architecture:**
+- **Language:** Go 1.24+
+- **Framework:** Gin HTTP framework
+- **Database:** PostgreSQL with GORM
+- **Cache:** Redis
+- **Message Queue:** RabbitMQ
+- **Default Port:** 8001
+- **Base API URL:** `/api/v1`
+- **Health URL:** `/health`
 
+## 🏃 Quick Start
+
+### Prerequisites
+- Go 1.24 or later
+- Docker & Docker Compose
+- PostgreSQL, Redis, and RabbitMQ (or use the provided Docker setup)
+
+### Development Setup
+
+1. **Clone and set up development environment:**
+```bash
+make dev-setup
 ```
+
+2. **Start infrastructure services:**
+```bash
+make compose-up
+```
+
+3. **Run the application:**
+```bash
 make run
+# or with hot reload:
+make run-dev
 ```
 
-Or directly:
-
-```
-go run ./cmd/server
-```
-
-Set a custom port via `PORT` environment variable (defaults to 8001):
-
-```
-PORT=9000 go run ./cmd/server
+4. **Run database migrations:**
+```bash
+make migrate
 ```
 
-## Infrastructure (Docker Compose)
+### Custom Configuration
 
-This repo includes a `docker-compose.yml` that provisions:
+Set environment variables or create a `.env` file:
+
+```bash
+# Server
+PORT=8001
+ENVIRONMENT=development
+
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=user
+DB_PASSWORD=password
+DB_NAME=userdb
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+
+# JWT
+JWT_SECRET=your-super-secret-key
+JWT_EXPIRES_IN=24h
+JWT_REFRESH_EXPIRES_IN=60d
+
+# Security
+SECURITY_PASSWORD_MIN_LENGTH=8
+SECURITY_MAX_LOGIN_ATTEMPTS=5
+```
+
+## 🛠️ Development
+
+### Available Commands
+
+```bash
+# Help
+make help                    # Show all available commands
+
+# Development
+make run                     # Run the application
+make run-dev                 # Run with hot reload (requires air)
+
+# Building
+make build                   # Build for development
+make build-prod             # Build production binary
+
+# Code Quality
+make fmt                     # Format code
+make vet                     # Run go vet
+make lint                    # Run golangci-lint
+make check                   # Run all code quality checks
+
+# Testing
+make test                    # Run tests
+make test-coverage          # Run tests with coverage report
+make test-race              # Run tests with race detection
+make benchmark              # Run benchmarks
+
+# Database
+make migrate                 # Run database migrations
+make migrate-create NAME=add_new_table  # Create new migration
+
+# Docker
+make compose-up             # Start infrastructure
+make compose-down           # Stop and remove infrastructure
+make compose-logs           # Show logs
+
+# Security
+make security-scan          # Run security scan with gosec
+
+# Cleanup
+make clean                  # Clean build artifacts
+```
+
+## 📊 Database Migrations
+
+- **Location:** `migrations/` directory
+- **Naming pattern:** `YYYYMMDDHHMMSS_description.up.sql`
+- **Apply locally:** `make migrate`
+- **Create new:** `make migrate-create NAME=migration_name`
+- **Tracking:** Applied versions tracked in `schema_migrations` table
+
+## 🔒 Security Features
+
+### Authentication & Authorization
+- JWT access tokens with configurable expiration
+- Secure refresh token rotation
+- Session validation in Redis
+- Role-based access control (RBAC ready)
+- MFA support with TOTP
+
+### Security Headers
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `X-XSS-Protection: 1; mode=block`
+
+### Rate Limiting & Protection
+- Login attempt throttling
+- Account lockout after failed attempts
+- IP-based request tracking
+- Token validation with secure error messages
+
+### Audit & Logging
+- Structured JSON logging
+- Request correlation IDs
+- Security event logging
+- Database query logging
+- External API call tracking
+
+## 🔧 Configuration
+
+The service uses a comprehensive configuration system. All settings can be configured via environment variables:
+
+### Server Configuration
+```bash
+PORT=8001
+SERVER_READ_TIMEOUT=15s
+SERVER_WRITE_TIMEOUT=15s
+SERVER_IDLE_TIMEOUT=60s
+```
+
+### Database Configuration
+```bash
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=user
+DB_PASSWORD=password
+DB_NAME=userdb
+DB_MAX_OPEN_CONNS=25
+DB_MAX_IDLE_CONNS=5
+```
+
+### Redis Configuration
+```bash
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_POOL_SIZE=10
+```
+
+### Security Configuration
+```bash
+SECURITY_PASSWORD_MIN_LENGTH=8
+SECURITY_PASSWORD_REQUIRE_UPPER=true
+SECURITY_PASSWORD_REQUIRE_LOWER=true
+SECURITY_PASSWORD_REQUIRE_DIGIT=true
+SECURITY_PASSWORD_REQUIRE_SPECIAL=true
+SECURITY_MAX_LOGIN_ATTEMPTS=5
+```
+
+### Email Configuration
+```bash
+FRONTEND_URL=http://localhost:3001
+EMAIL_VERIFICATION_EXPIRY=24h
+EMAIL_PASSWORD_RESET_EXPIRY=2h
+```
+
+## 🐳 Infrastructure (Docker Compose)
+
+The repo includes a `docker-compose.yml` that provisions:
 - PostgreSQL (16-alpine) on 5432
 - Redis (7-alpine) on 6379
 - RabbitMQ (3-management) on 5672 (AMQP) and 15672 (HTTP UI)
@@ -509,3 +699,102 @@ CREATE INDEX outbox_unpublished_idx ON outbox(published_at) WHERE published_at I
 
 ```
 
+## 📚 API Documentation
+
+The service provides a comprehensive REST API with standardized responses. See the API Reference section above for detailed endpoint documentation.
+
+### Response Format
+All endpoints return a consistent response format:
+```json
+{
+  "status": "success|error",
+  "message": "optional message",
+  "data": { /* endpoint-specific data */ },
+  "error": { /* optional error details */ },
+  "timestamp": "2023-12-01T10:00:00Z"
+}
+```
+
+### Error Codes
+Common error codes:
+- `INVALID_CREDENTIALS` - Invalid email or password
+- `EMAIL_NOT_VERIFIED` - Email address not verified
+- `WEAK_PASSWORD` - Password doesn't meet security requirements
+- `MFA_REQUIRED` - Multi-factor authentication required
+- `SESSION_EXPIRED` - Session has expired
+- `ACCOUNT_LOCKED` - Account has been locked
+
+## 🔧 Monitoring & Observability
+
+### Health Checks
+- `GET /health` - Basic health status
+- Response: `{"status": "ok"}`
+
+### Logging
+- Structured JSON logging in production
+- Request correlation IDs for tracing
+- Audit logging for security events
+- Performance metrics tracking
+
+### Metrics
+- Database connection pool usage
+- Redis cache hit/miss rates
+- Request latency and error rates
+- Login attempt tracking
+
+## 🚀 Production Deployment
+
+### Environment Variables for Production
+```bash
+# Required
+ENVIRONMENT=production
+JWT_SECRET=your-super-secure-secret-key
+DB_PASSWORD=your-database-password
+
+# Recommended
+SERVER_READ_TIMEOUT=30s
+SERVER_WRITE_TIMEOUT=30s
+DB_MAX_OPEN_CONNS=50
+DB_MAX_IDLE_CONNS=10
+REDIS_PASSWORD=your-redis-password
+```
+
+### Security Considerations
+1. **JWT Secret**: Use a strong, random secret (at least 32 characters)
+2. **Database**: Use SSL connections in production
+3. **Redis**: Enable authentication and use TLS
+4. **Environment**: Don't commit `.env` files to version control
+5. **Rate Limiting**: Configure appropriate limits for your traffic
+6. **Monitoring**: Set up alerts for security events and errors
+
+### Docker Deployment
+```bash
+# Build production image
+make docker-build
+
+# Run with environment file
+docker run -p 8001:8001 --env-file .env.production user-services:latest
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes and add tests
+4. Run the test suite (`make test-coverage`)
+5. Ensure code quality checks pass (`make check`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For questions or issues:
+- Check the documentation
+- Review the API examples
+- Open an issue on GitHub
+- Check logs for detailed error messages

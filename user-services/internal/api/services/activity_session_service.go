@@ -77,6 +77,10 @@ func (s *activitySessionService) StartActivitySession(ctx context.Context, req *
 
 	// Get IP address from backend request
 	clientIP := getClientIP(ginCtx)
+	var ipAddr *string
+	if clientIP != "" {
+		ipAddr = &clientIP
+	}
 
 	// Get user agent from request header, fallback to request body if provided
 	userAgent := ginCtx.GetHeader("User-Agent")
@@ -89,7 +93,7 @@ func (s *activitySessionService) StartActivitySession(ctx context.Context, req *
 		UserID:    userID,
 		SessionID: req.SessionID,
 		StartedAt: time.Now().UTC(),
-		IPAddr:    clientIP,
+		IPAddr:    ipAddr,
 		UserAgent: userAgent,
 	}
 
@@ -165,7 +169,7 @@ func (s *activitySessionService) GetSessionStats(ctx context.Context, userID uui
 	return &dto.SessionStatsResponse{
 		TotalSessions:      stats.TotalSessions,
 		TotalDurationMs:    stats.TotalDurationMs,
-		AverageDurationMs: stats.AverageDurationMs,
+		AverageDurationMs:  stats.AverageDurationMs,
 		LongestDurationMs:  stats.LongestDurationMs,
 		ShortestDurationMs: stats.ShortestDurationMs,
 	}, nil
@@ -224,7 +228,7 @@ func mapToActivitySessionResponse(session *models.UserActivitySession) *dto.Acti
 		StartedAt:  session.StartedAt,
 		EndedAt:    endTime,
 		DurationMs: session.DurationMs,
-		IPAddr:     &session.IPAddr,
+		IPAddr:     session.IPAddr,
 		UserAgent:  &session.UserAgent,
 		CreatedAt:  session.CreatedAt,
 		UpdatedAt:  session.UpdatedAt,

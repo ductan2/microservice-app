@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"user-services/internal/cache"
+	"user-services/internal/config"
+	"user-services/internal/response"
 	"user-services/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -23,21 +25,28 @@ func AuthRequired(sessionCache *cache.SessionCache) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "missing authorization header")
+			response.Unauthorized(c, "Authentication required")
 			c.Abort()
 			return
 		}
 
 		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-			utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "invalid authorization header format")
+			response.Unauthorized(c, "Invalid authorization header format")
 			c.Abort()
 			return
 		}
 
-		claims, err := utils.ValidateJWT(strings.TrimSpace(parts[1]))
+		token := strings.TrimSpace(parts[1])
+		claims, err := utils.ValidateJWT(token)
 		if err != nil {
-			utils.Fail(c, "Unauthorized", http.StatusUnauthorized, err.Error())
+			// Don't expose specific JWT validation errors to prevent token probing
+			if config.GetConfig().IsProduction() {
+				response.Unauthorized(c, "Invalid authentication token")
+			} else {
+				// In development, provide more detailed error messages
+				response.Unauthorized(c, "Invalid authentication token: "+err.Error())
+			}
 			c.Abort()
 			return
 		}
@@ -45,22 +54,85 @@ func AuthRequired(sessionCache *cache.SessionCache) gin.HandlerFunc {
 		// Check if session exists in Redis
 		sessionData, err := sessionCache.GetSession(c.Request.Context(), claims.SessionID)
 		if err != nil {
-			utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "session not found or expired")
+			response.Unauthorized(c, "Session has expired or is invalid")
 			c.Abort()
 			return
 		}
 
 		// Additional validation: ensure userID in session matches JWT claims
 		if sessionData.UserID != claims.UserID {
-			utils.Fail(c, "Unauthorized", http.StatusUnauthorized, "session user mismatch")
+			// This is a security issue - log it in production
+			if !config.GetConfig().IsDevelopment() {
+				// TODO: Add proper security logging for session hijacking attempts
+			}
+			response.Unauthorized(c, "Invalid session")
 			c.Abort()
 			return
 		}
 
+		// Set context values for downstream handlers
 		c.Set(contextUserIDKey, claims.UserID)
 		c.Set(contextUserEmailKey, claims.Email)
 		c.Set(contextSessionIDKey, claims.SessionID)
 
+		// Add security headers
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("X-XSS-Protection", "1; mode=block")
+
+		c.Next()
+	}
+}
+
+// OptionalAuth provides optional authentication - doesn't abort if no auth provided
+func OptionalAuth(sessionCache *cache.SessionCache) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.Next()
+			return
+		}
+
+		parts := strings.SplitN(authHeader, " ", 2)
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+			c.Next()
+			return
+		}
+
+		token := strings.TrimSpace(parts[1])
+		claims, err := utils.ValidateJWT(token)
+		if err != nil {
+			c.Next()
+			return
+		}
+
+		// Check if session exists in Redis
+		sessionData, err := sessionCache.GetSession(c.Request.Context(), claims.SessionID)
+		if err != nil {
+			c.Next()
+			return
+		}
+
+		// Validate session matches JWT claims
+		if sessionData.UserID != claims.UserID {
+			c.Next()
+			return
+		}
+
+		// Set context values
+		c.Set(contextUserIDKey, claims.UserID)
+		c.Set(contextUserEmailKey, claims.Email)
+		c.Set(contextSessionIDKey, claims.SessionID)
+
+		c.Next()
+	}
+}
+
+// RequireRole middleware for role-based authorization (placeholder for future implementation)
+func RequireRole(roles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// TODO: Implement role-based authorization once role system is in place
+		// For now, just pass through
 		c.Next()
 	}
 }

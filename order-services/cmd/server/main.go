@@ -79,6 +79,10 @@ func buildServer(cfg *config.Config) (*gin.Engine, func()) {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
+	if err := db.RunMigrations(gormDB, ""); err != nil {
+		log.Fatalf("Failed to run database migrations: %v", err)
+	}
+
 	sqlDB, err := gormDB.DB()
 	if err != nil {
 		log.Fatalf("Failed to get sql.DB: %v", err)

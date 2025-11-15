@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 type UserController struct {
@@ -21,6 +22,8 @@ type UserController struct {
 	currentUserService services.CurrentUserService
 	userService        services.UserService
 	sessionService     services.SessionService
+	rateLimiter        middleware.RateLimiter
+	redisClient        *redis.Client
 }
 
 func NewUserController(
@@ -29,6 +32,8 @@ func NewUserController(
 	currentUserService services.CurrentUserService,
 	userService services.UserService,
 	sessionService services.SessionService,
+	rateLimiter middleware.RateLimiter,
+	redisClient *redis.Client,
 ) *UserController {
 	return &UserController{
 		authService:        authService,
@@ -36,6 +41,8 @@ func NewUserController(
 		currentUserService: currentUserService,
 		userService:        userService,
 		sessionService:     sessionService,
+		rateLimiter:        rateLimiter,
+		redisClient:        redisClient,
 	}
 }
 
@@ -78,6 +85,11 @@ func (c *UserController) LoginUser(ctx *gin.Context) {
 
 	result, err := c.authService.Login(ctx.Request.Context(), email, req.Password, req.MFACode, userAgent, ipAddr)
 	if err != nil {
+		// Record failed attempt for rate limiting
+		if c.rateLimiter != nil {
+			c.rateLimiter.RecordFailedAttempt(ctx.Request.Context(), email)
+		}
+
 		// Handle specific error types
 		switch err {
 		case utils.ErrInvalidMFACode:
@@ -90,6 +102,11 @@ func (c *UserController) LoginUser(ctx *gin.Context) {
 			utils.Fail(ctx, "Internal server error", http.StatusInternalServerError, err.Error())
 		}
 		return
+	}
+
+	// Reset failed attempts on successful login
+	if c.rateLimiter != nil {
+		c.rateLimiter.ResetFailedAttempts(ctx.Request.Context(), email)
 	}
 
 	response := dto.AuthResponse{

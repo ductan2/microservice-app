@@ -3,7 +3,7 @@ SHELL := /bin/bash
 APP_NAME := order-services
 PKG := ./...
 
-.PHONY: run build tidy test fmt lint compose-up compose-down compose-logs
+.PHONY: run build tidy test fmt lint migrate compose-up compose-down compose-logs
 
 run:
 	go run ./cmd/server
@@ -11,14 +11,17 @@ run:
 build:
 	go build -o bin/$(APP_NAME) ./cmd/server
 
- tidy:
+tidy:
 	go mod tidy
 
 fmt:
 	gofmt -s -w .
 
- test:
+test:
 	go test $(PKG) -v
+
+migrate:
+	go run ./cmd/migrate
 
 compose-up:
 	docker compose up -d
@@ -28,4 +31,3 @@ compose-down:
 
 compose-logs:
 	docker compose logs -f --tail=200
-

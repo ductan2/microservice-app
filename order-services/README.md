@@ -23,6 +23,12 @@ Set a custom port via `PORT` environment variable (defaults to 8004):
 PORT=9000 go run ./cmd/server
 ```
 
+## Database migrations
+
+- SQL migrations live in `migrations/` and follow the `0001_description.up.sql` pattern.
+- Apply them locally with `make migrate` (or `go run ./cmd/migrate`); rerunning only applies new files via the `schema_migrations` ledger.
+- Override the lookup directory when needed: `MIGRATIONS_DIR=/custom/path make migrate`.
+
 ## Infrastructure (Docker Compose)
 
 This repo includes a `docker-compose.yml` that provisions:
@@ -50,4 +56,3 @@ make compose-logs
 ## Notes
 
 This service is currently under development.
-

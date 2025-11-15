@@ -15,7 +15,7 @@ services:
     image: postgres:17
     container_name: postgres
     ports:
-      - "5433:5432"
+      - "5432:5432"
     restart: always
     networks:
       - backend
@@ -23,8 +23,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: ${POSTGRES_DB:-english_app}
+      POSTGRES_DB_USER_SERVICES: ${POSTGRES_DB_USER_SERVICES:-lms_english_app}
+      POSTGRES_DB_ORDER_SERVICES: ${POSTGRES_DB_ORDER_SERVICES:-lms_order_serivecs}
+      POSTGRES_DB_LESSON_SERVICES: ${POSTGRES_DB_LESSON_SERVICES:-lms_lesson_service}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -163,7 +167,7 @@ services:
       - DB_PORT=5432
       - DB_USER=${POSTGRES_USER:-user}
       - DB_PASSWORD=${POSTGRES_PASSWORD:-password}
-      - DB_NAME=${POSTGRES_DB:-english_app}
+      - DB_NAME=${POSTGRES_DB_USER_SERVICES:-lms_english_app}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
@@ -203,7 +207,7 @@ services:
       - DB_PORT=5432
       - DB_USER=${POSTGRES_USER:-user}
       - DB_PASSWORD=${POSTGRES_PASSWORD:-password}
-      - DB_NAME=${POSTGRES_DB:-english_app}
+      - DB_NAME=${POSTGRES_DB_LESSON_SERVICES:-lms_lesson_service}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
@@ -242,7 +246,7 @@ services:
       - DB_PORT=5432
       - DB_USER=${POSTGRES_USER:-user}
       - DB_PASSWORD=${POSTGRES_PASSWORD:-password}
-      - DB_NAME=${POSTGRES_DB:-english_app}
+      - DB_NAME=${POSTGRES_DB_USER_SERVICES:-lms_english_app}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
@@ -284,7 +288,7 @@ services:
       - POSTGRES_PORT=5432
       - POSTGRES_USER=${POSTGRES_USER:-user}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
-      - POSTGRES_DB=${POSTGRES_DB:-english_app}
+      - POSTGRES_DB_USER_SERVICES=${POSTGRES_DB_USER_SERVICES:-lms_user_services}
       - POSTGRES_SSLMODE=disable
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
@@ -318,7 +322,7 @@ services:
       - DB_PORT=5432
       - DB_USER=${POSTGRES_USER:-user}
       - DB_PASSWORD=${POSTGRES_PASSWORD:-password}
-      - DB_NAME=${POSTGRES_DB:-english_app}
+      - DB_NAME=${POSTGRES_DB_ORDER_SERVICES:-lms_order_serivecs}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}

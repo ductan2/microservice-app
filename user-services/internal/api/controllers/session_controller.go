@@ -49,7 +49,13 @@ func (c *SessionController) GetActiveSessions(ctx *gin.Context) {
 	userAgent := ctx.GetHeader("User-Agent")
 	ipAddr := ctx.ClientIP()
 	for i := range sessions {
-		if sessions[i].UserAgent == userAgent && sessions[i].IPAddr == ipAddr {
+		ipMatches := false
+		if sessions[i].IPAddr != nil && ipAddr != "" {
+			ipMatches = *sessions[i].IPAddr == ipAddr
+		} else if sessions[i].IPAddr == nil && ipAddr == "" {
+			ipMatches = true
+		}
+		if sessions[i].UserAgent == userAgent && ipMatches {
 			sessions[i].IsCurrent = true
 		}
 	}
