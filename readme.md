@@ -4,6 +4,19 @@
 
 This backend is designed for an English learning application using a **microservices architecture**. Each service is independently deployed and communicates via API/gRPC and a message broker. The system includes database, cache, message queue, monitoring, and logging components for scalability and maintainability.
 
+## Table of Contents
+
+- [Architecture Diagram](#architecture-diagram)
+- [Core Services](#core-services)
+- [Infrastructure Stack](#infrastructure-stack)
+- [API Gateway & Service Discovery](#api-gateway--service-discovery)
+- [Monitoring & Observability](#monitoring--observability)
+- [DevOps & Deployment](#devops--deployment)
+- [Communication Patterns](#communication-patterns)
+- [gRPC Implementation Guide](#grpc-implementation-guide) ⭐
+- [Getting Started](#getting-started)
+- [Additional Documentation](#additional-documentation)
+
 ---
 
 ## Architecture Diagram
@@ -151,6 +164,8 @@ graph TB
   - 🟣 **Purple**: Monitoring & Observability
   - 🟠 **Orange**: External services
 
+> **Note:** The architecture currently uses REST/HTTP for service communication. For improved performance, see the [gRPC Implementation Guide](#grpc-implementation-guide) to convert internal service-to-service calls to gRPC while maintaining REST for external APIs.
+
 ---
 
 ## Core Services
@@ -289,6 +304,374 @@ The architecture follows a hybrid communication pattern as shown in the [Archite
 3. **Service Layer**: Domain services handle business logic independently
 4. **Data Layer**: PostgreSQL, MongoDB, and Redis for persistence and caching
 5. **Event Layer**: RabbitMQ for asynchronous inter-service communication
+
+---
+
+## gRPC Implementation Guide
+
+### Why gRPC for Microservices?
+
+While the current architecture uses REST/HTTP for synchronous communication, **gRPC** offers significant advantages for internal service-to-service communication:
+
+- **Performance**: Binary protocol (Protocol Buffers) is faster than JSON
+- **Type Safety**: Strong typing with .proto definitions
+- **Streaming**: Bidirectional streaming support
+- **Code Generation**: Auto-generate client/server code in multiple languages
+- **Efficiency**: Smaller payload size and HTTP/2 multiplexing
+
+### When to Use gRPC vs REST
+
+| Use Case | Protocol | Reason |
+|----------|----------|--------|
+| **Client → API Gateway** | REST/HTTP | Better browser/mobile compatibility |
+| **API Gateway → Services** | REST/HTTP | Current implementation, simpler debugging |
+| **Service → Service** | **gRPC** | Better performance, type safety |
+| **BFF → Services** | **gRPC** (Recommended) | High-frequency calls benefit from efficiency |
+| **Public APIs** | REST/HTTP | Wider compatibility |
+
+### Converting Services to gRPC
+
+#### Step 1: Define Protocol Buffers
+
+Create `.proto` files to define your service contracts:
+
+**Example: `user-service.proto`**
+```protobuf
+syntax = "proto3";
+
+package user;
+option go_package = "github.com/yourorg/user-services/pb";
+
+service UserService {
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+  rpc GetUsersByIds(GetUsersByIdsRequest) returns (GetUsersByIdsResponse);
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message GetUserResponse {
+  string user_id = 1;
+  string email = 2;
+  string name = 3;
+  string avatar_url = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message ValidateTokenResponse {
+  bool valid = 1;
+  string user_id = 2;
+  string error_message = 3;
+}
+
+message GetUsersByIdsRequest {
+  repeated string user_ids = 1;
+}
+
+message GetUsersByIdsResponse {
+  repeated GetUserResponse users = 1;
+}
+
+// ... other messages
+```
+
+#### Step 2: Generate Code
+
+**For Go Services (User, Content, Order, BFF):**
+```bash
+# Install protoc compiler and Go plugins
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+# Generate code
+protoc --go_out=. --go_opt=paths=source_relative \
+       --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+       proto/user-service.proto
+```
+
+**For Python Service (Lesson):**
+```bash
+# Install gRPC tools
+pip install grpcio grpcio-tools
+
+# Generate code
+python -m grpc_tools.protoc -I./proto \
+       --python_out=./pb \
+       --grpc_python_out=./pb \
+       proto/lesson-service.proto
+```
+
+**For Node.js Service (Notification):**
+```bash
+# Install gRPC packages
+npm install @grpc/grpc-js @grpc/proto-loader
+
+# Use dynamic loading or generate with protoc
+npm install -g grpc-tools
+grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./pb \
+       --grpc_out=grpc_js:./pb \
+       --plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin` \
+       proto/notification-service.proto
+```
+
+#### Step 3: Implement gRPC Server
+
+**Go Example (User Service):**
+```go
+package main
+
+import (
+    "context"
+    "log"
+    "net"
+    
+    "google.golang.org/grpc"
+    pb "github.com/yourorg/user-services/pb"
+)
+
+type userServiceServer struct {
+    pb.UnimplementedUserServiceServer
+    // your dependencies (DB, Redis, etc.)
+}
+
+func (s *userServiceServer) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+    // Implement your logic
+    user, err := s.userRepo.GetByID(ctx, req.UserId)
+    if err != nil {
+        return nil, err
+    }
+    
+    return &pb.GetUserResponse{
+        UserId:    user.ID,
+        Email:     user.Email,
+        Name:      user.Name,
+        AvatarUrl: user.AvatarURL,
+        CreatedAt: user.CreatedAt.String(),
+        UpdatedAt: user.UpdatedAt.String(),
+    }, nil
+}
+
+func main() {
+    // Start gRPC server alongside REST server
+    grpcServer := grpc.NewServer()
+    pb.RegisterUserServiceServer(grpcServer, &userServiceServer{})
+    
+    listener, err := net.Listen("tcp", ":50051")
+    if err != nil {
+        log.Fatalf("Failed to listen: %v", err)
+    }
+    
+    log.Println("gRPC server listening on :50051")
+    if err := grpcServer.Serve(listener); err != nil {
+        log.Fatalf("Failed to serve: %v", err)
+    }
+}
+```
+
+**Python Example (Lesson Service):**
+```python
+import grpc
+from concurrent import futures
+import lesson_service_pb2
+import lesson_service_pb2_grpc
+
+class LessonServiceServicer(lesson_service_pb2_grpc.LessonServiceServicer):
+    def GetLessonProgress(self, request, context):
+        # Implement your logic
+        progress = get_progress_from_db(request.user_id, request.lesson_id)
+        
+        return lesson_service_pb2.GetLessonProgressResponse(
+            user_id=progress.user_id,
+            lesson_id=progress.lesson_id,
+            completed=progress.completed,
+            score=progress.score
+        )
+
+def serve():
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    lesson_service_pb2_grpc.add_LessonServiceServicer_to_server(
+        LessonServiceServicer(), server
+    )
+    server.add_insecure_port('[::]:50052')
+    server.start()
+    print("gRPC server listening on :50052")
+    server.wait_for_termination()
+
+if __name__ == '__main__':
+    serve()
+```
+
+#### Step 4: Implement gRPC Client
+
+**BFF Service calling User Service:**
+```go
+package main
+
+import (
+    "context"
+    "time"
+    
+    "google.golang.org/grpc"
+    "google.golang.org/grpc/credentials/insecure"
+    pb "github.com/yourorg/user-services/pb"
+)
+
+type UserServiceClient struct {
+    client pb.UserServiceClient
+}
+
+func NewUserServiceClient(address string) (*UserServiceClient, error) {
+    conn, err := grpc.Dial(address, 
+        grpc.WithTransportCredentials(insecure.NewCredentials()),
+        grpc.WithBlock(),
+        grpc.WithTimeout(5*time.Second),
+    )
+    if err != nil {
+        return nil, err
+    }
+    
+    return &UserServiceClient{
+        client: pb.NewUserServiceClient(conn),
+    }, nil
+}
+
+func (c *UserServiceClient) GetUser(ctx context.Context, userID string) (*pb.GetUserResponse, error) {
+    ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+    defer cancel()
+    
+    return c.client.GetUser(ctx, &pb.GetUserRequest{
+        UserId: userID,
+    })
+}
+
+func (c *UserServiceClient) GetUsersByIds(ctx context.Context, userIDs []string) ([]*pb.GetUserResponse, error) {
+    ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+    defer cancel()
+    
+    resp, err := c.client.GetUsersByIds(ctx, &pb.GetUsersByIdsRequest{
+        UserIds: userIDs,
+    })
+    if err != nil {
+        return nil, err
+    }
+    
+    return resp.Users, nil
+}
+```
+
+### Docker Compose Configuration for gRPC
+
+Update `infrastructure/docker-compose.yml` to expose gRPC ports:
+
+```yaml
+services:
+  user-services:
+    # ... existing config
+    ports:
+      - "8001:8001"  # REST API
+      - "50051:50051"  # gRPC
+    environment:
+      - GRPC_PORT=50051
+      - REST_PORT=8001
+      # ... other env vars
+
+  lesson-services:
+    # ... existing config
+    ports:
+      - "8005:8005"  # REST API
+      - "50052:50052"  # gRPC
+    environment:
+      - GRPC_PORT=50052
+      - REST_PORT=8005
+
+  content-services:
+    ports:
+      - "8004:8004"  # REST API
+      - "50053:50053"  # gRPC
+    environment:
+      - GRPC_PORT=50053
+
+  order-services:
+    ports:
+      - "8006:8006"  # REST API
+      - "50054:50054"  # gRPC
+    environment:
+      - GRPC_PORT=50054
+
+  bff-services:
+    environment:
+      # gRPC endpoints for internal calls
+      - USER_SERVICE_GRPC=user-services:50051
+      - LESSON_SERVICE_GRPC=lesson-services:50052
+      - CONTENT_SERVICE_GRPC=content-services:50053
+      - ORDER_SERVICE_GRPC=order-services:50054
+      # REST endpoints for fallback/external
+      - USER_SERVICE_URL=http://user-services:8001
+```
+
+### Migration Strategy
+
+**Phase 1: Dual Protocol (Recommended)**
+- Keep REST endpoints for external/client access
+- Add gRPC servers alongside REST servers
+- Gradually migrate internal service-to-service calls to gRPC
+
+**Phase 2: BFF Migration**
+- Update BFF service to use gRPC for internal calls
+- Keep REST for external API gateway access
+- Monitor performance improvements
+
+**Phase 3: Full Internal gRPC**
+- All service-to-service communication uses gRPC
+- REST only exposed through API gateway for external clients
+- GraphQL remains for flexible client queries (Content Service)
+
+### Testing gRPC Services
+
+**Using grpcurl (like curl for gRPC):**
+```bash
+# Install grpcurl
+go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+
+# List services
+grpcurl -plaintext localhost:50051 list
+
+# Call a method
+grpcurl -plaintext -d '{"user_id": "123"}' \
+  localhost:50051 user.UserService/GetUser
+```
+
+**Using BloomRPC or Postman:**
+- BloomRPC: GUI client for gRPC (like Postman for REST)
+- Postman: Now supports gRPC in recent versions
+
+### Benefits for This Architecture
+
+1. **BFF Performance**: BFF makes multiple service calls - gRPC reduces latency by ~30-50%
+2. **Type Safety**: Protocol Buffers prevent serialization errors
+3. **Bandwidth**: Smaller payloads reduce network costs
+4. **Streaming**: Future features like real-time progress updates
+5. **Polyglot Support**: Go, Python, Node.js all have excellent gRPC support
+
+### Service Port Allocation
+
+| Service | REST Port | gRPC Port |
+|---------|-----------|-----------|
+| User Service | 8001 | 50051 |
+| Lesson Service | 8005 | 50052 |
+| Content Service | 8004 | 50053 |
+| Order Service | 8006 | 50054 |
+| Notification Service | 8003 | 50055 |
+| BFF Service | 8010 | - (client only) |
 
 ---
 
